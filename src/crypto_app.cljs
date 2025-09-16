@@ -147,7 +147,7 @@
       (reset! loading-atom true))
     (when @error-atom  
       (reset! error-atom nil)))
-  (-> (js/fetch "./data/crypto-prices.json")
+  (-> (js/fetch (str "./data/crypto-prices.json?t=" (js/Date.now)))
       (.then (fn [response]
                (js/console.log "Fetch response received, status:" (.-status response))
                (if (.-ok response)
