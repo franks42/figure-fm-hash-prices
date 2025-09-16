@@ -77,38 +77,37 @@
             }
         }
         
-        // Force Tailwind to include all animation classes
+        // Comprehensive safelist for all dynamic classes used in ClojureScript
         tailwind.config.safelist = [
+            // Animation classes
             'animate-glow',
             'animate-scan', 
             'animate-pulse-dot',
             'animate-fade-in',
             'animate-float',
+            'animate-spin',
+            'animate-ping',
+            
+            // Background classes
             'bg-animated',
+            'bg-neon-green/10',
+            'bg-neon-green/20', 
+            'bg-neon-red/10',
+            'bg-neon-green',
+            
+            // Text classes
+            'text-neon-green',
+            'text-neon-red',
+            
+            // Border classes  
+            'border-neon-green/20',
+            'border-neon-green/40',
+            'border-neon-red/20',
+            'border-t-neon-green',
+            
+            // Component classes
             'scan-line'
         ];
-        
-        // Enable automatic class detection for dynamically added elements
-        if (typeof window !== 'undefined') {
-            window.tailwindObserver = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.type === 'childList') {
-                        // Force Tailwind to regenerate styles
-                        if (window.tailwindcss) {
-                            window.tailwindcss.refresh();
-                        }
-                    }
-                });
-            });
-            
-            // Start observing
-            setTimeout(() => {
-                window.tailwindObserver.observe(document.body, {
-                    childList: true,
-                    subtree: true
-                });
-            }, 100);
-        }
     </script>
     
     <!-- Scittle and React Dependencies -->
