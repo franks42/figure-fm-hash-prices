@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(python3:*)",
+      "Bash(lsof:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Bash(git rebase:*)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebFetch(domain:www.jsdelivr.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:babashka.org)",
+      "Bash(git restore:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

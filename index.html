@@ -8,24 +8,103 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Styles -->
-    <link rel="stylesheet" href="styles.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'gradient': 'gradient 20s ease-in-out infinite',
+                        'glow': 'glow 3s ease-in-out infinite',
+                        'scan': 'scan 3s linear infinite',
+                        'pulse-dot': 'pulse-dot 2s ease-in-out infinite',
+                        'float': 'float 20s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        gradient: {
+                            '0%, 100%': { transform: 'translate(0, 0) rotate(0deg)' },
+                            '33%': { transform: 'translate(-20px, -20px) rotate(1deg)' },
+                            '66%': { transform: 'translate(20px, -10px) rotate(-1deg)' },
+                        },
+                        glow: {
+                            '0%, 100%': { filter: 'brightness(1)' },
+                            '50%': { filter: 'brightness(1.2)' },
+                        },
+                        scan: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(100%)' },
+                        },
+                        'pulse-dot': {
+                            '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+                            '50%': { opacity: '0.5', transform: 'scale(1.5)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translate(0, 0) rotate(0deg)' },
+                            '33%': { transform: 'translate(-20px, -20px) rotate(1deg)' },
+                            '66%': { transform: 'translate(20px, -10px) rotate(-1deg)' },
+                        }
+                    },
+                    colors: {
+                        'neon-green': '#00ff88',
+                        'neon-cyan': '#00ccff', 
+                        'neon-pink': '#ff00ff',
+                        'neon-red': '#ff4d5a',
+                    }
+                }
+            }
+        }
+    </script>
     
     <!-- Scittle and React Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.js"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.reagent.js"></script>
+    
+    <!-- Custom Background Animation -->
+    <style>
+        .bg-animated::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(120, 20, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255, 20, 147, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(20, 147, 255, 0.1) 0%, transparent 50%);
+            z-index: -1;
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        .scan-line::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00ff88, #00ccff, #ff00ff);
+            transform: translateX(-100%);
+            animation: scan 3s linear infinite;
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>CRYPTO TRACKER</h1>
-            <p class="subtitle">Real-time cryptocurrency prices powered by CoinGecko</p>
+<body class="bg-black text-white font-inter min-h-screen overflow-x-hidden bg-animated">
+    <div class="max-w-7xl mx-auto p-5">
+        <header class="text-center mb-12 pt-8">
+            <h1 class="text-5xl md:text-6xl font-black mb-3 bg-gradient-to-r from-neon-green via-neon-cyan to-neon-pink bg-clip-text text-transparent animate-glow">
+                CRYPTO TRACKER
+            </h1>
+            <p class="text-gray-400 text-lg font-light">Real-time cryptocurrency prices powered by CoinGecko</p>
         </header>
         <div id="app">
-            <div class="loading">
-                <div class="loading-spinner"></div>
+            <div class="text-center text-gray-400 text-xl py-24">
+                <div class="inline-block w-10 h-10 border-3 border-gray-700 border-t-neon-green rounded-full animate-spin mb-5"></div>
                 <div>Loading market data...</div>
             </div>
         </div>

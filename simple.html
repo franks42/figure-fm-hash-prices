@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.js"></script>
+</head>
+<body>
+    <div id="app">Loading...</div>
+    
+    <script type="application/x-scittle">
+        (ns simple-app)
+
+        (defn load-data []
+          (js/console.log "Loading data...")
+          (-> (js/fetch "./data/crypto-prices.json")
+              (.then (fn [response] 
+                       (js/console.log "Response:" response)
+                       (.json response)))
+              (.then (fn [data] 
+                       (js/console.log "Data:" data)
+                       (let [app-el (js/document.getElementById "app")]
+                         (set! (.-innerHTML app-el) 
+                               (str "Loaded " (.-bitcoin data) " successfully!")))))
+              (.catch (fn [error]
+                        (js/console.error "Error:" error)
+                        (let [app-el (js/document.getElementById "app")]
+                          (set! (.-innerHTML app-el) 
+                                (str "Error: " (.-message error))))))))
+
+        (load-data)
+    </script>
+</body>
+</html>
