@@ -180,31 +180,14 @@ jobs:
         
         # Check if file exists and has content
         if [ -s data/crypto-prices.json ]; then
-          # Create or switch to data-updates branch and force overwrite
-          git fetch origin
-          if git show-ref --verify --quiet refs/remotes/origin/data-updates; then
-            echo "Checking out existing data-updates branch"
-            git checkout -B data-updates origin/data-updates
-            # Copy the new file over the old one
-            cp data/crypto-prices.json data/crypto-prices.json.new
-            git checkout data/crypto-prices.json
-            mv data/crypto-prices.json.new data/crypto-prices.json
-          else
-            echo "Creating new data-updates branch"
-            git checkout -b data-updates
-          fi
-          
-          # Add the file after branch switch
+          # Simple approach: create new branch from main, add file, force push
+          git checkout -b data-updates-temp
           git add data/crypto-prices.json
+          git commit -m "Update crypto data $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           
-          # Check if there are changes to commit
-          if ! git diff --staged --quiet; then
-            git commit -m "Update crypto data $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-            git push origin data-updates
-            echo "✅ Data committed and pushed to data-updates branch successfully"
-          else
-            echo "ℹ️ No changes to commit"
-          fi
+          # Force push to data-updates branch (overwrite completely)
+          git push origin data-updates-temp:data-updates --force
+          echo "✅ Data force pushed to data-updates branch successfully"
         else
           echo "❌ Error: crypto-prices.json is empty or doesn't exist"
           exit 1
