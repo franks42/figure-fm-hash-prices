@@ -1,0 +1,53 @@
+{
+  "bitcoin": {
+    "usd": 45234.56,
+    "usd_24h_change": 2.34,
+    "usd_24h_vol": 28456789012,
+    "usd_market_cap": 884567890123
+  },
+  "ethereum": {
+    "usd": 2456.78,
+    "usd_24h_change": -1.23,
+    "usd_24h_vol": 14567890123,
+    "usd_market_cap": 295678901234
+  },
+  "cardano": {
+    "usd": 0.5678,
+    "usd_24h_change": 5.67,
+    "usd_24h_vol": 1234567890,
+    "usd_market_cap": 19876543210
+  },
+  "polkadot": {
+    "usd": 7.89,
+    "usd_24h_change": -0.45,
+    "usd_24h_vol": 345678901,
+    "usd_market_cap": 9876543210
+  },
+  "chainlink": {
+    "usd": 14.56,
+    "usd_24h_change": 3.21,
+    "usd_24h_vol": 567890123,
+    "usd_market_cap": 8765432109
+  },
+  "solana": {
+    "usd": 98.76,
+    "usd_24h_change": -2.10,
+    "usd_24h_vol": 2345678901,
+    "usd_market_cap": 42345678901
+  },
+  "avalanche-2": {
+    "usd": 34.56,
+    "usd_24h_change": 1.89,
+    "usd_24h_vol": 456789012,
+    "usd_market_cap": 12345678901
+  },
+  "polygon": {
+    "usd": 0.8901,
+    "usd_24h_change": 4.32,
+    "usd_24h_vol": 234567890,
+    "usd_market_cap": 8234567890
+  },
+  "timestamp": 1734567890,
+  "source": "coingecko",
+  "last_update": "2024-12-19 12:34:56 UTC"
+}

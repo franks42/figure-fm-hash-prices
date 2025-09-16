@@ -1,0 +1,76 @@
+name: Fetch Crypto Data
+
+on:
+  # Manual trigger for testing
+  workflow_dispatch:
+  
+  # Uncomment this section after testing to run automatically
+  # schedule:
+  #   # Run every 10 minutes
+  #   - cron: '*/10 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Install jq
+      run: sudo apt-get update && sudo apt-get install -y jq
+      
+    - name: Fetch crypto data
+      run: |
+        # Create data directory if it doesn't exist
+        mkdir -p data
+        
+        # Fetch data from CoinGecko (free, no API key needed)
+        # Getting prices for popular cryptocurrencies
+        echo "Fetching crypto data from CoinGecko..."
+        
+        RESPONSE=$(curl -s "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,cardano,polkadot,chainlink,solana,avalanche-2,polygon&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true")
+        
+        # Check if response is valid
+        if [ -z "$RESPONSE" ] || [ "$RESPONSE" = "null" ]; then
+          echo "Error: Failed to fetch data from CoinGecko"
+          exit 1
+        fi
+        
+        # Add metadata to the response
+        echo "$RESPONSE" | jq --arg timestamp "$(date -u +%s)" \
+                              --arg last_update "$(date -u '+%Y-%m-%d %H:%M:%S UTC')" \
+                              '. + {
+                                "timestamp": ($timestamp | tonumber),
+                                "source": "coingecko",
+                                "last_update": $last_update
+                              }' > data/crypto-prices.json
+        
+        # Display the fetched data for verification
+        echo "Data fetched successfully:"
+        cat data/crypto-prices.json | jq '.'
+        
+    - name: Commit and push if changed
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Check if file exists and has content
+        if [ -s data/crypto-prices.json ]; then
+          git add data/crypto-prices.json
+          
+          # Check if there are changes to commit
+          if ! git diff --staged --quiet; then
+            git commit -m "Update crypto data $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            git push
+            echo "✅ Data committed and pushed successfully"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
+        else
+          echo "❌ Error: crypto-prices.json is empty or doesn't exist"
+          exit 1
+        fi
