@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug - Figure Markets Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.reagent.js"></script>
+</head>
+<body>
+    <div id="app">Loading...</div>
+    
+    <script type="application/x-scittle">
+        (ns debug-app
+          (:require [reagent.core :as r]
+                    [reagent.dom :as rdom]))
+
+        (def state (r/atom {:status "Starting..." :data nil :error nil}))
+
+        (defn debug-component []
+          (let [{:keys [status data error]} @state]
+            [:div
+             [:h2 "Debug Status: " status]
+             (when error
+               [:div {:style {:color "red"}} "Error: " error])
+             (when data
+               [:div {:style {:color "green"}} "Data loaded: " (pr-str (keys data))])]))
+
+        (defn load-data []
+          (swap! state assoc :status "Fetching data...")
+          (js/console.log "Starting fetch...")
+          (-> (js/fetch "./data/crypto-prices.json")
+              (.then (fn [response]
+                       (js/console.log "Response received:" response)
+                       (swap! state assoc :status "Parsing response...")
+                       (if (.-ok response)
+                         (.json response)
+                         (throw (js/Error. (str "HTTP " (.-status response)))))))
+              (.then (fn [data]
+                       (js/console.log "JSON parsed:" data)
+                       (let [clj-data (js->clj data)]
+                         (js/console.log "CLJ data:" clj-data)
+                         (swap! state assoc 
+                                :status "Success!"
+                                :data clj-data))))
+              (.catch (fn [error]
+                        (js/console.error "Error:" error)
+                        (swap! state assoc 
+                               :status "Failed!"
+                               :error (.-message error))))))
+
+        (defn mount []
+          (rdom/render [debug-component] (js/document.getElementById "app")))
+
+        (mount)
+        (load-data)
+    </script>
+</body>
+</html>

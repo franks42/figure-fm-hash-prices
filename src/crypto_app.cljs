@@ -5,34 +5,37 @@
 
 (def app-state (r/atom {:prices {} :last-update nil :loading true :error nil}))
 
-;; Crypto icons and symbols mapping
+;; Crypto icons and symbols mapping (updated for Figure Markets data)
 (def crypto-icons
-  {:bitcoin "₿"
-   :ethereum "Ξ"
-   :cardano "₳"
-   :polkadot "●"
-   :chainlink "⬡"
-   :solana "◎"
-   :avalanche-2 "▲"
-   :polygon "Ⓜ"})
+  {:btc "₿"
+   :eth "Ξ"
+   :link "⬡"
+   :sol "◎"
+   :uni "🦄"
+   :xrp "💰"
+   :hash "🔗"
+   :figr_heloc "🏠"
+   :figr "📈"})
 
 (def crypto-symbols
-  {:bitcoin "BTC"
-   :ethereum "ETH"
-   :cardano "ADA"
-   :polkadot "DOT"
-   :chainlink "LINK"
-   :solana "SOL"
-   :avalanche-2 "AVAX"
-   :polygon "MATIC"})
+  {:btc "BTC"
+   :eth "ETH"
+   :link "LINK"
+   :sol "SOL"
+   :uni "UNI"
+   :xrp "XRP"
+   :hash "HASH"
+   :figr_heloc "FIGR_HELOC"
+   :figr "FIGR"})
 
 (defn format-number [n decimals]
   (.toLocaleString n "en-US" 
     #js{:minimumFractionDigits decimals 
         :maximumFractionDigits decimals}))
 
-(defn format-price [price]
-  (str "$" (format-number price 2)))
+(defn format-price [price crypto-id]
+  (let [decimals (if (= crypto-id "hash") 3 2)]
+    (str "$" (format-number price decimals))))
 
 (defn format-volume [vol]
   (cond
@@ -44,14 +47,16 @@
   (format-volume cap))
 
 (defn crypto-card [crypto-id data]
-  (let [name (-> crypto-id (str/replace "-" " ") str/capitalize)
-        symbol (get crypto-symbols (keyword crypto-id) "")
+  (let [name (str/upper-case crypto-id)
+        symbol (get crypto-symbols (keyword crypto-id) (str/upper-case crypto-id))
         icon (get crypto-icons (keyword crypto-id) "◆")
         price (get data "usd")
         change (get data "usd_24h_change")
         volume (get data "usd_24h_vol")
-        market-cap (get data "usd_market_cap")
-        positive? (>= change 0)
+        bid (get data "bid")
+        ask (get data "ask")
+        trades-24h (get data "trades_24h")
+        positive? (>= (or change 0) 0)
         arrow (if positive? "▲" "▼")
         change-classes (if positive? 
                         "bg-neon-green/10 text-neon-green border-neon-green/20" 
@@ -65,17 +70,25 @@
         [:div {:class "text-lg font-semibold text-white tracking-wide"} 
          name
          [:span {:class "text-sm text-gray-500 ml-2 uppercase"} symbol]]]]]
-     [:div {:class "text-4xl font-bold mb-4 tabular-nums tracking-tight"} (format-price price)]
+     [:div {:class "text-4xl font-bold mb-4 tabular-nums tracking-tight"} (format-price price crypto-id)]
      [:div {:class (str "inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold mb-5 border " change-classes)}
       [:span {:class "mr-1.5 text-base"} arrow]
-      (str (format-number (js/Math.abs change) 2) "%")]
+      (str (format-number (js/Math.abs (or change 0)) 2) "%")]
      [:div {:class "grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-white/5"}
       [:div {:class "flex flex-col"}
        [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Volume"]
-       [:div {:class "text-base font-semibold text-white tabular-nums"} (format-volume volume)]]
+       [:div {:class "text-base font-semibold text-white tabular-nums"} (format-volume (or volume 0))]]
       [:div {:class "flex flex-col"}
-       [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Market Cap"]
-       [:div {:class "text-base font-semibold text-white tabular-nums"} (format-market-cap market-cap)]]]]))
+       [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Trades"]
+       [:div {:class "text-base font-semibold text-white tabular-nums"} (format-number (or trades-24h 0) 0)]]]
+     (when (and bid ask (> bid 0) (> ask 0))
+       [:div {:class "grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/5"}
+        [:div {:class "flex flex-col"}
+         [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Bid"]
+         [:div {:class "text-sm font-semibold text-green-400 tabular-nums"} (format-price bid crypto-id)]]
+        [:div {:class "flex flex-col"}
+         [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Ask"]
+         [:div {:class "text-sm font-semibold text-red-400 tabular-nums"} (format-price ask crypto-id)]]])]))
 
 (defn app-component []
   (let [{:keys [prices last-update loading error]} @app-state]
@@ -90,8 +103,13 @@
                 [:div "Loading market data..."]]
        :else [:div
               [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10"}
-               (doall (for [[crypto-id data] prices]
-                       ^{:key crypto-id} [crypto-card crypto-id data]))]
+               (let [sorted-prices (sort-by (fn [[crypto-id _]] 
+                                             (cond
+                                               (= crypto-id "hash") "0-hash"  ; Put HASH first
+                                               (= crypto-id "figr") "1-figr"  ; Put FIGR second
+                                               :else crypto-id)) prices)]
+                 (doall (for [[crypto-id data] sorted-prices]
+                         ^{:key crypto-id} [crypto-card crypto-id data])))]
               (when last-update
                 [:div {:class "text-center mt-15 pb-10"}
                  [:div {:class "inline-flex items-center bg-white/[0.03] border border-white/10 px-6 py-3 rounded-full text-gray-400 text-sm"}

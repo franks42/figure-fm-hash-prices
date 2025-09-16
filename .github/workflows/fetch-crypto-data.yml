@@ -28,26 +28,72 @@ jobs:
         # Create data directory if it doesn't exist
         mkdir -p data
         
-        # Fetch data from CoinGecko (free, no API key needed)
-        # Getting prices for popular cryptocurrencies
-        echo "Fetching crypto data from CoinGecko..."
+        # Fetch data from Figure Markets API
+        echo "Fetching crypto data from Figure Markets..."
         
-        RESPONSE=$(curl -s "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,cardano,polkadot,chainlink,solana,avalanche-2,polygon&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true")
+        CRYPTO_RESPONSE=$(curl -s "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets")
+        STOCK_RESPONSE=$(curl -s "https://query1.finance.yahoo.com/v8/finance/chart/FIGR")
         
-        # Check if response is valid
-        if [ -z "$RESPONSE" ] || [ "$RESPONSE" = "null" ]; then
-          echo "Error: Failed to fetch data from CoinGecko"
+        # Check if responses are valid
+        if [ -z "$CRYPTO_RESPONSE" ] || [ "$CRYPTO_RESPONSE" = "null" ]; then
+          echo "Error: Failed to fetch crypto data from Figure Markets"
           exit 1
         fi
         
-        # Add metadata to the response
-        echo "$RESPONSE" | jq --arg timestamp "$(date -u +%s)" \
-                              --arg last_update "$(date -u '+%Y-%m-%d %H:%M:%S UTC')" \
-                              '. + {
-                                "timestamp": ($timestamp | tonumber),
-                                "source": "coingecko",
-                                "last_update": $last_update
-                              }' > data/crypto-prices.json
+        if [ -z "$STOCK_RESPONSE" ] || [ "$STOCK_RESPONSE" = "null" ]; then
+          echo "Error: Failed to fetch stock data from Yahoo Finance"
+          exit 1
+        fi
+        
+        # Combine crypto and stock data
+        jq --null-input \
+           --argjson crypto "$CRYPTO_RESPONSE" \
+           --argjson stock "$STOCK_RESPONSE" \
+           --arg timestamp "$(date -u +%s)" \
+           --arg last_update "$(date -u '+%Y-%m-%d %H:%M:%S UTC')" \
+           '
+           # Process crypto data from Figure Markets
+           ($crypto.data[] | select(.symbol | test("-USD$")) | select(.symbol | test("^(USDT|USDC)-USD$") | not)) as $cryptos |
+           reduce $cryptos as $item ({}; 
+             . + {
+               ($item.symbol | gsub("-USD"; "") | ascii_downcase): {
+                 "usd": ($item.midMarketPrice // $item.lastTradedPrice // 0 | tonumber),
+                 "usd_24h_change": ($item.percentageChange24h // 0 | tonumber * 100),
+                 "usd_24h_vol": ($item.volume24h // 0 | tonumber),
+                 "usd_market_cap": null,
+                 "symbol": $item.symbol,
+                 "bid": ($item.bestBid // 0 | tonumber),
+                 "ask": ($item.bestAsk // 0 | tonumber),
+                 "last_price": ($item.lastTradedPrice // 0 | tonumber),
+                 "trades_24h": ($item.tradeCount24h // 0),
+                 "type": "crypto"
+               }
+             }
+           ) |
+           # Add FIGR stock data
+           . + {
+             "figr": {
+               "usd": $stock.chart.result[0].meta.regularMarketPrice,
+               "usd_24h_change": (($stock.chart.result[0].meta.regularMarketPrice / $stock.chart.result[0].meta.previousClose - 1) * 100),
+               "usd_24h_vol": $stock.chart.result[0].meta.regularMarketVolume,
+               "usd_market_cap": null,
+               "symbol": "FIGR",
+               "bid": null,
+               "ask": null,
+               "last_price": $stock.chart.result[0].meta.regularMarketPrice,
+               "trades_24h": null,
+               "type": "stock",
+               "day_high": $stock.chart.result[0].meta.regularMarketDayHigh,
+               "day_low": $stock.chart.result[0].meta.regularMarketDayLow
+             }
+           } |
+           # Add metadata
+           . + {
+             "timestamp": ($timestamp | tonumber),
+             "source": "figuremarkets+yahoo",
+             "last_update": $last_update
+           }
+           ' > data/crypto-prices.json
         
         # Display the fetched data for verification
         echo "Data fetched successfully:"

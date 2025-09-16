@@ -77,13 +77,26 @@
             }
         }
         
+        // Force Tailwind to include all animation classes
+        tailwind.config.safelist = [
+            'animate-glow',
+            'animate-scan', 
+            'animate-pulse-dot',
+            'animate-fade-in',
+            'animate-float',
+            'bg-animated',
+            'scan-line'
+        ];
+        
         // Enable automatic class detection for dynamically added elements
         if (typeof window !== 'undefined') {
             window.tailwindObserver = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
                     if (mutation.type === 'childList') {
-                        // Trigger Tailwind to re-scan for new classes
-                        tailwind.refresh && tailwind.refresh();
+                        // Force Tailwind to regenerate styles
+                        if (window.tailwindcss) {
+                            window.tailwindcss.refresh();
+                        }
                     }
                 });
             });
@@ -142,7 +155,7 @@
             <h1 class="text-5xl md:text-6xl font-black mb-3 bg-gradient-to-r from-neon-green via-neon-cyan to-neon-pink bg-clip-text text-transparent animate-glow">
                 CRYPTO TRACKER
             </h1>
-            <p class="text-gray-400 text-lg font-light">Real-time cryptocurrency prices powered by CoinGecko</p>
+            <p class="text-gray-400 text-lg font-light">Real-time cryptocurrency prices powered by Figure Markets</p>
         </header>
         <div id="app">
             <div class="text-center text-gray-400 text-xl py-24">

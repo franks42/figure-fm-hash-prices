@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.reagent.js"></script>
+</head>
+<body class="bg-black text-white p-8">
+    <div id="app">Starting...</div>
+    
+    <script type="application/x-scittle">
+        (ns simple-test
+          (:require [reagent.core :as r]
+                    [reagent.dom :as rdom]))
+
+        (def state (r/atom {:status "Initializing..." :data nil :count 0}))
+
+        (defn simple-card [id data]
+          [:div {:class "bg-gray-800 p-4 rounded-lg m-2"}
+           [:h3 {:class "text-xl font-bold"} (str/upper-case id)]
+           [:p {:class "text-green-400"} (str "$" (get data "usd" "N/A"))]
+           [:p {:class "text-sm text-gray-400"} (str "24h: " (get data "usd_24h_change" "N/A") "%")]])
+
+        (defn app []
+          (let [{:keys [status data count]} @state]
+            [:div
+             [:h1 {:class "text-2xl mb-4"} "Status: " status]
+             [:p "Data entries: " count]
+             (when data
+               [:div {:class "grid grid-cols-2 gap-4"}
+                (doall (for [[id info] data]
+                         ^{:key id} [simple-card id info]))])]))
+
+        (defn load-data []
+          (swap! state assoc :status "Loading...")
+          (-> (js/fetch "./data/crypto-prices.json")
+              (.then (fn [response]
+                       (swap! state assoc :status "Got response...")
+                       (.json response)))
+              (.then (fn [data]
+                       (swap! state assoc :status "Parsing...")
+                       (let [clj-data (js->clj data)
+                             prices (dissoc clj-data "timestamp" "source" "last_update")]
+                         (swap! state assoc 
+                                :status "Success!"
+                                :data prices
+                                :count (count prices)))))
+              (.catch (fn [error]
+                        (swap! state assoc :status (str "Error: " (.-message error)))))))
+
+        (defn mount []
+          (rdom/render [app] (js/document.getElementById "app")))
+
+        (mount)
+        (load-data)
+    </script>
+</body>
+</html>
