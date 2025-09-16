@@ -1,106 +1,19 @@
 {
   "btc": {
-    "usd": 115352.73,
-    "usd_24h_change": 0.3272,
-    "usd_24h_vol": 427974.095095,
+    "usd": 115893.70,
+    "usd_24h_change": 0.9841000000000001,
+    "usd_24h_vol": 655185.456620,
     "usd_market_cap": null,
     "symbol": "BTC-USD",
-    "bid": 115287.90,
-    "ask": 115417.56,
-    "last_price": 115177.99,
-    "trades_24h": 37,
+    "bid": 115862.47,
+    "ask": 115924.94,
+    "last_price": 115949.53,
+    "trades_24h": 32,
     "type": "crypto"
   },
-  "eth": {
-    "usd": 4535.83,
-    "usd_24h_change": -1.1083,
-    "usd_24h_vol": 24515.683725,
-    "usd_market_cap": null,
-    "symbol": "ETH-USD",
-    "bid": 4534.67,
-    "ask": 4536.99,
-    "last_price": 4524.53,
-    "trades_24h": 17,
-    "type": "crypto"
-  },
-  "figr_heloc": {
-    "usd": 0.9956035,
-    "usd_24h_change": 0,
-    "usd_24h_vol": 11819223.148008993767000000,
-    "usd_market_cap": null,
-    "symbol": "FIGR_HELOC-USD",
-    "bid": 0,
-    "ask": 0,
-    "last_price": 1.000000000000000000,
-    "trades_24h": 17,
-    "type": "crypto"
-  },
-  "hash": {
-    "usd": 0.029,
-    "usd_24h_change": -23.68,
-    "usd_24h_vol": 77380.405805,
-    "usd_market_cap": null,
-    "symbol": "HASH-USD",
-    "bid": 0.038,
-    "ask": 0.039,
-    "last_price": 0.039,
-    "trades_24h": 71,
-    "type": "crypto"
-  },
-  "link": {
-    "usd": 23.625,
-    "usd_24h_change": -1.4059,
-    "usd_24h_vol": 6999.555720,
-    "usd_market_cap": null,
-    "symbol": "LINK-USD",
-    "bid": 23.604,
-    "ask": 23.646,
-    "last_price": 23.237,
-    "trades_24h": 40,
-    "type": "crypto"
-  },
-  "sol": {
-    "usd": 235.70,
-    "usd_24h_change": -1.7229999999999999,
-    "usd_24h_vol": 69012.956878,
-    "usd_market_cap": null,
-    "symbol": "SOL-USD",
-    "bid": 235.61,
-    "ask": 235.79,
-    "last_price": 235.16,
-    "trades_24h": 54,
-    "type": "crypto"
-  },
-  "uni": {
-    "usd": 9.202,
-    "usd_24h_change": -1.6939,
-    "usd_24h_vol": 8.227800,
-    "usd_market_cap": null,
-    "symbol": "UNI-USD",
-    "bid": 9.194,
-    "ask": 9.209,
-    "last_price": 9.142,
-    "trades_24h": 1,
-    "type": "crypto"
-  },
-  "xrp": {
-    "usd": 2.9993,
-    "usd_24h_change": -0.6049,
-    "usd_24h_vol": 12205.726469,
-    "usd_market_cap": null,
-    "symbol": "XRP-USD",
-    "bid": 2.9972,
-    "ask": 3.0014,
-    "last_price": 2.9958,
-    "trades_24h": 45,
-    "type": "crypto"
-  },
-  "timestamp": 1757985823,
-  "source": "figuremarkets",
-  "last_update": "2025-09-16 01:23:43 UTC",
   "figr": {
     "usd": 37.33,
-    "usd_24h_change": 14.8,
+    "usd_24h_change": 14.75561020596372,
     "usd_24h_vol": 1500000,
     "usd_market_cap": null,
     "symbol": "FIGR",
@@ -111,5 +24,225 @@
     "type": "stock",
     "day_high": 40.39,
     "day_low": 33.47
-  }
+  },
+  "timestamp": 1758040141,
+  "source": "figuremarkets",
+  "last_update": "2025-09-16 16:29:01 UTC"
+}
+{
+  "eth": {
+    "usd": 4464.12,
+    "usd_24h_change": -0.707,
+    "usd_24h_vol": 32857.106657,
+    "usd_market_cap": null,
+    "symbol": "ETH-USD",
+    "bid": 4463.06,
+    "ask": 4465.19,
+    "last_price": 4463.36,
+    "trades_24h": 22,
+    "type": "crypto"
+  },
+  "figr": {
+    "usd": 37.33,
+    "usd_24h_change": 14.75561020596372,
+    "usd_24h_vol": 1500000,
+    "usd_market_cap": null,
+    "symbol": "FIGR",
+    "bid": null,
+    "ask": null,
+    "last_price": 37.33,
+    "trades_24h": null,
+    "type": "stock",
+    "day_high": 40.39,
+    "day_low": 33.47
+  },
+  "timestamp": 1758040141,
+  "source": "figuremarkets",
+  "last_update": "2025-09-16 16:29:01 UTC"
+}
+{
+  "figr_heloc": {
+    "usd": 0.9982045,
+    "usd_24h_change": 1.6300999999999999,
+    "usd_24h_vol": 29017040.888008993793647110,
+    "usd_market_cap": null,
+    "symbol": "FIGR_HELOC-USD",
+    "bid": 0,
+    "ask": 0,
+    "last_price": 1.000000000000000000,
+    "trades_24h": 126,
+    "type": "crypto"
+  },
+  "figr": {
+    "usd": 37.33,
+    "usd_24h_change": 14.75561020596372,
+    "usd_24h_vol": 1500000,
+    "usd_market_cap": null,
+    "symbol": "FIGR",
+    "bid": null,
+    "ask": null,
+    "last_price": 37.33,
+    "trades_24h": null,
+    "type": "stock",
+    "day_high": 40.39,
+    "day_low": 33.47
+  },
+  "timestamp": 1758040141,
+  "source": "figuremarkets",
+  "last_update": "2025-09-16 16:29:01 UTC"
+}
+{
+  "hash": {
+    "usd": 0.038,
+    "usd_24h_change": 2.6315999999999997,
+    "usd_24h_vol": 71158.430580,
+    "usd_market_cap": null,
+    "symbol": "HASH-USD",
+    "bid": 0.038,
+    "ask": 0.039,
+    "last_price": 0.039,
+    "trades_24h": 56,
+    "type": "crypto"
+  },
+  "figr": {
+    "usd": 37.33,
+    "usd_24h_change": 14.75561020596372,
+    "usd_24h_vol": 1500000,
+    "usd_market_cap": null,
+    "symbol": "FIGR",
+    "bid": null,
+    "ask": null,
+    "last_price": 37.33,
+    "trades_24h": null,
+    "type": "stock",
+    "day_high": 40.39,
+    "day_low": 33.47
+  },
+  "timestamp": 1758040141,
+  "source": "figuremarkets",
+  "last_update": "2025-09-16 16:29:01 UTC"
+}
+{
+  "link": {
+    "usd": 23.352,
+    "usd_24h_change": 1.0332,
+    "usd_24h_vol": 0,
+    "usd_market_cap": null,
+    "symbol": "LINK-USD",
+    "bid": 23.327,
+    "ask": 23.377,
+    "last_price": 23.237,
+    "trades_24h": 0,
+    "type": "crypto"
+  },
+  "figr": {
+    "usd": 37.33,
+    "usd_24h_change": 14.75561020596372,
+    "usd_24h_vol": 1500000,
+    "usd_market_cap": null,
+    "symbol": "FIGR",
+    "bid": null,
+    "ask": null,
+    "last_price": 37.33,
+    "trades_24h": null,
+    "type": "stock",
+    "day_high": 40.39,
+    "day_low": 33.47
+  },
+  "timestamp": 1758040141,
+  "source": "figuremarkets",
+  "last_update": "2025-09-16 16:29:01 UTC"
+}
+{
+  "sol": {
+    "usd": 237.30,
+    "usd_24h_change": 2.0244,
+    "usd_24h_vol": 151368.548257,
+    "usd_market_cap": null,
+    "symbol": "SOL-USD",
+    "bid": 237.22,
+    "ask": 237.39,
+    "last_price": 237.63,
+    "trades_24h": 127,
+    "type": "crypto"
+  },
+  "figr": {
+    "usd": 37.33,
+    "usd_24h_change": 14.75561020596372,
+    "usd_24h_vol": 1500000,
+    "usd_market_cap": null,
+    "symbol": "FIGR",
+    "bid": null,
+    "ask": null,
+    "last_price": 37.33,
+    "trades_24h": null,
+    "type": "stock",
+    "day_high": 40.39,
+    "day_low": 33.47
+  },
+  "timestamp": 1758040141,
+  "source": "figuremarkets",
+  "last_update": "2025-09-16 16:29:01 UTC"
+}
+{
+  "uni": {
+    "usd": 9.211,
+    "usd_24h_change": 1.3307,
+    "usd_24h_vol": 8.227800,
+    "usd_market_cap": null,
+    "symbol": "UNI-USD",
+    "bid": 9.203,
+    "ask": 9.219,
+    "last_price": 9.142,
+    "trades_24h": 1,
+    "type": "crypto"
+  },
+  "figr": {
+    "usd": 37.33,
+    "usd_24h_change": 14.75561020596372,
+    "usd_24h_vol": 1500000,
+    "usd_market_cap": null,
+    "symbol": "FIGR",
+    "bid": null,
+    "ask": null,
+    "last_price": 37.33,
+    "trades_24h": null,
+    "type": "stock",
+    "day_high": 40.39,
+    "day_low": 33.47
+  },
+  "timestamp": 1758040141,
+  "source": "figuremarkets",
+  "last_update": "2025-09-16 16:29:01 UTC"
+}
+{
+  "xrp": {
+    "usd": 3.0354,
+    "usd_24h_change": 0.5645,
+    "usd_24h_vol": 3745.648948,
+    "usd_market_cap": null,
+    "symbol": "XRP-USD",
+    "bid": 3.0332,
+    "ask": 3.0376,
+    "last_price": 2.9729,
+    "trades_24h": 18,
+    "type": "crypto"
+  },
+  "figr": {
+    "usd": 37.33,
+    "usd_24h_change": 14.75561020596372,
+    "usd_24h_vol": 1500000,
+    "usd_market_cap": null,
+    "symbol": "FIGR",
+    "bid": null,
+    "ask": null,
+    "last_price": 37.33,
+    "trades_24h": null,
+    "type": "stock",
+    "day_high": 40.39,
+    "day_low": 33.47
+  },
+  "timestamp": 1758040141,
+  "source": "figuremarkets",
+  "last_update": "2025-09-16 16:29:01 UTC"
 }
