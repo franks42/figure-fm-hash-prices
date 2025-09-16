@@ -120,8 +120,9 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.reagent.js"></script>
     
-    <!-- Custom Background Animation -->
+    <!-- Custom Background and Scan Animation -->
     <style>
+        /* Animated background with floating orbs */
         .bg-animated::before {
             content: '';
             position: fixed;
@@ -136,6 +137,7 @@
             animation: float 20s ease-in-out infinite;
         }
         
+        /* Scanning line animation for crypto cards */
         .scan-line::before {
             content: '';
             position: absolute;
@@ -146,6 +148,19 @@
             background: linear-gradient(90deg, #00ff88, #00ccff, #ff00ff);
             transform: translateX(-100%);
             animation: scan 3s linear infinite;
+            z-index: 1;
+        }
+        
+        /* Ensure keyframes work */
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-20px, -20px) rotate(1deg); }
+            66% { transform: translate(20px, -10px) rotate(-1deg); }
+        }
+        
+        @keyframes scan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
     </style>
 </head>
