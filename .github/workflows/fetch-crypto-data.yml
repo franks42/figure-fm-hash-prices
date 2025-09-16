@@ -4,10 +4,10 @@ on:
   # Manual trigger for testing
   workflow_dispatch:
   
-  # Run automatically every 10 minutes
-  schedule:
-    # Run every 10 minutes
-    - cron: '*/10 * * * *'
+  # TEMPORARILY DISABLED - Run automatically every 10 minutes
+  # schedule:
+  #   # Run every 10 minutes
+  #   - cron: '*/10 * * * *'
 
 permissions:
   contents: write
