@@ -10,6 +10,10 @@
 (def initial-load-complete (r/atom false))
 (def update-flash-atom (r/atom false))
 
+;; Portfolio state atoms
+(def portfolio-atom (r/atom {}))           ; Simple holdings: crypto-id -> quantity
+(def show-portfolio-panel (r/atom false))  ; Toggle for portfolio input UI
+
 ;; Configuration constants
 (def ^:const POLL_INTERVAL_MS 30000)
 (def ^:const FLASH_DURATION_MS 800)
