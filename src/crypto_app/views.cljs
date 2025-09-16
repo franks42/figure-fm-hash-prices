@@ -1,7 +1,8 @@
 (ns crypto-app.views
   (:require [clojure.string :as str]
             [reagent.core :as r]
-            [crypto-app.state :as state]))
+            [crypto-app.state :as state]
+            [crypto-app.portfolio :as portfolio]))
 
 ;; Utility functions for formatting
 (defn format-number [n decimals]
@@ -44,6 +45,9 @@
         fifty-two-week-high (get data "fifty_two_week_high")
         fifty-two-week-low (get data "fifty_two_week_low")
         previous-close (get data "previous_close")
+        ;; Portfolio data
+        quantity @(r/cursor state/portfolio-atom [crypto-id])
+        holding-value (when quantity (portfolio/calculate-holding-value quantity price))
         ;; Display logic
         positive? (>= (or change 0) 0)
         arrow (if positive? "▲" "▼")
