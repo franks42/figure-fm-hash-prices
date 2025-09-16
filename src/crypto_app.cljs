@@ -145,7 +145,7 @@
       (reset! loading-atom true))
     (when @error-atom
       (reset! error-atom nil)))
-  (-> (js/fetch (str "./data/crypto-prices.json?t=" (js/Date.now)))
+  (-> (js/fetch (str "https://raw.githubusercontent.com/franks42/figure-fm-hash-prices/data-updates/data/crypto-prices.json?t=" (js/Date.now)))
       (.then (fn [response]
                (if (.-ok response)
                  (.json response)

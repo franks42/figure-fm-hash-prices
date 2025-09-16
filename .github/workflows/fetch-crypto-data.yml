@@ -155,20 +155,30 @@ jobs:
         echo "Data fetched successfully:"
         cat data/crypto-prices.json | jq '.'
         
-    - name: Commit and push if changed
+    - name: Commit and push to data branch
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
         # Check if file exists and has content
         if [ -s data/crypto-prices.json ]; then
+          # Create or switch to data-updates branch
+          git fetch origin
+          if git show-ref --verify --quiet refs/remotes/origin/data-updates; then
+            echo "Checking out existing data-updates branch"
+            git checkout -B data-updates origin/data-updates
+          else
+            echo "Creating new data-updates branch"
+            git checkout -b data-updates
+          fi
+          
           git add data/crypto-prices.json
           
           # Check if there are changes to commit
           if ! git diff --staged --quiet; then
             git commit -m "Update crypto data $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-            git push
-            echo "✅ Data committed and pushed successfully"
+            git push origin data-updates
+            echo "✅ Data committed and pushed to data-updates branch successfully"
           else
             echo "ℹ️ No changes to commit"
           fi
