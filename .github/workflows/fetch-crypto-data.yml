@@ -180,20 +180,20 @@ jobs:
         
         # Check if file exists and has content
         if [ -s data/crypto-prices.json ]; then
-          # Add the file first, then switch branches
-          git add data/crypto-prices.json
-          
-          # Create or switch to data-updates branch  
+          # Create or switch to data-updates branch first
           git fetch origin
           if git show-ref --verify --quiet refs/remotes/origin/data-updates; then
             echo "Checking out existing data-updates branch"
+            git stash push -m "temporary stash for branch switch"
             git checkout -B data-updates origin/data-updates
-            # Re-add the file after checkout
-            git add data/crypto-prices.json
+            git stash pop
           else
             echo "Creating new data-updates branch"
             git checkout -b data-updates
           fi
+          
+          # Add the file after branch switch
+          git add data/crypto-prices.json
           
           # Check if there are changes to commit
           if ! git diff --staged --quiet; then
