@@ -1,53 +1,47 @@
 {
-  "bitcoin": {
-    "usd": 45234.56,
-    "usd_24h_change": 2.34,
-    "usd_24h_vol": 28456789012,
-    "usd_market_cap": 884567890123
+  "avalanche-2": {
+    "usd": 29.67,
+    "usd_market_cap": 12553658623.906136,
+    "usd_24h_vol": 1224754047.7743208,
+    "usd_24h_change": -0.18648836081952466
   },
-  "ethereum": {
-    "usd": 2456.78,
-    "usd_24h_change": -1.23,
-    "usd_24h_vol": 14567890123,
-    "usd_market_cap": 295678901234
+  "bitcoin": {
+    "usd": 115129,
+    "usd_market_cap": 2293542665861.9404,
+    "usd_24h_vol": 45980112262.187004,
+    "usd_24h_change": -0.031705571663811084
   },
   "cardano": {
-    "usd": 0.5678,
-    "usd_24h_change": 5.67,
-    "usd_24h_vol": 1234567890,
-    "usd_market_cap": 19876543210
-  },
-  "polkadot": {
-    "usd": 7.89,
-    "usd_24h_change": -0.45,
-    "usd_24h_vol": 345678901,
-    "usd_market_cap": 9876543210
+    "usd": 0.860962,
+    "usd_market_cap": 31442911995.57155,
+    "usd_24h_vol": 2142564820.500373,
+    "usd_24h_change": -3.5809209337475325
   },
   "chainlink": {
-    "usd": 14.56,
-    "usd_24h_change": 3.21,
-    "usd_24h_vol": 567890123,
-    "usd_market_cap": 8765432109
+    "usd": 23.55,
+    "usd_market_cap": 15974129071.982754,
+    "usd_24h_vol": 920880755.2763238,
+    "usd_24h_change": -2.8396054120787566
+  },
+  "ethereum": {
+    "usd": 4509.66,
+    "usd_market_cap": 544472566704.6173,
+    "usd_24h_vol": 34451731090.01341,
+    "usd_24h_change": -2.272476985168563
+  },
+  "polkadot": {
+    "usd": 4.14,
+    "usd_market_cap": 6298006670.590357,
+    "usd_24h_vol": 308424240.35141945,
+    "usd_24h_change": -5.103719453395258
   },
   "solana": {
-    "usd": 98.76,
-    "usd_24h_change": -2.10,
-    "usd_24h_vol": 2345678901,
-    "usd_market_cap": 42345678901
+    "usd": 233.56,
+    "usd_market_cap": 126778245494.49313,
+    "usd_24h_vol": 9952674255.996668,
+    "usd_24h_change": -3.334265283065037
   },
-  "avalanche-2": {
-    "usd": 34.56,
-    "usd_24h_change": 1.89,
-    "usd_24h_vol": 456789012,
-    "usd_market_cap": 12345678901
-  },
-  "polygon": {
-    "usd": 0.8901,
-    "usd_24h_change": 4.32,
-    "usd_24h_vol": 234567890,
-    "usd_market_cap": 8234567890
-  },
-  "timestamp": 1734567890,
+  "timestamp": 1757982986,
   "source": "coingecko",
-  "last_update": "2024-12-19 12:34:56 UTC"
+  "last_update": "2025-09-16 00:36:26 UTC"
 }
