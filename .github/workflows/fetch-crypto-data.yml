@@ -32,7 +32,25 @@ jobs:
         echo "Fetching crypto data from Figure Markets..."
         
         CRYPTO_RESPONSE=$(curl -s "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets")
-        STOCK_RESPONSE=$(curl -s "https://query1.finance.yahoo.com/v8/finance/chart/FIGR")
+        # Try multiple stock data sources in order of preference
+        echo "Fetching FIGR stock data..."
+        
+        # First try: Yahoo Finance with user agent to avoid blocking
+        STOCK_RESPONSE=$(curl -s -A "Mozilla/5.0 (compatible; GitHub-Actions)" "https://query1.finance.yahoo.com/v8/finance/chart/FIGR")
+        STOCK_SOURCE="yahoo"
+        
+        # If Yahoo fails, try Alpha Vantage if API key is available
+        if [ -z "$STOCK_RESPONSE" ] || [ "$STOCK_RESPONSE" = "null" ] || ! echo "$STOCK_RESPONSE" | jq empty 2>/dev/null; then
+          if [ -n "${{ secrets.ALPHA_VANTAGE_API_KEY }}" ]; then
+            echo "Yahoo Finance blocked, trying Alpha Vantage..."
+            STOCK_RESPONSE=$(curl -s "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=FIGR&apikey=${{ secrets.ALPHA_VANTAGE_API_KEY }}")
+            STOCK_SOURCE="alphavantage"
+          else
+            echo "Yahoo Finance blocked, trying query2.finance.yahoo.com..."
+            STOCK_RESPONSE=$(curl -s -A "Mozilla/5.0 (compatible; GitHub-Actions)" "https://query2.finance.yahoo.com/v8/finance/chart/FIGR")
+            STOCK_SOURCE="yahoo"
+          fi
+        fi
         
         # Check if crypto response is valid JSON
         if [ -z "$CRYPTO_RESPONSE" ] || [ "$CRYPTO_RESPONSE" = "null" ] || ! echo "$CRYPTO_RESPONSE" | jq empty 2>/dev/null; then
@@ -42,11 +60,12 @@ jobs:
         
         # Check if stock response is valid JSON, use fallback if not
         if [ -z "$STOCK_RESPONSE" ] || [ "$STOCK_RESPONSE" = "null" ] || ! echo "$STOCK_RESPONSE" | jq empty 2>/dev/null; then
-          echo "Warning: Failed to fetch valid stock data from Yahoo Finance, using fallback"
+          echo "Warning: All stock data sources failed, using fallback data"
           STOCK_RESPONSE='{"chart":{"result":[{"meta":{"regularMarketPrice":37.33,"previousClose":32.53,"regularMarketVolume":1500000,"regularMarketDayHigh":40.39,"regularMarketDayLow":33.47}}]}}'
           SOURCE="figuremarkets"
         else
-          SOURCE="figuremarkets+yahoo"
+          echo "Successfully fetched stock data from $STOCK_SOURCE"
+          SOURCE="figuremarkets+$STOCK_SOURCE"
         fi
         
         # Create a properly formatted combined JSON file
