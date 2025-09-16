@@ -111,8 +111,79 @@
      ;; Portfolio button
      [:div {:class "flex mt-4"}
       [:button {:class "flex-1 bg-white/[0.05] hover:bg-white/[0.10] border border-white/20 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-                :onClick #(reset! state/show-portfolio-panel true)}
+                :onClick #(reset! state/show-portfolio-panel crypto-id)}
        "📊 Portfolio"]]]))
+
+;; Portfolio modal components (compositional approach)
+(defn modal-backdrop [content]
+  [:div {:class "fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"}
+   content])
+
+(defn modal-container [content]
+  [:div {:class "bg-gray-900 border border-white/20 rounded-2xl p-6 max-w-md w-full"}
+   content])
+
+(defn modal-header [icon symbol close-fn]
+  [:div {:class "flex items-center justify-between mb-6"}
+   [:div {:class "flex items-center"}
+    [:span {:class "text-2xl mr-3"} icon]
+    [:h2 {:class "text-xl font-bold text-white"} symbol " Portfolio"]]
+   [:button {:class "text-gray-400 hover:text-white text-2xl"
+             :onClick close-fn}
+    "×"]])
+
+(defn holdings-display [current-quantity holding-value crypto-id]
+  [:div {:class "text-center"}
+   [:div {:class "text-sm text-gray-400"} "Current Holdings"]
+   [:div {:class "text-2xl font-bold text-white"} (format-number current-quantity 4)]
+   (when holding-value
+     [:div {:class "text-lg text-gray-300 mt-1"} (format-price holding-value crypto-id)])])
+
+(defn quantity-input [current-quantity]
+  [:div {:class "flex flex-col space-y-2"}
+   [:label {:class "text-sm text-gray-400"} "Enter Quantity:"]
+   [:input {:type "number" 
+            :step "0.0001"
+            :placeholder "0.0000"
+            :class "bg-gray-800 border border-white/20 rounded-lg px-3 py-2 text-white text-center focus:outline-none focus:border-white/40"
+            :defaultValue current-quantity
+            :id "quantity-input"}]])
+
+(defn action-buttons [save-fn cancel-fn]
+  [:div {:class "flex space-x-2"}
+   [:button {:class "flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+             :onClick save-fn}
+    "Save"]
+   [:button {:class "flex-1 bg-gray-600 hover:bg-gray-700 text-white rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+             :onClick cancel-fn}
+    "Cancel"]])
+
+(defn input-form [current-quantity save-fn cancel-fn]
+  [:div {:class "border-t border-white/10 pt-4 space-y-3"}
+   (quantity-input current-quantity)
+   (action-buttons save-fn cancel-fn)])
+
+(defn portfolio-panel []
+  (when-let [crypto-id @state/show-portfolio-panel]
+    (let [symbol (get state/crypto-symbols (keyword crypto-id) (str/upper-case crypto-id))
+          icon (get state/crypto-icons (keyword crypto-id) "◆")
+          current-quantity (get @state/portfolio-atom crypto-id 0)
+          price (get-in @state/prices-atom [crypto-id "usd"] 0)
+          holding-value (when (> current-quantity 0) (portfolio/calculate-holding-value current-quantity price))
+          close-fn #(reset! state/show-portfolio-panel nil)
+          save-fn #(let [input-val (-> js/document (.getElementById "quantity-input") .-value js/parseFloat)]
+                     (when-not (js/isNaN input-val)
+                       (swap! state/portfolio-atom assoc crypto-id input-val)
+                       (reset! state/show-portfolio-panel nil)))
+          
+          header (modal-header icon symbol close-fn)
+          holdings (holdings-display current-quantity holding-value crypto-id)
+          form (input-form current-quantity save-fn close-fn)
+          content [:div {:class "space-y-4"} holdings form]]
+      
+      (modal-backdrop 
+        (modal-container 
+          [:div header content])))))
 
 (defn app-component []
   (let [last-update @state/last-update-atom
@@ -148,4 +219,5 @@
                                       (if flash
                                         "bg-neon-green animate-ping"
                                         "bg-neon-green animate-pulse-dot"))}]
-                  "Last updated: " last-update]])])]))
+                  "Last updated: " last-update]])])
+     [portfolio-panel]]))

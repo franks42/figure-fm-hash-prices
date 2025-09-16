@@ -12,7 +12,7 @@
 
 ;; Portfolio state atoms
 (def portfolio-atom (r/atom {}))           ; Simple holdings: crypto-id -> quantity
-(def show-portfolio-panel (r/atom false))  ; Toggle for portfolio input UI
+(def show-portfolio-panel (r/atom nil))    ; crypto-id of asset whose portfolio modal is open, nil = closed
 
 ;; Configuration constants
 (def ^:const POLL_INTERVAL_MS 30000)
