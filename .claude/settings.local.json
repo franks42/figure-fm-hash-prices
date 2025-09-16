@@ -14,7 +14,9 @@
       "WebFetch(domain:www.jsdelivr.com)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:babashka.org)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(open index.html)",
+      "Bash(open animation-test.html)"
     ],
     "deny": [],
     "ask": []

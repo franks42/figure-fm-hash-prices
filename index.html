@@ -19,20 +19,13 @@
                         'inter': ['Inter', 'sans-serif'],
                     },
                     animation: {
-                        'gradient': 'gradient 20s ease-in-out infinite',
                         'glow': 'glow 3s ease-in-out infinite',
                         'scan': 'scan 3s linear infinite',
                         'pulse-dot': 'pulse-dot 2s ease-in-out infinite',
                         'float': 'float 20s ease-in-out infinite',
                         'fade-in': 'fadeIn 0.5s ease-in-out',
-                        'slide-up': 'slideUp 0.3s ease-out',
                     },
                     keyframes: {
-                        gradient: {
-                            '0%, 100%': { transform: 'translate(0, 0) rotate(0deg)' },
-                            '33%': { transform: 'translate(-20px, -20px) rotate(1deg)' },
-                            '66%': { transform: 'translate(20px, -10px) rotate(-1deg)' },
-                        },
                         glow: {
                             '0%, 100%': { filter: 'brightness(1)' },
                             '50%': { filter: 'brightness(1.2)' },
@@ -53,10 +46,6 @@
                         fadeIn: {
                             '0%': { opacity: '0', transform: 'translateY(10px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        slideUp: {
-                            '0%': { transform: 'translateY(100%)' },
-                            '100%': { transform: 'translateY(0)' },
                         }
                     },
                     colors: {
@@ -85,11 +74,6 @@
                         xs: '2px',
                     }
                 }
-            },
-            plugins: [],
-            // Enable automatic DOM scanning and style generation
-            corePlugins: {
-                preflight: true,
             }
         }
         
@@ -120,7 +104,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.reagent.js"></script>
     
-    <!-- Custom Background and Scan Animation -->
+    <!-- Custom Background and Scan Line Effects -->
     <style>
         /* Animated background with floating orbs */
         .bg-animated::before {
@@ -149,18 +133,6 @@
             transform: translateX(-100%);
             animation: scan 3s linear infinite;
             z-index: 1;
-        }
-        
-        /* Ensure keyframes work */
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(-20px, -20px) rotate(1deg); }
-            66% { transform: translate(20px, -10px) rotate(-1deg); }
-        }
-        
-        @keyframes scan {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
         }
     </style>
 </head>
