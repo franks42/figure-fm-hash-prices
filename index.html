@@ -4,8 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crypto Price Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/scittle@0.6.17/dist/scittle.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/scittle@0.6.17/dist/scittle.reagent.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.reagent.js"></script>
     <style>
         * {
             margin: 0;
@@ -377,7 +379,7 @@
              [:div {:class "price"} (format-price price)]
              [:div {:class (str "change-container " change-class)}
               [:span {:class "arrow"} arrow]
-              (format-number (js/Math.abs change) 2) "%"]
+              (str (format-number (js/Math.abs change) 2) "%")]
              [:div {:class "stats"}
               [:div {:class "stat"}
                [:div {:class "stat-label"} "24h Volume"]
@@ -399,8 +401,8 @@
                         [:div "Loading market data..."]]
                :else [:div
                       [:div {:class "crypto-grid"}
-                       (for [[crypto-id data] prices]
-                         ^{:key crypto-id} [crypto-card crypto-id data])]
+                       (doall (for [[crypto-id data] prices]
+                               ^{:key crypto-id} [crypto-card crypto-id data]))]
                       (when last-update
                         [:div {:class "footer"}
                          [:div {:class "last-update"}
@@ -433,10 +435,10 @@
                                :loading false 
                                :error (.-message error))))))
 
-        ;; Initialize app with Reagent
+        ;; Mount the Reagent app
         (defn mount-app []
           (rdom/render [app-component] (js/document.getElementById "app")))
-
+        
         ;; Start the app
         (mount-app)
         
