@@ -12,8 +12,13 @@
 
 (defn init []
   "Initializes the application"
+  ;; Debug: Log initialization
+  (js/console.log "🚀 App initializing...")
+  
   ;; Restore portfolio from localStorage
+  (js/console.log "📂 Restoring portfolio from localStorage...")
   (state/restore-portfolio)
+  (js/console.log "📂 Portfolio state after restore:" @state/portfolio-atom)
   
   ;; Start the app UI
   (mount-app)

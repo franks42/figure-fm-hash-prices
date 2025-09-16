@@ -18,19 +18,26 @@
 (defn save-portfolio-to-storage [portfolio-data]
   "Save portfolio data to localStorage"
   (try
+    (js/console.log "💾 Saving portfolio to localStorage:" portfolio-data)
     (.setItem js/localStorage "crypto-portfolio" (.stringify js/JSON (clj->js portfolio-data)))
+    (js/console.log "✅ Portfolio saved successfully")
     true
     (catch :default e
-      (js/console.warn "Failed to save portfolio to localStorage:" e)
+      (js/console.warn "❌ Failed to save portfolio to localStorage:" e)
       false)))
 
 (defn load-portfolio-from-storage []
   "Load portfolio data from localStorage"
   (try
-    (when-let [stored-data (.getItem js/localStorage "crypto-portfolio")]
-      (js->clj (.parse js/JSON stored-data)))
+    (js/console.log "📖 Loading portfolio from localStorage...")
+    (let [stored-data (.getItem js/localStorage "crypto-portfolio")]
+      (js/console.log "📖 Raw stored data:" stored-data)
+      (when stored-data
+        (let [parsed-data (js->clj (.parse js/JSON stored-data))]
+          (js/console.log "✅ Portfolio loaded successfully:" parsed-data)
+          parsed-data)))
     (catch :default e
-      (js/console.warn "Failed to load portfolio from localStorage:" e)
+      (js/console.warn "❌ Failed to load portfolio from localStorage:" e)
       {})))
 
 (defn persist-portfolio []
