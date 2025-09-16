@@ -23,21 +23,6 @@
 (defn format-market-cap [cap]
   (format-volume cap))
 
-;; Portfolio display components (compositional approach)
-(defn portfolio-value-display [holding-value crypto-id]
-  (when holding-value
-    [:div {:class "bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mt-4"}
-     [:div {:class "text-xs text-blue-400 uppercase mb-1 tracking-widest"} "Portfolio Value"]
-     [:div {:class "text-lg font-bold text-blue-300 tabular-nums"} (format-price holding-value crypto-id)]]))
-
-(defn portfolio-summary-header []
-  (let [total-value (portfolio/get-total-portfolio-value @state/portfolio-atom @state/prices-atom)]
-    (when (> total-value 0)
-      [:div {:class "bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-2xl p-6 mb-8"}
-       [:div {:class "text-center"}
-        [:div {:class "text-sm text-blue-400 uppercase mb-2 tracking-widest"} "Total Portfolio Value"]
-        [:div {:class "text-4xl font-bold text-white tabular-nums"} (str "$" (format-number total-value 2))]]])))
-
 ;; UI Components
 (defn crypto-card [crypto-id]
   (let [data @(r/cursor state/prices-atom [crypto-id])
@@ -123,62 +108,11 @@
           [:div {:class "flex flex-col"}
            [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Ask"]
            [:div {:class "text-sm font-semibold text-red-400 tabular-nums"} (format-price ask crypto-id)]]]))
-     ;; Portfolio value display  
-      (portfolio-value-display holding-value crypto-id)
-      ;; Portfolio button
+     ;; Portfolio button
      [:div {:class "flex mt-4"}
       [:button {:class "flex-1 bg-white/[0.05] hover:bg-white/[0.10] border border-white/20 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
                 :onClick #(reset! state/show-portfolio-panel crypto-id)}
        "📊 Portfolio"]]]))
-
-;; Portfolio modal components (compositional approach)
-(defn modal-backdrop [content]
-  [:div {:class "fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"}
-   content])
-
-(defn modal-container [content]
-  [:div {:class "bg-gray-900 border border-white/20 rounded-2xl p-6 max-w-md w-full"}
-   content])
-
-(defn modal-header [icon symbol close-fn]
-  [:div {:class "flex items-center justify-between mb-6"}
-   [:div {:class "flex items-center"}
-    [:span {:class "text-2xl mr-3"} icon]
-    [:h2 {:class "text-xl font-bold text-white"} symbol " Portfolio"]]
-   [:button {:class "text-gray-400 hover:text-white text-2xl"
-             :onClick close-fn}
-    "×"]])
-
-(defn holdings-display [current-quantity holding-value crypto-id]
-  [:div {:class "text-center"}
-   [:div {:class "text-sm text-gray-400"} "Current Holdings"]
-   [:div {:class "text-2xl font-bold text-white"} (format-number current-quantity 4)]
-   (when holding-value
-     [:div {:class "text-lg text-gray-300 mt-1"} (format-price holding-value crypto-id)])])
-
-(defn quantity-input [current-quantity]
-  [:div {:class "flex flex-col space-y-2"}
-   [:label {:class "text-sm text-gray-400"} "Enter Quantity:"]
-   [:input {:type "number" 
-            :step "0.0001"
-            :placeholder "0.0000"
-            :class "bg-gray-800 border border-white/20 rounded-lg px-3 py-2 text-white text-center focus:outline-none focus:border-white/40"
-            :defaultValue current-quantity
-            :id "quantity-input"}]])
-
-(defn action-buttons [save-fn cancel-fn]
-  [:div {:class "flex space-x-2"}
-   [:button {:class "flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-             :onClick save-fn}
-    "Save"]
-   [:button {:class "flex-1 bg-gray-600 hover:bg-gray-700 text-white rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-             :onClick cancel-fn}
-    "Cancel"]])
-
-(defn input-form [current-quantity save-fn cancel-fn]
-  [:div {:class "border-t border-white/10 pt-4 space-y-3"}
-   (quantity-input current-quantity)
-   (action-buttons save-fn cancel-fn)])
 
 (defn portfolio-panel []
   (when-let [crypto-id @state/show-portfolio-panel]
@@ -186,22 +120,24 @@
           icon (get state/crypto-icons (keyword crypto-id) "◆")
           current-quantity (get @state/portfolio-atom crypto-id 0)
           price (get-in @state/prices-atom [crypto-id "usd"] 0)
-          holding-value (when (> current-quantity 0) (portfolio/calculate-holding-value current-quantity price))
-          close-fn #(reset! state/show-portfolio-panel nil)
-          save-fn #(let [input-val (-> js/document (.getElementById "quantity-input") .-value js/parseFloat)]
-                     (when-not (js/isNaN input-val)
-                       (swap! state/portfolio-atom assoc crypto-id input-val)
-                       (state/persist-portfolio)
-                       (reset! state/show-portfolio-panel nil)))
-          
-          header (modal-header icon symbol close-fn)
-          holdings (holdings-display current-quantity holding-value crypto-id)
-          form (input-form current-quantity save-fn close-fn)
-          content [:div {:class "space-y-4"} holdings form]]
-      
-      (modal-backdrop 
-        (modal-container 
-          [:div header content])))))
+          holding-value (when (> current-quantity 0) (portfolio/calculate-holding-value current-quantity price))]
+      [:div {:class "fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"}
+       [:div {:class "bg-gray-900 border border-white/20 rounded-2xl p-6 max-w-md w-full"}
+        [:div {:class "flex items-center justify-between mb-6"}
+         [:div {:class "flex items-center"}
+          [:span {:class "text-2xl mr-3"} icon]
+          [:h2 {:class "text-xl font-bold text-white"} symbol " Portfolio"]]
+         [:button {:class "text-gray-400 hover:text-white text-2xl"
+                   :onClick #(reset! state/show-portfolio-panel nil)}
+          "×"]]
+        [:div {:class "space-y-4"}
+         [:div {:class "text-center"}
+          [:div {:class "text-sm text-gray-400"} "Current Holdings"]
+          [:div {:class "text-2xl font-bold text-white"} (format-number current-quantity 4)]
+          (when holding-value
+            [:div {:class "text-lg text-gray-300 mt-1"} (format-price holding-value crypto-id)])]
+         [:div {:class "text-center text-gray-400 py-4"}
+          "Add/edit functionality coming soon..."]]]]))
 
 (defn app-component []
   (let [last-update @state/last-update-atom
@@ -218,8 +154,7 @@
                 [:div {:class "inline-block w-10 h-10 border-3 border-gray-700 border-t-neon-green rounded-full animate-spin mb-5"}]
                 [:div "Loading market data..."]]
        :else [:div
-       (portfolio-summary-header)
-               [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10"}
+              [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10"}
                (let [price-keys @state/price-keys-atom
                      sorted-keys (sort-by (fn [crypto-id]
                                             (cond
