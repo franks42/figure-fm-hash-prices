@@ -113,10 +113,17 @@ jobs:
                 "trades_24h": null,
                 "type": "stock",
                 "day_high": ($stock."Global Quote"."03. high" | tonumber),
-                "day_low": ($stock."Global Quote"."04. low" | tonumber)
+                "day_low": ($stock."Global Quote"."04. low" | tonumber),
+                "open": ($stock."Global Quote"."02. open" | tonumber),
+                "previous_close": ($stock."Global Quote"."08. previousClose" | tonumber),
+                "change": ($stock."Global Quote"."09. change" | tonumber),
+                "latest_day": $stock."Global Quote"."07. latestDay",
+                "company_name": "Figure Technology Solutions, Inc.",
+                "exchange": "Alpha Vantage",
+                "currency": "USD"
               }
             else
-              # Yahoo Finance format (original)
+              # Yahoo Finance format (enhanced)
               {
                 "usd": $stock.chart.result[0].meta.regularMarketPrice,
                 "usd_24h_change": (($stock.chart.result[0].meta.regularMarketPrice / $stock.chart.result[0].meta.previousClose - 1) * 100),
@@ -128,8 +135,19 @@ jobs:
                 "last_price": $stock.chart.result[0].meta.regularMarketPrice,
                 "trades_24h": null,
                 "type": "stock",
-                "day_high": $stock.chart.result[0].meta.regularMarketDayHigh,
-                "day_low": $stock.chart.result[0].meta.regularMarketDayLow
+                "day_high": ($stock.chart.result[0].meta.regularMarketDayHigh // null),
+                "day_low": ($stock.chart.result[0].meta.regularMarketDayLow // null),
+                "open": ($stock.chart.result[0].meta.regularMarketOpen // null),
+                "previous_close": ($stock.chart.result[0].meta.previousClose // null),
+                "change": (($stock.chart.result[0].meta.regularMarketPrice - $stock.chart.result[0].meta.previousClose) // null),
+                "fifty_two_week_high": ($stock.chart.result[0].meta.fiftyTwoWeekHigh // null),
+                "fifty_two_week_low": ($stock.chart.result[0].meta.fiftyTwoWeekLow // null),
+                "company_name": ($stock.chart.result[0].meta.longName // "Figure Technology Solutions, Inc."),
+                "company_short_name": ($stock.chart.result[0].meta.shortName // "FIGR"),
+                "exchange": ($stock.chart.result[0].meta.fullExchangeName // "NasdaqGS"),
+                "currency": ($stock.chart.result[0].meta.currency // "USD"),
+                "timezone": ($stock.chart.result[0].meta.timezone // "EDT"),
+                "last_trade_time": ($stock.chart.result[0].meta.regularMarketTime // null)
               }
             end
           )
