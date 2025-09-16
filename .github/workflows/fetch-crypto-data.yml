@@ -49,56 +49,67 @@ jobs:
           SOURCE="figuremarkets+yahoo"
         fi
         
-        # Combine crypto and stock data
+        # Create a properly formatted combined JSON file
+        echo "Combining data into unified JSON..."
+        
+        # Create a temporary script for complex jq processing
+        cat > /tmp/combine_data.jq << 'EOF'
+        # Start with empty object and build crypto data
+        {} |
+        # Add crypto currencies
+        . + (
+          reduce ($crypto.data[] | 
+                  select(.symbol | test("-USD$")) | 
+                  select(.symbol | test("^(USDT|USDC)-USD$") | not)
+                 ) as $item 
+          ({}; . + {
+            ($item.symbol | gsub("-USD"; "") | ascii_downcase): {
+              "usd": ($item.midMarketPrice // $item.lastTradedPrice // 0 | tonumber),
+              "usd_24h_change": ($item.percentageChange24h // 0 | tonumber * 100),
+              "usd_24h_vol": ($item.volume24h // 0 | tonumber),
+              "usd_market_cap": null,
+              "symbol": $item.symbol,
+              "bid": ($item.bestBid // 0 | tonumber),
+              "ask": ($item.bestAsk // 0 | tonumber),
+              "last_price": ($item.lastTradedPrice // 0 | tonumber),
+              "trades_24h": ($item.tradeCount24h // 0),
+              "type": "crypto"
+            }
+          })
+        ) |
+        # Add FIGR stock data
+        . + {
+          "figr": {
+            "usd": $stock.chart.result[0].meta.regularMarketPrice,
+            "usd_24h_change": (($stock.chart.result[0].meta.regularMarketPrice / $stock.chart.result[0].meta.previousClose - 1) * 100),
+            "usd_24h_vol": $stock.chart.result[0].meta.regularMarketVolume,
+            "usd_market_cap": null,
+            "symbol": "FIGR",
+            "bid": null,
+            "ask": null,
+            "last_price": $stock.chart.result[0].meta.regularMarketPrice,
+            "trades_24h": null,
+            "type": "stock",
+            "day_high": $stock.chart.result[0].meta.regularMarketDayHigh,
+            "day_low": $stock.chart.result[0].meta.regularMarketDayLow
+          }
+        } |
+        # Add metadata
+        . + {
+          "timestamp": ($timestamp | tonumber),
+          "source": $source,
+          "last_update": $last_update
+        }
+        EOF
+        
+        # Run the jq script
         jq --null-input \
            --argjson crypto "$CRYPTO_RESPONSE" \
            --argjson stock "$STOCK_RESPONSE" \
            --arg timestamp "$(date -u +%s)" \
            --arg last_update "$(date -u '+%Y-%m-%d %H:%M:%S UTC')" \
            --arg source "$SOURCE" \
-           '
-           # Process crypto data from Figure Markets
-           ($crypto.data[] | select(.symbol | test("-USD$")) | select(.symbol | test("^(USDT|USDC)-USD$") | not)) as $cryptos |
-           reduce $cryptos as $item ({}; 
-             . + {
-               ($item.symbol | gsub("-USD"; "") | ascii_downcase): {
-                 "usd": ($item.midMarketPrice // $item.lastTradedPrice // 0 | tonumber),
-                 "usd_24h_change": ($item.percentageChange24h // 0 | tonumber * 100),
-                 "usd_24h_vol": ($item.volume24h // 0 | tonumber),
-                 "usd_market_cap": null,
-                 "symbol": $item.symbol,
-                 "bid": ($item.bestBid // 0 | tonumber),
-                 "ask": ($item.bestAsk // 0 | tonumber),
-                 "last_price": ($item.lastTradedPrice // 0 | tonumber),
-                 "trades_24h": ($item.tradeCount24h // 0),
-                 "type": "crypto"
-               }
-             }
-           ) |
-           # Add FIGR stock data
-           . + {
-             "figr": {
-               "usd": $stock.chart.result[0].meta.regularMarketPrice,
-               "usd_24h_change": (($stock.chart.result[0].meta.regularMarketPrice / $stock.chart.result[0].meta.previousClose - 1) * 100),
-               "usd_24h_vol": $stock.chart.result[0].meta.regularMarketVolume,
-               "usd_market_cap": null,
-               "symbol": "FIGR",
-               "bid": null,
-               "ask": null,
-               "last_price": $stock.chart.result[0].meta.regularMarketPrice,
-               "trades_24h": null,
-               "type": "stock",
-               "day_high": $stock.chart.result[0].meta.regularMarketDayHigh,
-               "day_low": $stock.chart.result[0].meta.regularMarketDayLow
-             }
-           } |
-           # Add metadata
-           . + {
-             "timestamp": ($timestamp | tonumber),
-             "source": $source,
-             "last_update": $last_update
-           }
-           ' > data/crypto-prices.json
+           -f /tmp/combine_data.jq > data/crypto-prices.json
         
         # Display the fetched data for verification
         echo "Data fetched successfully:"
