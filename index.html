@@ -167,24 +167,38 @@
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            height: 3px;
+            width: 100%;
+            height: 6px;
             background: linear-gradient(90deg, #00ff88, #00ccff, #ff00ff);
             transform: translateX(-100%);
             z-index: 9999;
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.2s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 1.0);
         }
         
         .fetch-indicator.active {
             opacity: 1;
-            animation: fetch-scan 2s ease-out;
+            animation: fetch-scan 2s linear;
         }
         
         @keyframes fetch-scan {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+            0% { 
+                transform: translateX(-100%); 
+                opacity: 1;
+            }
+            5% { 
+                transform: translateX(-90%); 
+                opacity: 1;
+            }
+            95% { 
+                transform: translateX(90%); 
+                opacity: 1;
+            }
+            100% { 
+                transform: translateX(100%); 
+                opacity: 1;
+            }
         }
     </style>
 </head>

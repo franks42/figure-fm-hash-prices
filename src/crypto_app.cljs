@@ -130,11 +130,11 @@
               (when last-update
                 [:div {:class "text-center mt-15 pb-10"}
                  [:div {:class (str "inline-flex items-center px-6 py-3 rounded-full text-gray-400 text-sm transition-all duration-300 "
-                                    (if flash 
+                                    (if flash
                                       "bg-neon-green/20 border border-neon-green/40 text-neon-green"
                                       "bg-white/[0.03] border border-white/10"))}
                   [:span {:class (str "w-2 h-2 rounded-full mr-2.5 "
-                                      (if flash 
+                                      (if flash
                                         "bg-neon-green animate-ping"
                                         "bg-neon-green animate-pulse-dot"))}]
                   "Last updated: " last-update]])])]))
@@ -143,13 +143,16 @@
   (js/console.log "Starting crypto data fetch...")
   ;; Show top scan line during fetch
   (let [indicator (js/document.getElementById "fetch-indicator")]
-    (when indicator
-      (.add (.-classList indicator) "active")))
+    (if indicator
+      (do
+        (js/console.log "Starting top scan line animation")
+        (.add (.-classList indicator) "active"))
+      (js/console.log "ERROR: fetch-indicator element not found!")))
   ;; Only show loading states for initial load
   (when (not @initial-load-complete)
     (when (not @loading-atom)
       (reset! loading-atom true))
-    (when @error-atom  
+    (when @error-atom
       (reset! error-atom nil)))
   (-> (js/fetch (str "./data/crypto-prices.json?t=" (js/Date.now)))
       (.then (fn [response]
@@ -160,8 +163,7 @@
       (.then (fn [data]
                (js/console.log "JSON data parsed:" data)
                (let [js-data (js->clj data :keywordize-keys false)
-                     prices (dissoc js-data "timestamp" "source" "last_update")  
-                     last-update (get js-data "last_update")]
+                     prices (dissoc js-data "timestamp" "source" "last_update")]
                  (js/console.log "Processed prices:" prices)
                  ;; Update new granular atoms with differential updates
                  (let [old-prices @prices-atom
@@ -174,27 +176,35 @@
                            new-price (get new-data "usd")
                            old-change (get old-data "usd_24h_change")
                            new-change (get new-data "usd_24h_change")]
-                       (when (or (not= old-price new-price) 
+                       (when (or (not= old-price new-price)
                                  (not= old-change new-change))
                          (js/console.log "Updating coin:" coin-id "price:" old-price "→" new-price "change:" old-change "→" new-change)
                          (swap! prices-atom assoc coin-id new-data))))
                    ;; Only update keys if they actually changed
                    (when (not= new-keys old-keys)
                      (reset! price-keys-atom (keys prices))))
-                 (when (not= @last-update-atom last-update)
-                   (js/console.log "Updating timestamp:" @last-update-atom "→" last-update)
-                   (reset! last-update-atom last-update))
+                 ;; Always update timestamp to show when we fetched the data
+                 (let [now (js/Date.)
+                       formatted-time (.toISOString now)]
+                   (js/console.log "Updating timestamp:" @last-update-atom "→" formatted-time)
+                   (reset! last-update-atom (.replace formatted-time "T" " ")))
                  ;; Flash indicator briefly to show data was fetched (always)
                  (reset! update-flash-atom true)
                  (js/setTimeout #(reset! update-flash-atom false) 800)
-                 ;; Hide top scan line
-                 (let [indicator (js/document.getElementById "fetch-indicator")]
-                   (when indicator
-                     (.remove (.-classList indicator) "active")))
+                 ;; Hide top scan line after animation completes
+                 (js/setTimeout
+                  (fn []
+                    (let [indicator (js/document.getElementById "fetch-indicator")]
+                      (if indicator
+                        (do
+                          (js/console.log "Stopping top scan line animation")
+                          (.remove (.-classList indicator) "active"))
+                        (js/console.log "ERROR: fetch-indicator element not found for hiding!"))))
+                  2100)
                  ;; Only update loading state for initial load
                  (when (not @initial-load-complete)
                    (reset! initial-load-complete true)
-                   (when @loading-atom  
+                   (when @loading-atom
                      (reset! loading-atom false)))
                  ;; DISABLED: Update legacy app-state for backward compatibility
                  ;; (swap! app-state assoc
