@@ -153,21 +153,34 @@
       (.then (fn [data]
                (let [js-data (js->clj data :keywordize-keys false)
                      prices (dissoc js-data "timestamp" "source" "last_update")]
-                 ;; Update new granular atoms with differential updates
+                 ;; Update new granular atoms with batched differential updates
                  (let [old-prices @prices-atom
                        new-keys (set (keys prices))
-                       old-keys (set @price-keys-atom)]
-                   ;; Only update individual coins that changed (compare key fields)
-                   (doseq [[coin-id new-data] prices]
-                     (let [old-data (get old-prices coin-id)
-                           old-price (get old-data "usd")
-                           new-price (get new-data "usd")
-                           old-change (get old-data "usd_24h_change")
-                           new-change (get new-data "usd_24h_change")]
-                       (when (or (not= old-price new-price)
-                                 (not= old-change new-change))
-                         (swap! prices-atom assoc coin-id new-data))))
-                   ;; Only update keys if they actually changed
+                       old-keys (set @price-keys-atom)
+                     ;; Collect all changes in a single pass
+                       changes (into {}
+                                     (for [[coin-id new-data] prices
+                                           :let [old-data (get old-prices coin-id)
+                                                 old-price (get old-data "usd")
+                                                 new-price (get new-data "usd")
+                                                 old-change (get old-data "usd_24h_change")
+                                                 new-change (get new-data "usd_24h_change")
+                                                 old-volume (get old-data "usd_24h_vol")
+                                                 new-volume (get new-data "usd_24h_vol")
+                                                 old-bid (get old-data "bid")
+                                                 new-bid (get new-data "bid")
+                                                 old-ask (get old-data "ask")
+                                                 new-ask (get new-data "ask")]
+                                           :when (or (not= old-price new-price)
+                                                     (not= old-change new-change)
+                                                     (not= old-volume new-volume)
+                                                     (not= old-bid new-bid)
+                                                     (not= old-ask new-ask))]
+                                       [coin-id new-data]))]
+                    ;; Single batched update - triggers only one re-render
+                   (when (seq changes)
+                     (swap! prices-atom merge changes))
+                    ;; Only update keys if they actually changed
                    (when (not= new-keys old-keys)
                      (reset! price-keys-atom (keys prices))))
                  ;; Always update timestamp to show when we fetched the data
