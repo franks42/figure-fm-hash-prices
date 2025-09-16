@@ -96,22 +96,43 @@ jobs:
             }
           })
         ) |
-        # Add FIGR stock data
+        # Add FIGR stock data (handle both Yahoo and Alpha Vantage formats)
         . + {
-          "figr": {
-            "usd": $stock.chart.result[0].meta.regularMarketPrice,
-            "usd_24h_change": (($stock.chart.result[0].meta.regularMarketPrice / $stock.chart.result[0].meta.previousClose - 1) * 100),
-            "usd_24h_vol": $stock.chart.result[0].meta.regularMarketVolume,
-            "usd_market_cap": null,
-            "symbol": "FIGR",
-            "bid": null,
-            "ask": null,
-            "last_price": $stock.chart.result[0].meta.regularMarketPrice,
-            "trades_24h": null,
-            "type": "stock",
-            "day_high": $stock.chart.result[0].meta.regularMarketDayHigh,
-            "day_low": $stock.chart.result[0].meta.regularMarketDayLow
-          }
+          "figr": (
+            if ($stock | has("Global Quote")) then
+              # Alpha Vantage format
+              {
+                "usd": ($stock."Global Quote"."05. price" | tonumber),
+                "usd_24h_change": ($stock."Global Quote"."10. change percent" | gsub("%"; "") | tonumber),
+                "usd_24h_vol": ($stock."Global Quote"."06. volume" | tonumber),
+                "usd_market_cap": null,
+                "symbol": "FIGR",
+                "bid": null,
+                "ask": null,
+                "last_price": ($stock."Global Quote"."05. price" | tonumber),
+                "trades_24h": null,
+                "type": "stock",
+                "day_high": ($stock."Global Quote"."03. high" | tonumber),
+                "day_low": ($stock."Global Quote"."04. low" | tonumber)
+              }
+            else
+              # Yahoo Finance format (original)
+              {
+                "usd": $stock.chart.result[0].meta.regularMarketPrice,
+                "usd_24h_change": (($stock.chart.result[0].meta.regularMarketPrice / $stock.chart.result[0].meta.previousClose - 1) * 100),
+                "usd_24h_vol": $stock.chart.result[0].meta.regularMarketVolume,
+                "usd_market_cap": null,
+                "symbol": "FIGR",
+                "bid": null,
+                "ask": null,
+                "last_price": $stock.chart.result[0].meta.regularMarketPrice,
+                "trades_24h": null,
+                "type": "stock",
+                "day_high": $stock.chart.result[0].meta.regularMarketDayHigh,
+                "day_low": $stock.chart.result[0].meta.regularMarketDayLow
+              }
+            end
+          )
         } |
         # Add metadata
         . + {
