@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crypto Price Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/scittle@0.6.17/dist/scittle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/scittle@0.6.17/dist/scittle.reagent.js"></script>
     <style>
         * {
             margin: 0;
@@ -310,9 +311,11 @@
 
     <script type="application/x-scittle">
         (ns crypto-app
-          (:require [clojure.string :as str]))
+          (:require [clojure.string :as str]
+                    [reagent.core :as r]
+                    [reagent.dom :as rdom]))
 
-        (def app-state (atom {:prices {} :last-update nil :loading true :error nil}))
+        (def app-state (r/atom {:prices {} :last-update nil :loading true :error nil}))
 
         ;; Crypto icons and symbols mapping
         (def crypto-icons
@@ -352,6 +355,58 @@
         (defn format-market-cap [cap]
           (format-volume cap))
 
+        (defn crypto-card [crypto-id data]
+          (let [name (-> crypto-id (str/replace "-" " ") str/capitalize)
+                symbol (get crypto-symbols (keyword crypto-id) "")
+                icon (get crypto-icons (keyword crypto-id) "◆")
+                price (get data "usd")
+                change (get data "usd_24h_change")
+                volume (get data "usd_24h_vol")
+                market-cap (get data "usd_market_cap")
+                positive? (>= change 0)
+                arrow (if positive? "▲" "▼")
+                change-class (if positive? "change-positive" "change-negative")]
+            [:div {:class "crypto-card"}
+             [:div {:class "crypto-header"}
+              [:div {:class "crypto-info"}
+               [:div {:class "crypto-icon"} icon]
+               [:div 
+                [:div {:class "crypto-name"} 
+                 name
+                 [:span {:class "crypto-symbol"} symbol]]]]]
+             [:div {:class "price"} (format-price price)]
+             [:div {:class (str "change-container " change-class)}
+              [:span {:class "arrow"} arrow]
+              (format-number (js/Math.abs change) 2) "%"]
+             [:div {:class "stats"}
+              [:div {:class "stat"}
+               [:div {:class "stat-label"} "24h Volume"]
+               [:div {:class "stat-value"} (format-volume volume)]]
+              [:div {:class "stat"}
+               [:div {:class "stat-label"} "Market Cap"]
+               [:div {:class "stat-value"} (format-market-cap market-cap)]]]]))
+
+        (defn app-component []
+          (let [{:keys [prices last-update loading error]} @app-state]
+            [:div
+             (cond
+               error [:div {:class "error"} 
+                      "Failed to load market data: " error 
+                      [:br]
+                      "Retrying in 30 seconds..."]
+               loading [:div {:class "loading"} 
+                        [:div {:class "loading-spinner"}]
+                        [:div "Loading market data..."]]
+               :else [:div
+                      [:div {:class "crypto-grid"}
+                       (for [[crypto-id data] prices]
+                         ^{:key crypto-id} [crypto-card crypto-id data])]
+                      (when last-update
+                        [:div {:class "footer"}
+                         [:div {:class "last-update"}
+                          [:span {:class "update-dot"}]
+                          "Last updated: " last-update]])])]))
+
         (defn fetch-crypto-data []
           (swap! app-state assoc :loading true :error nil)
           (-> (js/fetch "./data/crypto-prices.json")
@@ -374,62 +429,13 @@
                                :loading false 
                                :error (.-message error))))))
 
-        ;; Direct DOM rendering without hiccup conversion
-        (defn render-app []
-          (let [{:keys [prices last-update loading error]} @app-state
-                app-element (js/document.getElementById "app")]
-            (set! (.-innerHTML app-element)
-                  (cond
-                    error (str "<div class='error'>Failed to load market data: " error 
-                              "<br>Retrying in 30 seconds...</div>")
-                    
-                    loading "<div class='loading'><div class='loading-spinner'></div><div>Loading market data...</div></div>"
-                    
-                    :else (str "<div class='crypto-grid'>"
-                              (str/join ""
-                                (for [[crypto-id data] prices]
-                                  (let [name (-> crypto-id name (str/replace "-" " ") str/capitalize)
-                                        symbol (get crypto-symbols (keyword crypto-id) "")
-                                        icon (get crypto-icons (keyword crypto-id) "◆")
-                                        price (get data "usd")
-                                        change (get data "usd_24h_change")
-                                        volume (get data "usd_24h_vol")
-                                        market-cap (get data "usd_market_cap")
-                                        positive? (>= change 0)
-                                        arrow (if positive? "▲" "▼")
-                                        change-class (if positive? "change-positive" "change-negative")]
-                                    (str "<div class='crypto-card'>"
-                                         "<div class='crypto-header'>"
-                                         "<div class='crypto-info'>"
-                                         "<div class='crypto-icon'>" icon "</div>"
-                                         "<div>"
-                                         "<div class='crypto-name'>" name 
-                                         "<span class='crypto-symbol'>" symbol "</span></div>"
-                                         "</div></div></div>"
-                                         "<div class='price'>" (format-price price) "</div>"
-                                         "<div class='change-container " change-class "'>"
-                                         "<span class='arrow'>" arrow "</span>"
-                                         (format-number (js/Math.abs change) 2) "%</div>"
-                                         "<div class='stats'>"
-                                         "<div class='stat'>"
-                                         "<div class='stat-label'>24h Volume</div>"
-                                         "<div class='stat-value'>" (format-volume volume) "</div>"
-                                         "</div>"
-                                         "<div class='stat'>"
-                                         "<div class='stat-label'>Market Cap</div>"
-                                         "<div class='stat-value'>" (format-market-cap market-cap) "</div>"
-                                         "</div></div></div>"))))
-                              "</div>"
-                              (if last-update
-                                (str "<div class='footer'><div class='last-update'>"
-                                     "<span class='update-dot'></span>"
-                                     "Last updated: " last-update "</div></div>")
-                                ""))))))
+        ;; Initialize app with Reagent
+        (defn mount-app []
+          (rdom/render [app-component] (js/document.getElementById "app")))
 
-        ;; Initialize app
-        (add-watch app-state :dom-update 
-                   (fn [_ _ _ _] (render-app)))
-
+        ;; Start the app
+        (mount-app)
+        
         ;; Fetch data immediately and then every 30 seconds
         (fetch-crypto-data)
         (js/setInterval fetch-crypto-data 30000)
