@@ -30,6 +30,14 @@
      [:div {:class "text-xs text-blue-400 uppercase mb-1 tracking-widest"} "Portfolio Value"]
      [:div {:class "text-lg font-bold text-blue-300 tabular-nums"} (format-price holding-value crypto-id)]]))
 
+(defn portfolio-summary-header []
+  (let [total-value (portfolio/get-total-portfolio-value @state/portfolio-atom @state/prices-atom)]
+    (when (> total-value 0)
+      [:div {:class "bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-2xl p-6 mb-8"}
+       [:div {:class "text-center"}
+        [:div {:class "text-sm text-blue-400 uppercase mb-2 tracking-widest"} "Total Portfolio Value"]
+        [:div {:class "text-4xl font-bold text-white tabular-nums"} (str "$" (format-number total-value 2))]]])))
+
 ;; UI Components
 (defn crypto-card [crypto-id]
   (let [data @(r/cursor state/prices-atom [crypto-id])
@@ -209,7 +217,8 @@
                 [:div {:class "inline-block w-10 h-10 border-3 border-gray-700 border-t-neon-green rounded-full animate-spin mb-5"}]
                 [:div "Loading market data..."]]
        :else [:div
-              [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10"}
+       (portfolio-summary-header)
+               [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10"}
                (let [price-keys @state/price-keys-atom
                      sorted-keys (sort-by (fn [crypto-id]
                                             (cond
