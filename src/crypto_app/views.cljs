@@ -107,13 +107,12 @@
            [:div {:class "text-sm font-semibold text-green-400 tabular-nums"} (format-price bid crypto-id)]]
           [:div {:class "flex flex-col"}
            [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Ask"]
-           [:div {:class "text-sm font-semibold text-red-400 tabular-nums"} (format-price ask crypto-id)]]]))]))
-
+           [:div {:class "text-sm font-semibold text-red-400 tabular-nums"} (format-price ask crypto-id)]]]))
      ;; Portfolio button
-[:div {:class "flex mt-4"}
- [:button {:class "flex-1 bg-white/[0.05] hover:bg-white/[0.10] border border-white/20 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-           :onClick #(reset! state/show-portfolio-panel true)}
-  "📊 Portfolio"]]
+     [:div {:class "flex mt-4"}
+      [:button {:class "flex-1 bg-white/[0.05] hover:bg-white/[0.10] border border-white/20 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+                :onClick #(reset! state/show-portfolio-panel true)}
+       "📊 Portfolio"]]]))
 
 (defn app-component []
   (let [last-update @state/last-update-atom
