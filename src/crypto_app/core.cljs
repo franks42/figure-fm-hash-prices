@@ -14,6 +14,9 @@
   "Initializes the application"
   ;; Debug: Log initialization
   (js/console.log "🚀 App initializing...")
+  (js/console.log "🌍 Current URL:" js/window.location.href)
+  (js/console.log "🌍 Domain:" js/window.location.hostname)
+  (js/console.log "🌍 Protocol:" js/window.location.protocol)
   
   ;; Restore portfolio from localStorage
   (js/console.log "📂 Restoring portfolio from localStorage...")
