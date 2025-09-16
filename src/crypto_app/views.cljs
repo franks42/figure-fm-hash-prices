@@ -188,11 +188,18 @@
           price (get-in @state/prices-atom [crypto-id "usd"] 0)
           holding-value (when (> current-quantity 0) (portfolio/calculate-holding-value current-quantity price))
           close-fn #(reset! state/show-portfolio-panel nil)
-          save-fn #(let [input-val (-> js/document (.getElementById "quantity-input") .-value js/parseFloat)]
-                     (when-not (js/isNaN input-val)
-                       (swap! state/portfolio-atom assoc crypto-id input-val)
-                       (state/persist-portfolio)
-                       (reset! state/show-portfolio-panel nil)))
+          save-fn #(do
+                     (js/console.log "🔴 SAVE BUTTON CLICKED!")
+                     (let [input-val (-> js/document (.getElementById "quantity-input") .-value js/parseFloat)]
+                       (js/console.log "🔴 Input value:" input-val)
+                       (when-not (js/isNaN input-val)
+                         (js/console.log "🔴 Updating portfolio atom...")
+                         (swap! state/portfolio-atom assoc crypto-id input-val)
+                         (js/console.log "🔴 Portfolio atom after update:" @state/portfolio-atom)
+                         (js/console.log "🔴 Calling persist-portfolio...")
+                         (state/persist-portfolio)
+                         (js/console.log "🔴 Closing modal...")
+                         (reset! state/show-portfolio-panel nil))))
           
           header (modal-header icon symbol close-fn)
           holdings (holdings-display current-quantity holding-value crypto-id)
