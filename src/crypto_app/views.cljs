@@ -1,8 +1,7 @@
 (ns crypto-app.views
   (:require [clojure.string :as str]
             [reagent.core :as r]
-            [crypto-app.state :as state]
-            [crypto-app.portfolio :as portfolio]))
+            [crypto-app.state :as state]))
 
 ;; Utility functions for formatting
 (defn format-number [n decimals]
@@ -45,9 +44,6 @@
         fifty-two-week-high (get data "fifty_two_week_high")
         fifty-two-week-low (get data "fifty_two_week_low")
         previous-close (get data "previous_close")
-        ;; Portfolio data
-        quantity @(r/cursor state/portfolio-atom [crypto-id])
-        holding-value (when quantity (portfolio/calculate-holding-value quantity price))
         ;; Display logic
         positive? (>= (or change 0) 0)
         arrow (if positive? "▲" "▼")
@@ -109,78 +105,6 @@
            [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Ask"]
            [:div {:class "text-sm font-semibold text-red-400 tabular-nums"} (format-price ask crypto-id)]]]))]))
 
-     ;; Portfolio holdings display
-(when quantity
-  [:div {:class "mt-4 p-3 bg-neon-pink/10 border border-neon-pink/20 rounded-xl"}
-   [:div {:class "flex justify-between items-center mb-2"}
-    [:div {:class "text-xs text-neon-pink uppercase tracking-widest"} "Your Holdings"]
-    [:div {:class "text-xs text-gray-400"} "💰"]]
-   [:div {:class "flex justify-between items-center"}
-    [:div {:class "text-sm text-neon-pink"}
-     (str "Quantity: " (format-number quantity (if (= crypto-id "hash") 0 8)))]
-    [:div {:class "text-sm font-semibold text-white"}
-     (str "Value: " (format-price holding-value crypto-id))]]])
-     ;; Portfolio button
-[:div {:class "flex mt-4"}
- [:button {:class "flex-1 bg-white/[0.05] hover:bg-white/[0.10] border border-white/20 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-           :onClick #(reset! state/show-portfolio-panel true)}
-  "📊 Portfolio"]]
-
-(defn portfolio-panel []
-  "Portfolio management panel"
-  (let [portfolio @state/portfolio-atom
-        price-keys @state/price-keys-atom
-        current-prices @state/prices-atom]
-    [:div {:class (str "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-300 "
-                       (if @state/show-portfolio-panel "opacity-100" "opacity-0 pointer-events-none"))}
-     [:div {:class "bg-black/90 border border-white/20 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto backdrop-blur-lg"}
-      [:div {:class "flex justify-between items-center mb-6"}
-       [:h2 {:class "text-2xl font-bold text-white"} "Portfolio Management"]
-       [:button {:class "text-gray-400 hover:text-white text-xl"
-                 :onClick #(reset! state/show-portfolio-panel false)}
-        "✕"]]
-
-      ;; Portfolio summary
-      (let [total-value (portfolio/get-total-portfolio-value portfolio current-prices)
-            assets-count (portfolio/get-portfolio-assets-count portfolio)]
-        (when (> total-value 0)
-          [:div {:class "mb-6 p-4 bg-neon-green/10 border border-neon-green/20 rounded-xl"}
-           [:div {:class "grid grid-cols-2 gap-4"}
-            [:div
-             [:div {:class "text-xs text-neon-green uppercase tracking-widest"} "Total Value"]
-             [:div {:class "text-xl font-bold text-white"} (format-price total-value "usd")]]
-            [:div
-             [:div {:class "text-xs text-neon-green uppercase tracking-widest"} "Assets Held"]
-             [:div {:class "text-xl font-bold text-white"} (str assets-count)]]]]))
-
-      ;; Holdings list and input
-      [:div {:class "space-y-4"}
-       (for [crypto-id price-keys]
-         (let [current-quantity (get portfolio crypto-id 0)
-               current-price (get-in current-prices [crypto-id "usd"])
-               crypto-name (str/upper-case crypto-id)]
-           ^{:key crypto-id}
-           [:div {:class "flex items-center justify-between p-3 bg-white/[0.03] border border-white/10 rounded-xl"}
-            [:div {:class "flex items-center"}
-             [:div {:class "w-8 h-8 rounded-lg mr-3 flex items-center justify-center text-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/10"}
-              (get state/crypto-icons (keyword crypto-id) "◆")]
-             [:div
-              [:div {:class "font-semibold text-white"} crypto-name]
-              [:div {:class "text-xs text-gray-400"} (format-price current-price crypto-id)]]]
-            [:div {:class "flex items-center space-x-2"}
-             [:input {:type "number"
-                      :step (if (= crypto-id "hash") "1" "0.00000001")
-                      :min "0"
-                      :value current-quantity
-                      :onChange (fn [e]
-                                  (let [value (js/parseFloat (.. e -target -value))]
-                                    (portfolio/update-holding crypto-id (if (js/isNaN value) 0 value))))
-                      :class "w-32 px-3 py-1 bg-white/[0.05] border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-neon-green/50"}]
-             (when (> current-quantity 0)
-               [:button {:onClick #(portfolio/remove-holding crypto-id)
-                         :class "text-red-400 hover:text-red-300 text-sm"}
-                "Clear"])]]))]]]))
-
 (defn app-component []
   (let [last-update @state/last-update-atom
         loading @state/loading-atom
@@ -215,7 +139,4 @@
                                       (if flash
                                         "bg-neon-green animate-ping"
                                         "bg-neon-green animate-pulse-dot"))}]
-                  "Last updated: " last-update]])])]
-
-     ;; Portfolio management panel overlay
-    [portfolio-panel]))
+                  "Last updated: " last-update]])])]))
