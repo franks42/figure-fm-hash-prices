@@ -32,7 +32,9 @@
       "WebFetch(domain:financialmodelingprep.com)",
       "WebFetch(domain:query1.finance.yahoo.com)",
       "Bash(curl:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(cljfmt check:*)",
+      "Bash(cljfmt fix:*)"
     ],
     "deny": [],
     "ask": []

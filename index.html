@@ -135,17 +135,31 @@
         }
         
         /* Scanning line animation for crypto cards */
+        .scan-line {
+            position: relative;
+        }
+        
         .scan-line::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
+            width: 100%;
             height: 2px;
             background: linear-gradient(90deg, #00ff88, #00ccff, #ff00ff);
             transform: translateX(-100%);
             animation: scan 3s linear infinite;
-            z-index: 1;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        /* Add slight delays to make animation more visible */
+        .scan-line:nth-child(2n)::before {
+            animation-delay: -1s;
+        }
+        
+        .scan-line:nth-child(3n)::before {
+            animation-delay: -2s;
         }
     </style>
 </head>
@@ -157,12 +171,7 @@
             </h1>
             <p class="text-gray-400 text-lg font-light">Real-time cryptocurrency prices powered by Figure Markets</p>
         </header>
-        <div id="app">
-            <div class="text-center text-gray-400 text-xl py-24">
-                <div class="inline-block w-10 h-10 border-3 border-gray-700 border-t-neon-green rounded-full animate-spin mb-5"></div>
-                <div>Loading market data...</div>
-            </div>
-        </div>
+        <div id="app"></div>
     </div>
 
     <!-- Load ClojureScript Application -->
