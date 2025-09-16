@@ -1,8 +1,7 @@
 (ns crypto-app.core
   (:require [reagent.dom :as rdom]
             [crypto-app.views :as views]
-            [crypto-app.effects :as effects]
-            [crypto-app.portfolio :as portfolio]))
+            [crypto-app.effects :as effects]))
 
 ;; Main application coordination
 
@@ -12,10 +11,7 @@
 
 (defn init []
   "Initializes the application"
-;; Initialize portfolio from localStorage
-  (portfolio/initialize-portfolio)
-
-;; Start the app UI
+  ;; Start the app UI
   (mount-app)
 
 ;; Set up timeout handler for loading errors
