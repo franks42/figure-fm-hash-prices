@@ -141,6 +141,10 @@
 
 (defn fetch-crypto-data []
   (js/console.log "Starting crypto data fetch...")
+  ;; Show top scan line during fetch
+  (let [indicator (js/document.getElementById "fetch-indicator")]
+    (when indicator
+      (.add (.-classList indicator) "active")))
   ;; Only show loading states for initial load
   (when (not @initial-load-complete)
     (when (not @loading-atom)
@@ -183,6 +187,10 @@
                  ;; Flash indicator briefly to show data was fetched (always)
                  (reset! update-flash-atom true)
                  (js/setTimeout #(reset! update-flash-atom false) 800)
+                 ;; Hide top scan line
+                 (let [indicator (js/document.getElementById "fetch-indicator")]
+                   (when indicator
+                     (.remove (.-classList indicator) "active")))
                  ;; Only update loading state for initial load
                  (when (not @initial-load-complete)
                    (reset! initial-load-complete true)
@@ -198,6 +206,10 @@
       (.catch (fn [error]
                 (js/console.error "Failed to fetch crypto data:" error)
                 (js/console.log "Error atom before:" @error-atom)
+                ;; Hide top scan line on error
+                (let [indicator (js/document.getElementById "fetch-indicator")]
+                  (when indicator
+                    (.remove (.-classList indicator) "active")))
                 ;; Update new granular atoms
                 (reset! loading-atom false)
                 (reset! error-atom (.-message error))
