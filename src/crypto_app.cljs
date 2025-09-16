@@ -12,9 +12,6 @@
 (def initial-load-complete (r/atom false))
 (def update-flash-atom (r/atom false))
 
-;; Legacy app-state for backward compatibility during migration
-(def app-state (r/atom {:prices {} :last-update nil :loading true :error nil}))
-
 ;; Crypto icons and symbols mapping (updated for Figure Markets data)
 (def crypto-icons
   {:btc "₿"
@@ -57,7 +54,6 @@
   (format-volume cap))
 
 (defn crypto-card [crypto-id]
-  (js/console.log "crypto-card rendering for:" crypto-id)
   (let [data @(r/cursor prices-atom [crypto-id])
         name (str/upper-case crypto-id)
         symbol (get crypto-symbols (keyword crypto-id) (str/upper-case crypto-id))
@@ -103,7 +99,6 @@
          [:div {:class "text-sm font-semibold text-red-400 tabular-nums"} (format-price ask crypto-id)]]])]))
 
 (defn app-component []
-  (js/console.log "app-component rendering")
   (let [last-update @last-update-atom
         loading @loading-atom
         error @error-atom
@@ -140,14 +135,10 @@
                   "Last updated: " last-update]])])]))
 
 (defn fetch-crypto-data []
-  (js/console.log "Starting crypto data fetch...")
   ;; Show top scan line during fetch
   (let [indicator (js/document.getElementById "fetch-indicator")]
-    (if indicator
-      (do
-        (js/console.log "Starting top scan line animation")
-        (.add (.-classList indicator) "active"))
-      (js/console.log "ERROR: fetch-indicator element not found!")))
+    (when indicator
+      (.add (.-classList indicator) "active")))
   ;; Only show loading states for initial load
   (when (not @initial-load-complete)
     (when (not @loading-atom)
@@ -156,15 +147,12 @@
       (reset! error-atom nil)))
   (-> (js/fetch (str "./data/crypto-prices.json?t=" (js/Date.now)))
       (.then (fn [response]
-               (js/console.log "Fetch response received, status:" (.-status response))
                (if (.-ok response)
                  (.json response)
                  (throw (js/Error. (str "HTTP " (.-status response)))))))
       (.then (fn [data]
-               (js/console.log "JSON data parsed:" data)
                (let [js-data (js->clj data :keywordize-keys false)
                      prices (dissoc js-data "timestamp" "source" "last_update")]
-                 (js/console.log "Processed prices:" prices)
                  ;; Update new granular atoms with differential updates
                  (let [old-prices @prices-atom
                        new-keys (set (keys prices))
@@ -178,7 +166,6 @@
                            new-change (get new-data "usd_24h_change")]
                        (when (or (not= old-price new-price)
                                  (not= old-change new-change))
-                         (js/console.log "Updating coin:" coin-id "price:" old-price "→" new-price "change:" old-change "→" new-change)
                          (swap! prices-atom assoc coin-id new-data))))
                    ;; Only update keys if they actually changed
                    (when (not= new-keys old-keys)
@@ -186,7 +173,6 @@
                  ;; Always update timestamp to show when we fetched the data
                  (let [now (js/Date.)
                        formatted-time (.toISOString now)]
-                   (js/console.log "Updating timestamp:" @last-update-atom "→" formatted-time)
                    (reset! last-update-atom (.replace formatted-time "T" " ")))
                  ;; Flash indicator briefly to show data was fetched (always)
                  (reset! update-flash-atom true)
@@ -195,11 +181,8 @@
                  (js/setTimeout
                   (fn []
                     (let [indicator (js/document.getElementById "fetch-indicator")]
-                      (if indicator
-                        (do
-                          (js/console.log "Stopping top scan line animation")
-                          (.remove (.-classList indicator) "active"))
-                        (js/console.log "ERROR: fetch-indicator element not found for hiding!"))))
+                      (when indicator
+                        (.remove (.-classList indicator) "active"))))
                   2100)
                  ;; Only update loading state for initial load
                  (when (not @initial-load-complete)
@@ -215,7 +198,7 @@
                  )))
       (.catch (fn [error]
                 (js/console.error "Failed to fetch crypto data:" error)
-                (js/console.log "Error atom before:" @error-atom)
+
                 ;; Hide top scan line on error
                 (let [indicator (js/document.getElementById "fetch-indicator")]
                   (when indicator
@@ -223,7 +206,7 @@
                 ;; Update new granular atoms
                 (reset! loading-atom false)
                 (reset! error-atom (.-message error))
-                (js/console.log "Error atom after:" @error-atom)
+
                 ;; DISABLED: Update legacy app-state for backward compatibility
                 ;; (swap! app-state assoc
                 ;;        :loading false
@@ -245,11 +228,7 @@
      (when @loading-atom
        ;; Update new granular atoms
        (reset! loading-atom false)
-       (reset! error-atom "Timeout loading data")
-       ;; Update legacy app-state for backward compatibility
-       (swap! app-state assoc
-              :loading false
-              :error "Timeout loading data")))
+       (reset! error-atom "Timeout loading data")))
    10000)
 
   ;; Fetch data immediately and then every 30 seconds
