@@ -408,16 +408,20 @@
                           "Last updated: " last-update]])])]))
 
         (defn fetch-crypto-data []
+          (js/console.log "Starting crypto data fetch...")
           (swap! app-state assoc :loading true :error nil)
           (-> (js/fetch "./data/crypto-prices.json")
               (.then (fn [response]
+                       (js/console.log "Fetch response received, status:" (.-status response))
                        (if (.-ok response)
                          (.json response)
                          (throw (js/Error. (str "HTTP " (.-status response)))))))
               (.then (fn [data]
+                       (js/console.log "JSON data parsed:" data)
                        (let [js-data (js->clj data)
                              prices (dissoc js-data "timestamp" "source" "last_update")
                              last-update (get js-data "last_update")]
+                         (js/console.log "Processed prices:" prices)
                          (swap! app-state assoc 
                                 :prices prices 
                                 :last-update last-update 
@@ -435,6 +439,15 @@
 
         ;; Start the app
         (mount-app)
+        
+        ;; Add a timeout to show error if loading takes too long
+        (js/setTimeout 
+          (fn []
+            (when (:loading @app-state)
+              (swap! app-state assoc 
+                     :loading false 
+                     :error "Timeout loading data")))
+          10000)
         
         ;; Fetch data immediately and then every 30 seconds
         (fetch-crypto-data)
