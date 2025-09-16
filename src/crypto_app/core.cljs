@@ -30,4 +30,6 @@
   (effects/start-polling))
 
 ;; Auto-start when script loads
+(js/console.log "🟢 CORE.CLJS LOADED - About to call init()")
 (init)
+(js/console.log "🟢 INIT() COMPLETED")
