@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Price Dashboard</title>
+    <title>Crypto Price Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/scittle@0.6.17/dist/scittle.js"></script>
     <style>
         * {
@@ -13,83 +13,192 @@
         }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
             min-height: 100vh;
-            padding: 20px;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(120, 20, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255, 20, 147, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(20, 147, 255, 0.1) 0%, transparent 50%);
+            z-index: -1;
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-20px, -20px) rotate(1deg); }
+            66% { transform: translate(20px, -10px) rotate(-1deg); }
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-top: 30px;
         }
         
         h1 {
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-size: 3.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00ff88 0%, #00ccff 50%, #ff00ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            animation: glow 3s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+        
+        .subtitle {
+            color: #888;
+            font-size: 1.1em;
+            font-weight: 300;
         }
         
         .crypto-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 40px;
         }
         
         .crypto-card { 
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .crypto-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00ff88, #00ccff, #ff00ff);
+            transform: translateX(-100%);
+            animation: scan 3s linear infinite;
+        }
+        
+        @keyframes scan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
         
         .crypto-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+            transform: translateY(-5px) scale(1.02);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3),
+                        0 0 60px rgba(120, 20, 255, 0.1);
         }
         
         .crypto-header {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .crypto-info {
+            display: flex;
+            align-items: center;
         }
         
         .crypto-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 12px;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            margin-right: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 24px;
+            background: linear-gradient(135deg, rgba(120, 20, 255, 0.2) 0%, rgba(255, 20, 147, 0.2) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .crypto-name {
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: 600;
-            color: #333;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+        
+        .crypto-symbol {
+            font-size: 0.85em;
+            color: #666;
+            margin-left: 8px;
+            text-transform: uppercase;
         }
         
         .price { 
-            font-size: 1.8em; 
-            font-weight: bold;
-            color: #2d3748;
-            margin-bottom: 10px;
+            font-size: 2.2em; 
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -1px;
+        }
+        
+        .change-container {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .change-positive { 
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        
+        .change-negative { 
+            background: rgba(255, 77, 90, 0.1);
+            color: #ff4d5a;
+            border: 1px solid rgba(255, 77, 90, 0.2);
+        }
+        
+        .arrow {
+            margin-right: 5px;
+            font-size: 1.1em;
         }
         
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #e2e8f0;
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
         
         .stat {
@@ -99,64 +208,103 @@
         
         .stat-label {
             font-size: 0.75em;
-            color: #718096;
+            color: #666;
             text-transform: uppercase;
-            margin-bottom: 2px;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
         }
         
         .stat-value {
-            font-size: 0.95em;
+            font-size: 1em;
             font-weight: 600;
-            color: #2d3748;
+            color: #fff;
+            font-variant-numeric: tabular-nums;
         }
-        
-        .change-positive { color: #48bb78; }
-        .change-negative { color: #f56565; }
         
         .loading { 
             text-align: center;
-            color: white;
+            color: #888;
             font-size: 1.2em;
+            padding: 100px 0;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
         .error {
-            background: #fed7d7;
-            color: #742a2a;
-            padding: 15px;
-            border-radius: 8px;
+            background: rgba(255, 77, 90, 0.1);
+            border: 1px solid rgba(255, 77, 90, 0.2);
+            color: #ff4d5a;
+            padding: 20px;
+            border-radius: 12px;
             margin: 20px 0;
             text-align: center;
         }
         
         .footer {
             text-align: center;
-            color: white;
-            margin-top: 30px;
-            font-size: 0.9em;
-            opacity: 0.9;
+            margin-top: 60px;
+            padding-bottom: 40px;
         }
         
         .last-update {
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            padding: 10px 20px;
-            border-radius: 20px;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 24px;
+            border-radius: 30px;
+            color: #888;
+            font-size: 0.9em;
+        }
+        
+        .update-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
         }
         
         @media (max-width: 640px) {
-            h1 { font-size: 1.8em; }
+            h1 { font-size: 2.5em; }
             .crypto-grid {
                 grid-template-columns: 1fr;
             }
+            .price { font-size: 1.8em; }
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>💎 Crypto Price Dashboard</h1>
+        <header>
+            <h1>CRYPTO TRACKER</h1>
+            <p class="subtitle">Real-time cryptocurrency prices powered by CoinGecko</p>
+        </header>
         <div id="app">
-            <div class="loading">⏳ Loading crypto data...</div>
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div>Loading market data...</div>
+            </div>
         </div>
     </div>
 
@@ -166,7 +314,7 @@
 
         (def app-state (atom {:prices {} :last-update nil :loading true :error nil}))
 
-        ;; Crypto icons mapping
+        ;; Crypto icons and symbols mapping
         (def crypto-icons
           {:bitcoin "₿"
            :ethereum "Ξ"
@@ -174,8 +322,18 @@
            :polkadot "●"
            :chainlink "⬡"
            :solana "◎"
-           :avalanche-2 "🔺"
-           :polygon "▲"})
+           :avalanche-2 "▲"
+           :polygon "Ⓜ"})
+        
+        (def crypto-symbols
+          {:bitcoin "BTC"
+           :ethereum "ETH"
+           :cardano "ADA"
+           :polkadot "DOT"
+           :chainlink "LINK"
+           :solana "SOL"
+           :avalanche-2 "AVAX"
+           :polygon "MATIC"})
 
         (defn format-number [n decimals]
           (.toLocaleString n "en-US" 
@@ -195,24 +353,32 @@
           (format-volume cap))
 
         (defn format-change [change]
-          (let [formatted (str (if (>= change 0) "+" "") 
-                              (format-number change 2) "%")
-                class (if (>= change 0) "change-positive" "change-negative")]
-            [:span {:class class} formatted]))
+          (let [positive? (>= change 0)
+                arrow (if positive? "▲" "▼")
+                formatted (str (format-number (js/Math.abs change) 2) "%")
+                class (if positive? "change-positive" "change-negative")]
+            [:div {:class (str "change-container " class)}
+             [:span {:class "arrow"} arrow]
+             formatted]))
 
         (defn crypto-card [crypto-id data]
           (let [name (-> crypto-id name (str/replace "-" " ") str/capitalize)
-                icon (get crypto-icons (keyword crypto-id) "🪙")
+                symbol (get crypto-symbols (keyword crypto-id) "")
+                icon (get crypto-icons (keyword crypto-id) "◆")
                 price (get data "usd")
                 change (get data "usd_24h_change")
                 volume (get data "usd_24h_vol")
                 market-cap (get data "usd_market_cap")]
             [:div {:class "crypto-card"}
              [:div {:class "crypto-header"}
-              [:div {:class "crypto-icon"} icon]
-              [:div {:class "crypto-name"} name]]
+              [:div {:class "crypto-info"}
+               [:div {:class "crypto-icon"} icon]
+               [:div 
+                [:div {:class "crypto-name"} 
+                 name
+                 [:span {:class "crypto-symbol"} symbol]]]]]
              [:div {:class "price"} (format-price price)]
-             [:div "24h Change: " (format-change change)]
+             (format-change change)
              [:div {:class "stats"}
               [:div {:class "stat"}
                [:div {:class "stat-label"} "24h Volume"]
@@ -226,10 +392,12 @@
             [:div
              (cond
                error [:div {:class "error"} 
-                      "❌ Error loading data: " error 
+                      "Failed to load market data: " error 
                       [:br]
-                      "Will retry in 30 seconds..."]
-               loading [:div {:class "loading"} "⏳ Loading crypto data..."]
+                      "Retrying in 30 seconds..."]
+               loading [:div {:class "loading"} 
+                        [:div {:class "loading-spinner"}]
+                        [:div "Loading market data..."]]
                :else [:div
                       [:div {:class "crypto-grid"}
                        (for [[crypto-id data] prices]
@@ -237,7 +405,8 @@
                       (when last-update
                         [:div {:class "footer"}
                          [:div {:class "last-update"}
-                          "📊 Last updated: " last-update]])])]))
+                          [:span {:class "update-dot"}]
+                          "Last updated: " last-update]])])]))
 
         (defn fetch-crypto-data []
           (swap! app-state assoc :loading true :error nil)
