@@ -13,6 +13,16 @@ outputs:
     value: 'data/crypto-prices.json'
 
 runs:
-  using: 'node20'
-  main: 'dist/action.js'
-  pre: 'npm install'
+  using: 'composite'
+  steps:
+    - name: Install dependencies
+      run: |
+        cd ${{ github.action_path }}
+        npm install
+        npm install -g nbb
+      shell: bash
+    - name: Run nbb action
+      run: |
+        cd ${{ github.action_path }}
+        nbb action.cljs
+      shell: bash

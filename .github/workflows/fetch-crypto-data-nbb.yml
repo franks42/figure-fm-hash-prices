@@ -1,0 +1,50 @@
+name: Fetch Crypto Data (nbb)
+
+on:
+  # Manual trigger for testing
+  workflow_dispatch:
+
+  # Run automatically every 10 minutes (disabled for testing)
+  # schedule:
+  #   - cron: '*/10 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Fetch crypto data with nbb
+      uses: ./.github/actions/fetch-data
+      with:
+        alpha-vantage-api-key: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
+
+    - name: Commit and push to data branch
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+        # Check if file exists and has content
+        if [ -s data/crypto-prices.json ]; then
+          # Simple approach: create new branch from main, add file, force push
+          git checkout -b data-updates-temp
+          git add data/crypto-prices.json
+          git commit -m "Update crypto data $(date -u '+%Y-%m-%d %H:%M:%S UTC') [nbb]"
+
+          # Force push to data-updates branch (overwrite completely)
+          git push origin data-updates-temp:data-updates --force
+          echo "✅ Data force pushed to data-updates branch successfully"
+        else
+          echo "❌ Error: crypto-prices.json is empty or doesn't exist"
+          exit 1
+        fi
