@@ -1,0 +1,19 @@
+{
+  "name": "fetch-crypto-data-action",
+  "version": "1.0.0",
+  "description": "Fetch crypto and stock data using nbb",
+  "main": "action.cljs",
+  "scripts": {
+    "test": "nbb action.cljs",
+    "lint": "clj-kondo --lint action.cljs",
+    "format": "cljfmt fix action.cljs"
+  },
+  "dependencies": {
+    "nbb": "^1.3.184",
+    "@actions/core": "^1.10.1",
+    "@actions/github": "^6.0.0",
+    "@actions/exec": "^1.1.1",
+    "node-fetch": "^3.3.2"
+  },
+  "type": "module"
+}
