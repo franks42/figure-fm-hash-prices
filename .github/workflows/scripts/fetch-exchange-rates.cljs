@@ -4,22 +4,28 @@
 (require '[clojure.string :as str])
 
 ;; Exchange rate fetching script for GitHub Actions
-;; Fetches USD exchange rates to various currencies using exchangerate.host (free, no API key needed)
+;; Fetches USD exchange rates to various currencies using exchangerate-api.com (free, no API key needed)
 
 (def supported-currencies ["EUR" "GBP" "JPY" "CAD" "AUD" "CHF" "CNY" "KRW" "SEK"])
 
 (defn fetch-exchange-rates []
-  "Fetch current USD exchange rates"
-  (let [base-url "https://api.exchangerate.host/latest"
-        params (str "?base=USD&symbols=" (str/join "," supported-currencies))]
-    (-> (js/fetch (str base-url params))
+  "Fetch current USD exchange rates from exchangerate-api.com"
+  (let [api-url "https://api.exchangerate-api.com/v4/latest/USD"]
+    (-> (js/fetch api-url)
         (.then (fn [response]
                  (if (.-ok response)
                    (.json response)
                    (throw (js/Error. (str "HTTP " (.-status response)))))))
         (.then (fn [data]
                  (js/console.log "✅ Exchange rates fetched successfully")
-                 (js->clj data :keywordize-keys true))))))
+                 (let [clj-data (js->clj data :keywordize-keys true)
+                       all-rates (:rates clj-data)
+                       ;; Filter to only include our supported currencies
+                       filtered-rates (select-keys all-rates
+                                                   (map keyword supported-currencies))]
+                   {:rates filtered-rates
+                    :date (:date clj-data)
+                    :base (:base clj-data)}))))))
 
 (defn save-exchange-rates [rates-data]
   "Save exchange rates to JSON file"
@@ -30,7 +36,7 @@
         output {:rates rates
                 :timestamp timestamp
                 :base "USD"
-                :source "exchangerate.host"
+                :source "exchangerate-api.com"
                 :lastUpdate (.toISOString (js/Date.))}]
     (js/console.log "💾 Saving exchange rates to" path)
     (js/console.log "📊 Rates:" (clj->js rates))
