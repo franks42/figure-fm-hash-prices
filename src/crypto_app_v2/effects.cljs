@@ -177,10 +177,12 @@
                (let [rates-data (js->clj data :keywordize-keys true)
                      rates (:rates rates-data)]
                  (js/console.log "✅ Exchange rates loaded from API:" rates)
-                 (reset! state/exchange-rates-atom rates))))
+                 (reset! state/exchange-rates-atom rates)
+                 (reset! state/using-mock-rates-atom false))))
       (.catch (fn [error]
                 (js/console.warn "💱 Failed to load exchange rates, using mock data:" error)
                 (reset! state/exchange-rates-atom mock-exchange-rates)
+                (reset! state/using-mock-rates-atom true)
                 (js/console.log "💱 Mock exchange rates loaded:" @state/exchange-rates-atom)))))
 
 (defn start-polling []

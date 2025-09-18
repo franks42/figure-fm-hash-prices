@@ -86,10 +86,18 @@
         ;; Right - Exchange rate indicator
         [:div {:class "flex-1 flex justify-end"}
          (when (and exchange-rate (not= current-currency "USD"))
-           [:div {:class "text-xs text-gray-400 bg-white/5 border border-white/10 rounded-lg px-3 py-2"}
-            [:div {:class "text-gray-500 uppercase tracking-wider"} "Exchange Rate"]
+           [:div {:class (str "text-xs bg-white/5 border rounded-lg px-3 py-2 "
+                              (if @state/using-mock-rates-atom
+                                "border-amber-500/40 text-amber-400"
+                                "border-white/10 text-gray-400"))}
+            [:div {:class "text-gray-500 uppercase tracking-wider flex items-center"}
+             "Exchange Rate"
+             (when @state/using-mock-rates-atom
+               [:span {:class "ml-1 text-amber-500"} "⚠️"])]
             [:div {:class "font-mono text-gray-300"}
-             (str "1 USD = " (format-number exchange-rate 3) " " current-currency)]])]]])))
+             (str "1 USD = " (format-number exchange-rate 3) " " current-currency)]
+            (when @state/using-mock-rates-atom
+              [:div {:class "text-xs text-amber-300 mt-1"} "Mock data"])])]]])))
 
 ;; UI Components
 (defn crypto-card [asset]
@@ -242,6 +250,16 @@
        (modal-container
         [:div header content])))))
 
+;; Mock data warning banner
+(defn mock-data-warning []
+  (when @state/using-mock-rates-atom
+    [:div {:class "bg-amber-500/10 border border-amber-500/20 text-amber-400 p-4 rounded-xl mb-6 flex items-center"}
+     [:div {:class "flex items-center mr-3"}
+      [:span {:class "text-lg"} "⚠️"]]
+     [:div
+      [:div {:class "font-semibold"} "Using Mock Exchange Rates"]
+      [:div {:class "text-sm text-amber-300"} "Real-time rates unavailable. Currency conversions use demo values."]]]))
+
 ;; Currency selector modal
 (defn currency-selector-panel []
   (when @state/show-currency-panel
@@ -297,6 +315,7 @@
                 [:div {:class "inline-block w-10 h-10 border-3 border-gray-700 border-t-neon-green rounded-full animate-spin mb-5"}]
                 [:div "Loading standardized market data..."]]
        :else [:div
+              (mock-data-warning)
               (portfolio-summary-header)
               [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10"}
                (let [prices @state/prices-atom

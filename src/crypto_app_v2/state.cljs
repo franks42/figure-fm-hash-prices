@@ -18,6 +18,7 @@
 (def currency-atom (r/atom "USD"))         ; Currently selected currency
 (def show-currency-panel (r/atom false))   ; Currency selector modal open/closed
 (def exchange-rates-atom (r/atom {}))      ; Exchange rates: {"EUR" 0.85, "GBP" 0.73, ...}
+(def using-mock-rates-atom (r/atom true))  ; Track if using mock exchange rates
 
 ;; Portfolio persistence functions (compositional approach)
 (defn save-portfolio-to-storage [portfolio-data]
