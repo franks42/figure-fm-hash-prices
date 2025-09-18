@@ -50,7 +50,17 @@ jobs:
         else
           git add data/standardized-prices.json
           git add data/exchange-rates.json
-          git add data/unmapped-fields.log
+          # Add unmapped-fields.log only if it exists
+          if [ -f data/unmapped-fields.log ]; then
+            git add data/unmapped-fields.log
+          fi
+          # Add other metadata files if they exist
+          if [ -f data/standardized-metadata.json ]; then
+            git add data/standardized-metadata.json
+          fi
+          if [ -f data/mapping-report.json ]; then
+            git add data/mapping-report.json
+          fi
           git commit -m "Update crypto prices and exchange rates data
 
           🤖 Generated with standardized field mapping system
