@@ -124,7 +124,7 @@
            [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Ask"]
            [:div {:class "text-sm font-semibold text-red-400 tabular-nums"} (format-price ask crypto-id)]]]))
      ;; Portfolio value display  
-      (portfolio-value-display holding-value crypto-id)
+     (portfolio-value-display holding-value crypto-id)
       ;; Portfolio button
      [:div {:class "flex mt-4"}
       [:button {:class "flex-1 bg-white/[0.05] hover:bg-white/[0.10] border border-white/20 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
@@ -159,7 +159,7 @@
 (defn quantity-input [current-quantity]
   [:div {:class "flex flex-col space-y-2"}
    [:label {:class "text-sm text-gray-400"} "Enter Quantity:"]
-   [:input {:type "number" 
+   [:input {:type "number"
             :step "0.0001"
             :placeholder "0.0000"
             :class "bg-gray-800 border border-white/20 rounded-lg px-3 py-2 text-white text-center focus:outline-none focus:border-white/40"
@@ -200,15 +200,15 @@
                          (state/persist-portfolio)
                          (js/console.log "🔴 Closing modal...")
                          (reset! state/show-portfolio-panel nil))))
-          
+
           header (modal-header icon symbol close-fn)
           holdings (holdings-display current-quantity holding-value crypto-id)
           form (input-form current-quantity save-fn close-fn)
           content [:div {:class "space-y-4"} holdings form]]
-      
-      (modal-backdrop 
-        (modal-container 
-          [:div header content])))))
+
+      (modal-backdrop
+       (modal-container
+        [:div header content])))))
 
 (defn app-component []
   (let [last-update @state/last-update-atom
@@ -225,8 +225,8 @@
                 [:div {:class "inline-block w-10 h-10 border-3 border-gray-700 border-t-neon-green rounded-full animate-spin mb-5"}]
                 [:div "Loading market data..."]]
        :else [:div
-       (portfolio-summary-header)
-               [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10"}
+              (portfolio-summary-header)
+              [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10"}
                (let [price-keys @state/price-keys-atom
                      sorted-keys (sort-by (fn [crypto-id]
                                             (cond

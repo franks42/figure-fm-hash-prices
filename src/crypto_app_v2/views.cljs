@@ -204,8 +204,8 @@
           content [:div {:class "space-y-4"} holdings form]]
 
       (modal-backdrop
-        (modal-container
-          [:div header content])))))
+       (modal-container
+        [:div header content])))))
 
 (defn app-component []
   (let [last-update @state/last-update-atom
@@ -222,7 +222,7 @@
                 [:div {:class "inline-block w-10 h-10 border-3 border-gray-700 border-t-neon-green rounded-full animate-spin mb-5"}]
                 [:div "Loading standardized market data..."]]
        :else [:div
-       (portfolio-summary-header)
+              (portfolio-summary-header)
               [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10"}
                (let [prices @state/prices-atom
                      sorted-assets (sort-by (fn [asset]

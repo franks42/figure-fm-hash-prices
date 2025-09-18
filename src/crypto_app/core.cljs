@@ -17,12 +17,12 @@
   (js/console.log "🌍 Current URL:" js/window.location.href)
   (js/console.log "🌍 Domain:" js/window.location.hostname)
   (js/console.log "🌍 Protocol:" js/window.location.protocol)
-  
+
   ;; Restore portfolio from localStorage
   (js/console.log "📂 Restoring portfolio from localStorage...")
   (state/restore-portfolio)
   (js/console.log "📂 Portfolio state after restore:" @state/portfolio-atom)
-  
+
   ;; Start the app UI
   (mount-app)
 
