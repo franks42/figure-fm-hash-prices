@@ -1,0 +1,80 @@
+(ns crypto-app-v2.state
+  (:require [reagent.core :as r]))
+
+;; Fine-grained state atoms for selective updates
+(def prices-atom (r/atom []))                     ; Changed: array instead of object
+(def price-keys-atom (r/atom []))
+(def last-update-atom (r/atom nil))
+(def loading-atom (r/atom true))
+(def error-atom (r/atom nil))
+(def initial-load-complete (r/atom false))
+(def update-flash-atom (r/atom false))
+
+;; Portfolio state atoms
+(def portfolio-atom (r/atom {}))           ; Simple holdings: crypto-id -> quantity
+(def show-portfolio-panel (r/atom nil))    ; crypto-id of asset whose portfolio modal is open, nil = closed
+
+;; Portfolio persistence functions (compositional approach)
+(defn save-portfolio-to-storage [portfolio-data]
+  (try
+    (js/console.log "💾 Saving portfolio to localStorage:" portfolio-data)
+    (.setItem js/localStorage "crypto-portfolio-v2" (.stringify js/JSON (clj->js portfolio-data)))
+    (js/console.log "✅ Portfolio saved successfully")
+    true
+    (catch :default e
+      (js/console.warn "❌ Failed to save portfolio to localStorage:" e)
+      false)))
+
+(defn load-portfolio-from-storage []
+  (try
+    (js/console.log "📖 Loading portfolio from localStorage...")
+    (let [stored-data (.getItem js/localStorage "crypto-portfolio-v2")]
+      (js/console.log "📖 Raw stored data:" stored-data)
+      (when stored-data
+        (let [parsed-data (js->clj (.parse js/JSON stored-data))]
+          (js/console.log "✅ Portfolio loaded successfully:" parsed-data)
+          parsed-data)))
+    (catch :default e
+      (js/console.warn "❌ Failed to load portfolio from localStorage:" e)
+      {})))
+
+(defn persist-portfolio []
+  (save-portfolio-to-storage @portfolio-atom))
+
+(defn restore-portfolio []
+  (let [stored-portfolio (load-portfolio-from-storage)]
+    (when (seq stored-portfolio)
+      (reset! portfolio-atom stored-portfolio))))
+
+(defn clear-portfolio []
+  (reset! portfolio-atom {})
+  (save-portfolio-to-storage {}))
+
+;; Configuration constants
+(def ^:const POLL_INTERVAL_MS 30000)
+(def ^:const FLASH_DURATION_MS 800)
+(def ^:const SCAN_HIDE_DELAY_MS 2100)
+(def ^:const TIMEOUT_MS 10000)
+
+;; Crypto icons and symbols mapping (updated for Figure Markets data)
+(def crypto-icons
+  {:btc "₿"
+   :eth "Ξ"
+   :link "⬡"
+   :sol "◎"
+   :uni "🦄"
+   :xrp "💰"
+   :hash "🔗"
+   :figr_heloc "🏠"
+   :figr "📈"})
+
+(def crypto-symbols
+  {:btc "BTC"
+   :eth "ETH"
+   :link "LINK"
+   :sol "SOL"
+   :uni "UNI"
+   :xrp "XRP"
+   :hash "HASH"
+   :figr_heloc "FIGR_HELOC"
+   :figr "FIGR"})
