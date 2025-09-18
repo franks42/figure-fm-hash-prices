@@ -44,32 +44,29 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
 
-        # Switch to data-updates branch (where data files are stored like V1 app expects)
-        git fetch origin data-updates
-        git checkout -B data-updates origin/data-updates
-
-        # Check if there are changes to commit
-        if [ ! -f data/standardized-prices.json ] || [ ! -f data/exchange-rates.json ] || ! git diff --quiet data/standardized-prices.json data/exchange-rates.json 2>/dev/null; then
+        # Check if we have data files to commit (following V1 approach)
+        if [ -s data/standardized-prices.json ] && [ -s data/exchange-rates.json ]; then
+          # Simple approach: create new branch from main, add files, force push (same as V1)
+          git checkout -b data-updates-temp
           git add data/standardized-prices.json
           git add data/exchange-rates.json
-          # Add unmapped-fields.log only if it exists
-          if [ -f data/unmapped-fields.log ]; then
-            git add data/unmapped-fields.log
-          fi
-          # Add other metadata files if they exist
-          if [ -f data/standardized-metadata.json ]; then
-            git add data/standardized-metadata.json
-          fi
-          if [ -f data/mapping-report.json ]; then
-            git add data/mapping-report.json
-          fi
+
+          # Add optional files if they exist
+          [ -f data/unmapped-fields.log ] && git add data/unmapped-fields.log
+          [ -f data/standardized-metadata.json ] && git add data/standardized-metadata.json
+          [ -f data/mapping-report.json ] && git add data/mapping-report.json
+
           git commit -m "Update crypto prices and exchange rates data
 
           🤖 Generated with standardized field mapping system
           📊 Unmapped fields logged for mapping table updates
 
           $(date '+%Y-%m-%d %H:%M:%S UTC')"
-          git push origin data-updates
+
+          # Force push to data-updates branch (overwrite completely, same as V1)
+          git push origin data-updates-temp:data-updates --force
+          echo "✅ Data force pushed to data-updates branch successfully"
         else
-          echo "No changes to data files"
+          echo "❌ Error: Required data files are missing or empty"
+          exit 1
         fi
