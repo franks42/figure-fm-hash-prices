@@ -69,7 +69,8 @@
 (defn portfolio-summary-header []
   (let [total-value (portfolio/get-total-portfolio-value @state/portfolio-atom @state/prices-atom)
         current-currency @state/currency-atom
-        exchange-rate (get @state/exchange-rates-atom current-currency)]
+        currency-key (keyword current-currency)
+        exchange-rate (get @state/exchange-rates-atom currency-key)]
     (when (> total-value 0)
       [:div {:class "bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-2xl p-6 mb-8"}
        [:div {:class "flex items-center justify-between"}
@@ -260,6 +261,24 @@
       [:div {:class "font-semibold"} "Using Mock Exchange Rates"]
       [:div {:class "text-sm text-amber-300"} "Real-time rates unavailable. Currency conversions use demo values."]]]))
 
+;; Standalone exchange rate indicator (always visible)
+(defn exchange-rate-indicator []
+  (let [current-currency @state/currency-atom
+        currency-key (keyword current-currency)
+        exchange-rate (get @state/exchange-rates-atom currency-key)]
+    (when (and exchange-rate (not= current-currency "USD"))
+      [:div {:class "flex justify-center mb-6"}
+       [:div {:class (str "text-sm bg-white/5 border rounded-lg px-4 py-2 "
+                          (if @state/using-mock-rates-atom
+                            "border-amber-500/40 text-amber-400"
+                            "border-blue-500/40 text-blue-400"))}
+        [:div {:class "flex items-center"}
+         [:span {:class "mr-2"} "💱"]
+         [:span
+          (str "1 USD = " (format-number exchange-rate 3) " " current-currency)]
+         (when @state/using-mock-rates-atom
+           [:div {:class "text-xs text-amber-300 ml-2"} "(Mock)"])]]])))
+
 ;; Currency selector modal
 (defn currency-selector-panel []
   (when @state/show-currency-panel
@@ -316,6 +335,7 @@
                 [:div "Loading standardized market data..."]]
        :else [:div
               (mock-data-warning)
+              (exchange-rate-indicator)
               (portfolio-summary-header)
               [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10"}
                (let [prices @state/prices-atom

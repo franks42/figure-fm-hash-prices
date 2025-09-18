@@ -93,7 +93,8 @@
   "Convert USD amount to target currency using current exchange rates"
   (if (= target-currency "USD")
     usd-amount
-    (let [rate (get @exchange-rates-atom target-currency)]
+    (let [currency-key (keyword target-currency)
+          rate (get @exchange-rates-atom currency-key)]
       (if rate
         (* usd-amount rate)
         usd-amount))))  ; Fallback to USD if rate not available
