@@ -1,0 +1,1038 @@
+{
+  "metadata": {
+    "version": "1.1.0",
+    "lastUpdated": "2025-09-17",
+    "description": "API field mapping configuration for crypto tracker data standardization"
+  },
+  "typeDefinitions": {
+    "currencyAmount": {
+      "description": "A monetary amount with explicit currency specification",
+      "structure": {
+        "amount": {
+          "type": "number",
+          "description": "The numeric amount"
+        },
+        "currency": {
+          "type": "string",
+          "description": "The currency code (USD, EUR, JPY, etc.)"
+        }
+      },
+      "example": {
+        "amount": 45000.50,
+        "currency": "USD"
+      }
+    },
+    "tokenAmount": {
+      "description": "A token/asset quantity with token specification",
+      "structure": {
+        "amount": {
+          "type": "number",
+          "description": "The numeric quantity"
+        },
+        "currency": {
+          "type": "string",
+          "description": "The token/asset symbol (BTC, ETH, AAPL, etc.)"
+        }
+      },
+      "example": {
+        "amount": 1500000,
+        "currency": "BTC"
+      }
+    }
+  },
+  "apis": {
+    "figureMarkets": {
+      "name": "Figure Markets API",
+      "description": "Crypto trading data from Figure Markets",
+      "baseUrl": "https://api.figuremarkets.com"
+    },
+    "yahooFinance": {
+      "name": "Yahoo Finance API",
+      "description": "Stock and some crypto data",
+      "baseUrl": "https://query1.finance.yahoo.com"
+    },
+    "coinGecko": {
+      "name": "CoinGecko API",
+      "description": "Comprehensive crypto market data",
+      "baseUrl": "https://api.coingecko.com/api/v3"
+    },
+    "alphaVantage": {
+      "name": "Alpha Vantage API",
+      "description": "Stock and crypto data with time series",
+      "baseUrl": "https://www.alphavantage.co/query"
+    },
+    "freeCurrencyApi": {
+      "name": "FreeCurrencyAPI",
+      "description": "Currency exchange rates",
+      "baseUrl": "https://api.freecurrencyapi.com/v1"
+    },
+    "exchangeRateHost": {
+      "name": "ExchangeRate.host",
+      "description": "Real-time currency exchange rates",
+      "baseUrl": "https://api.exchangerate.host"
+    },
+    "fixerIo": {
+      "name": "Fixer.io",
+      "description": "Professional currency exchange rates",
+      "baseUrl": "https://api.fixer.io/v1"
+    }
+  },
+  "fieldMappings": {
+    "basicIdentification": {
+      "category": "Basic Identification",
+      "fields": {
+        "assetId": {
+          "type": "string",
+          "description": "Unique asset identifier",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "id",
+            "yahooFinance": null,
+            "coinGecko": "id",
+            "alphaVantage": "01. symbol",
+            "currentInternal": null
+          }
+        },
+        "symbol": {
+          "type": "string",
+          "description": "Trading pair symbol (e.g., \"BTC-USD\")",
+          "required": true,
+          "mappings": {
+            "figureMarkets": "symbol",
+            "yahooFinance": "symbol",
+            "coinGecko": "symbol",
+            "alphaVantage": "01. symbol",
+            "currentInternal": "symbol"
+          }
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Human-readable asset name",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "displayName",
+            "yahooFinance": "longName",
+            "coinGecko": "name",
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "baseCurrency": {
+          "type": "string",
+          "description": "Base currency (e.g., \"BTC\")",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "denom",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "quoteCurrency": {
+          "type": "string",
+          "description": "Quote currency (e.g., \"USD\")",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "quoteDenom",
+            "yahooFinance": "currency",
+            "coinGecko": null,
+            "alphaVantage": "09. currency",
+            "currentInternal": null
+          }
+        },
+        "assetType": {
+          "type": "string",
+          "description": "Asset type (\"crypto\", \"stock\", etc.)",
+          "required": true,
+          "enum": ["crypto", "stock", "fund", "commodity"],
+          "mappings": {
+            "figureMarkets": "marketType",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": "type"
+          }
+        }
+      }
+    },
+    "pricingData": {
+      "category": "Pricing Data",
+      "fields": {
+        "currentPrice": {
+          "type": "currencyAmount",
+          "description": "Current/mid market price with currency specification",
+          "required": true,
+          "structure": {
+            "amount": "number",
+            "currency": "string"
+          },
+          "mappings": {
+            "figureMarkets": {
+              "amount": "midMarketPrice",
+              "currency": "quoteDenom"
+            },
+            "yahooFinance": {
+              "amount": "regularMarketPrice",
+              "currency": "currency"
+            },
+            "coinGecko": {
+              "amount": "current_price",
+              "currency": "USD"
+            },
+            "alphaVantage": {
+              "amount": "05. price",
+              "currency": "09. currency"
+            },
+            "currentInternal": {
+              "amount": "usd",
+              "currency": "USD"
+            }
+          }
+        },
+        "lastTradePrice": {
+          "type": "number",
+          "description": "Last executed trade price in user's default fiat currency",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "lastTradedPrice",
+            "yahooFinance": "regularMarketPrice",
+            "coinGecko": "current_price",
+            "alphaVantage": "05. price",
+            "currentInternal": "last_price"
+          }
+        },
+        "bidPrice": {
+          "type": "number",
+          "description": "Best bid price in user's default fiat currency",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "bestBid",
+            "yahooFinance": "bid",
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": "bid"
+          }
+        },
+        "askPrice": {
+          "type": "number",
+          "description": "Best ask price in user's default fiat currency",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "bestAsk",
+            "yahooFinance": "ask",
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": "ask"
+          }
+        },
+        "indexPrice": {
+          "type": "number",
+          "description": "Reference/index price in user's default fiat currency",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "indexPrice",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        }
+      }
+    },
+    "statistics24h": {
+      "category": "24 Hour Statistics",
+      "fields": {
+        "priceChange24h": {
+          "type": "number",
+          "description": "Absolute price change",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "priceChange24h",
+            "yahooFinance": "calculated",
+            "coinGecko": "price_change_24h",
+            "alphaVantage": "06. change",
+            "currentInternal": "usd_24h_change"
+          }
+        },
+        "priceChangePercent24h": {
+          "type": "number",
+          "description": "Percentage price change",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "percentageChange24h",
+            "yahooFinance": "calculated",
+            "coinGecko": "price_change_percentage_24h",
+            "alphaVantage": "10. change percent",
+            "currentInternal": null
+          }
+        },
+        "volume24h": {
+          "type": "currencyAmount",
+          "description": "24-hour trading volume with currency specification",
+          "required": false,
+          "structure": {
+            "amount": "number",
+            "currency": "string"
+          },
+          "mappings": {
+            "figureMarkets": {
+              "amount": "volume24h",
+              "currency": "quoteDenom"
+            },
+            "yahooFinance": {
+              "amount": "regularMarketVolume",
+              "currency": "currency"
+            },
+            "coinGecko": {
+              "amount": "total_volume",
+              "currency": "USD"
+            },
+            "alphaVantage": null,
+            "currentInternal": "usd_24h_vol"
+          }
+        },
+        "baseVolume24h": {
+          "type": "tokenAmount",
+          "description": "24-hour trading volume in base currency/token quantity",
+          "required": false,
+          "structure": {
+            "amount": "number",
+            "currency": "string"
+          },
+          "mappings": {
+            "figureMarkets": {
+              "amount": "baseVolume24h",
+              "currency": "denom"
+            },
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": {
+              "amount": "06. volume",
+              "currency": "01. symbol"
+            },
+            "currentInternal": null
+          }
+        },
+        "high24h": {
+          "type": "number",
+          "description": "24-hour high price",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "high24h",
+            "yahooFinance": "regularMarketDayHigh",
+            "coinGecko": "high_24h",
+            "alphaVantage": "03. high",
+            "currentInternal": null
+          }
+        },
+        "low24h": {
+          "type": "number",
+          "description": "24-hour low price",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "low24h",
+            "yahooFinance": "regularMarketDayLow",
+            "coinGecko": "low_24h",
+            "alphaVantage": "04. low",
+            "currentInternal": null
+          }
+        },
+        "tradeCount24h": {
+          "type": "number",
+          "description": "Number of trades in 24h",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "tradeCount24h",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": "trades_24h"
+          }
+        }
+      }
+    },
+    "extendedPriceData": {
+      "category": "Extended Price Data",
+      "fields": {
+        "openPrice": {
+          "type": "number",
+          "description": "Opening price",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": "regularMarketOpen",
+            "coinGecko": null,
+            "alphaVantage": "02. open",
+            "currentInternal": null
+          }
+        },
+        "previousClose": {
+          "type": "number",
+          "description": "Previous closing price",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": "previousClose",
+            "coinGecko": null,
+            "alphaVantage": "08. previous close",
+            "currentInternal": null
+          }
+        },
+        "priceChange": {
+          "type": "number",
+          "description": "Absolute price change",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": "calculated",
+            "coinGecko": "price_change_24h",
+            "alphaVantage": "09. change",
+            "currentInternal": null
+          }
+        },
+        "fiftyTwoWeekHigh": {
+          "type": "number",
+          "description": "52-week high",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": "fiftyTwoWeekHigh",
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "fiftyTwoWeekLow": {
+          "type": "number",
+          "description": "52-week low",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": "fiftyTwoWeekLow",
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        }
+      }
+    },
+    "marketCapValuation": {
+      "category": "Market Cap & Valuation",
+      "fields": {
+        "marketCap": {
+          "type": "currencyAmount",
+          "description": "Market capitalization with currency specification",
+          "required": false,
+          "structure": {
+            "amount": "number",
+            "currency": "string"
+          },
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": {
+              "amount": "marketCap",
+              "currency": "currency"
+            },
+            "coinGecko": {
+              "amount": "market_cap",
+              "currency": "USD"
+            },
+            "alphaVantage": null,
+            "currentInternal": "usd_market_cap"
+          }
+        }
+      }
+    },
+    "tradingSpecifications": {
+      "category": "Trading Specifications",
+      "fields": {
+        "denomExponent": {
+          "type": "number",
+          "description": "Base currency decimal places",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "denomExponent",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "quoteExponent": {
+          "type": "number",
+          "description": "Quote currency decimal places",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "quoteExponent",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "pricePrecision": {
+          "type": "number",
+          "description": "Price decimal precision",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "pricePrecision",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "quantityPrecision": {
+          "type": "number",
+          "description": "Quantity decimal precision",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "quantityPrecision",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "priceIncrement": {
+          "type": "string",
+          "description": "Minimum price increment",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "priceIncrement",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "sizeIncrement": {
+          "type": "string",
+          "description": "Minimum quantity increment",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "sizeIncrement",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "minTradeQuantity": {
+          "type": "string",
+          "description": "Minimum trade size",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "minTradeQuantity",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        }
+      }
+    },
+    "marketInformation": {
+      "category": "Market Information",
+      "fields": {
+        "marketLocation": {
+          "type": "string",
+          "description": "Market jurisdiction",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "marketLocation",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "marketLocations": {
+          "type": "array",
+          "description": "Available market locations",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "marketLocations",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "exchange": {
+          "type": "string",
+          "description": "Exchange name",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": "fullExchangeName",
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "timezone": {
+          "type": "string",
+          "description": "Market timezone",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": "timezone",
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        }
+      }
+    },
+    "companyTokenInfo": {
+      "category": "Company/Token Info",
+      "fields": {
+        "companyName": {
+          "type": "string",
+          "description": "Full company/token name",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": "longName",
+            "coinGecko": "name",
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "companyShortName": {
+          "type": "string",
+          "description": "Short company name",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": "shortName",
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        }
+      }
+    },
+    "tradingFeatures": {
+      "category": "Trading Features",
+      "fields": {
+        "proTradeAvailable": {
+          "type": "boolean",
+          "description": "Pro trading availability",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "proTradeAvailable",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "baseVolume24h": {
+          "type": "string",
+          "description": "24h volume in base currency",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "baseVolume24h",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        }
+      }
+    },
+    "blockchainContractInfo": {
+      "category": "Blockchain/Contract Info",
+      "fields": {
+        "contractAddress": {
+          "type": "array",
+          "description": "Smart contract addresses",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "contractAddress",
+            "yahooFinance": null,
+            "coinGecko": "platforms",
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "contractAddressUrl": {
+          "type": "array",
+          "description": "Blockchain explorer URLs",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "contractAddressUrl",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "unifiedCryptoassetId": {
+          "type": "string",
+          "description": "Universal crypto asset ID",
+          "required": false,
+          "mappings": {
+            "figureMarkets": "unifiedCryptoassetId",
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        }
+      }
+    },
+    "timestamps": {
+      "category": "Timestamps",
+      "fields": {
+        "lastTradeTime": {
+          "type": "number",
+          "description": "Last trade timestamp",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": "regularMarketTime",
+            "coinGecko": "last_updated",
+            "alphaVantage": "07. latest trading day",
+            "currentInternal": null
+          }
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Data fetch timestamp",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": null,
+            "coinGecko": "last_updated",
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "lastUpdate": {
+          "type": "string",
+          "description": "Human-readable update time",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": null,
+            "coinGecko": "last_updated",
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        }
+      }
+    },
+    "dataSource": {
+      "category": "Data Source",
+      "fields": {
+        "dataSource": {
+          "type": "string",
+          "description": "Data provider information",
+          "required": false,
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        },
+        "baseFiatCurrency": {
+          "type": "string",
+          "description": "User's preferred base fiat currency for price display",
+          "required": false,
+          "enum": ["USD", "EUR", "JPY", "GBP", "CAD", "AUD", "CHF", "SGD", "HKD", "KRW", "CNY", "INR", "BRL", "MXN", "AED", "NOK", "SEK", "NZD", "THB", "VND", "MYR"],
+          "default": "USD",
+          "mappings": {
+            "figureMarkets": null,
+            "yahooFinance": null,
+            "coinGecko": null,
+            "alphaVantage": null,
+            "currentInternal": null
+          }
+        }
+      }
+    }
+  },
+  "exchangeRateFields": {
+    "baseCurrencyInfo": {
+      "category": "Base Currency Info",
+      "fields": {
+        "baseCurrency": {
+          "type": "string",
+          "description": "Base currency code (e.g., \"USD\")",
+          "required": true,
+          "mappings": {
+            "freeCurrencyApi": "base_currency",
+            "exchangeRateHost": "base",
+            "fixerIo": "base"
+          }
+        },
+        "date": {
+          "type": "string",
+          "description": "Rate date (YYYY-MM-DD)",
+          "required": true,
+          "mappings": {
+            "freeCurrencyApi": "date",
+            "exchangeRateHost": "date",
+            "fixerIo": "date"
+          }
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Unix timestamp",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": null,
+            "exchangeRateHost": "timestamp",
+            "fixerIo": "timestamp"
+          }
+        }
+      }
+    },
+    "exchangeRates": {
+      "category": "Exchange Rates",
+      "fields": {
+        "rates": {
+          "type": "object",
+          "description": "Currency rates object",
+          "required": true,
+          "mappings": {
+            "freeCurrencyApi": "data",
+            "exchangeRateHost": "rates",
+            "fixerIo": "rates"
+          }
+        },
+        "eur": {
+          "type": "number",
+          "description": "EUR exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.EUR",
+            "exchangeRateHost": "rates.EUR",
+            "fixerIo": "rates.EUR"
+          }
+        },
+        "jpy": {
+          "type": "number",
+          "description": "JPY exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.JPY",
+            "exchangeRateHost": "rates.JPY",
+            "fixerIo": "rates.JPY"
+          }
+        },
+        "gbp": {
+          "type": "number",
+          "description": "GBP exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.GBP",
+            "exchangeRateHost": "rates.GBP",
+            "fixerIo": "rates.GBP"
+          }
+        },
+        "cad": {
+          "type": "number",
+          "description": "CAD exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.CAD",
+            "exchangeRateHost": "rates.CAD",
+            "fixerIo": "rates.CAD"
+          }
+        },
+        "aud": {
+          "type": "number",
+          "description": "AUD exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.AUD",
+            "exchangeRateHost": "rates.AUD",
+            "fixerIo": "rates.AUD"
+          }
+        },
+        "chf": {
+          "type": "number",
+          "description": "CHF exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.CHF",
+            "exchangeRateHost": "rates.CHF",
+            "fixerIo": "rates.CHF"
+          }
+        },
+        "sgd": {
+          "type": "number",
+          "description": "SGD (Singapore Dollar) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.SGD",
+            "exchangeRateHost": "rates.SGD",
+            "fixerIo": "rates.SGD"
+          }
+        },
+        "hkd": {
+          "type": "number",
+          "description": "HKD (Hong Kong Dollar) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.HKD",
+            "exchangeRateHost": "rates.HKD",
+            "fixerIo": "rates.HKD"
+          }
+        },
+        "krw": {
+          "type": "number",
+          "description": "KRW (Korean Won) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.KRW",
+            "exchangeRateHost": "rates.KRW",
+            "fixerIo": "rates.KRW"
+          }
+        },
+        "cny": {
+          "type": "number",
+          "description": "CNY (Chinese Yuan) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.CNY",
+            "exchangeRateHost": "rates.CNY",
+            "fixerIo": "rates.CNY"
+          }
+        },
+        "inr": {
+          "type": "number",
+          "description": "INR (Indian Rupee) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.INR",
+            "exchangeRateHost": "rates.INR",
+            "fixerIo": "rates.INR"
+          }
+        },
+        "brl": {
+          "type": "number",
+          "description": "BRL (Brazilian Real) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.BRL",
+            "exchangeRateHost": "rates.BRL",
+            "fixerIo": "rates.BRL"
+          }
+        },
+        "mxn": {
+          "type": "number",
+          "description": "MXN (Mexican Peso) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.MXN",
+            "exchangeRateHost": "rates.MXN",
+            "fixerIo": "rates.MXN"
+          }
+        },
+        "aed": {
+          "type": "number",
+          "description": "AED (UAE Dirham) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.AED",
+            "exchangeRateHost": "rates.AED",
+            "fixerIo": "rates.AED"
+          }
+        },
+        "nok": {
+          "type": "number",
+          "description": "NOK (Norwegian Krone) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.NOK",
+            "exchangeRateHost": "rates.NOK",
+            "fixerIo": "rates.NOK"
+          }
+        },
+        "sek": {
+          "type": "number",
+          "description": "SEK (Swedish Krona) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.SEK",
+            "exchangeRateHost": "rates.SEK",
+            "fixerIo": "rates.SEK"
+          }
+        },
+        "nzd": {
+          "type": "number",
+          "description": "NZD (New Zealand Dollar) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.NZD",
+            "exchangeRateHost": "rates.NZD",
+            "fixerIo": "rates.NZD"
+          }
+        },
+        "thb": {
+          "type": "number",
+          "description": "THB (Thai Baht) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.THB",
+            "exchangeRateHost": "rates.THB",
+            "fixerIo": "rates.THB"
+          }
+        },
+        "vnd": {
+          "type": "number",
+          "description": "VND (Vietnamese Dong) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.VND",
+            "exchangeRateHost": "rates.VND",
+            "fixerIo": "rates.VND"
+          }
+        },
+        "myr": {
+          "type": "number",
+          "description": "MYR (Malaysian Ringgit) exchange rate",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": "data.MYR",
+            "exchangeRateHost": "rates.MYR",
+            "fixerIo": "rates.MYR"
+          }
+        }
+      }
+    },
+    "apiMetadata": {
+      "category": "API Metadata",
+      "fields": {
+        "success": {
+          "type": "boolean",
+          "description": "API request success status",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": null,
+            "exchangeRateHost": "success",
+            "fixerIo": "success"
+          }
+        },
+        "source": {
+          "type": "string",
+          "description": "Data source information",
+          "required": false,
+          "mappings": {
+            "freeCurrencyApi": null,
+            "exchangeRateHost": "source",
+            "fixerIo": "source"
+          }
+        }
+      }
+    }
+  }
+}
