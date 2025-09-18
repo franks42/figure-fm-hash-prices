@@ -3,14 +3,19 @@
 (ns fetch-standardized-crypto-data
   "Fetch crypto data and convert to standardized format with unmapped field logging"
   (:require ["fs" :as fs]
-            ["axios" :as axios]
             [clojure.string :as str]))
 
 (defn load-field-mappings []
   "Load the standardized field mapping configuration"
-  (-> (fs/readFileSync "api-field-mapping.json" "utf8")
-      js/JSON.parse
-      js->clj))
+  (try
+    (let [file-content (fs/readFileSync "api-field-mapping.json" "utf8")
+          parsed (js/JSON.parse file-content)
+          clj-data (js->clj parsed)]
+      (println "✅ Loaded field mappings successfully")
+      clj-data)
+    (catch js/Error e
+      (println "❌ Error loading field mappings:" (.-message e))
+      (js/process.exit 1))))
 
 (defn get-all-source-mappings [field-mappings source-key]
   "Get all field mappings for a specific source, including complex mappings"
@@ -66,63 +71,49 @@
     {"amount" (if (string? amount) (js/parseFloat amount) amount)
      "currency" (str token)}))
 
-(defn map-figure-markets-asset [field-mappings raw-asset]
-  "Convert Figure Markets asset to standardized format"
+(defn map-github-data-to-standardized [raw-asset]
+  "Convert GitHub data (old format) to standardized format"
   (let [raw-data (js->clj raw-asset)
-        source-mappings (get-all-source-mappings field-mappings "figureMarkets")
-        unmapped-fields (find-unmapped-fields raw-data source-mappings)
-        mapped-data (atom {})]
+        ;; The data from GitHub is in the old format
+        symbol (get raw-data "symbol")
+        price (get raw-data "usd")
+        volume (get raw-data "usd_24h_vol")
+        change (get raw-data "usd_24h_change")
+        bid (get raw-data "bid")
+        ask (get raw-data "ask")
+        asset-type (get raw-data "type")
+        timestamp (.valueOf (js/Date.))]
 
-    ;; Map known fields
-    (doseq [[raw-field standard-field] source-mappings]
-      (when-let [raw-value (get raw-data raw-field)]
-        (swap! mapped-data assoc standard-field raw-value)))
-
-    ;; Get asset symbol for logging
-    (let [asset-symbol (or (get @mapped-data "symbol") "UNKNOWN")]
-      ;; Log unmapped fields
-      (log-unmapped-fields unmapped-fields "Figure Markets" asset-symbol))
-
-    ;; Build standardized asset with special handling for currencyAmount fields
-    (let [base-data @mapped-data
-          enhanced-data (merge base-data
-                               {;; currencyAmount conversions
-                                "currentPrice" (convert-to-currency-amount
-                                                (get base-data "midMarketPrice")
-                                                (get base-data "quoteDenom"))
-                                "volume24h" (convert-to-currency-amount
-                                             (get base-data "volume24h")
-                                             (get base-data "quoteDenom"))
-                                "baseVolume24h" (convert-to-token-amount
-                                                 (get base-data "baseVolume24h")
-                                                 (get base-data "denom"))
-                                "marketCap" (when (get base-data "marketCap")
-                                              (convert-to-currency-amount
-                                               (get base-data "marketCap")
-                                               (get base-data "quoteDenom")))
-
-                               ;; Add metadata
-                                "dataSource" "Figure Markets"
-                                "timestamp" (.getTime (js/Date.))
-                                "lastUpdate" (.toISOString (js/Date.))})]
-
-      ;; Return only non-nil values
-      (into {} (filter #(some? (second %)) enhanced-data)))))
+    ;; Build standardized format
+    {"symbol" symbol
+     "currentPrice" {"amount" price
+                     "currency" "USD"}
+     "volume24h" {"amount" volume
+                  "currency" "USD"}
+     "priceChange24h" change
+     "bidPrice" bid
+     "askPrice" ask
+     "assetType" asset-type
+     "dataSource" "GitHub/Figure Markets"
+     "timestamp" timestamp}))
 
 (defn fetch-figure-markets-data []
-  "Fetch data from Figure Markets API"
-  (println "🔄 Fetching data from Figure Markets API...")
-  (let [api-token (.-FIGURE_API_TOKEN js/process.env)]
-    (if (empty? api-token)
-      (do
-        (println "❌ FIGURE_API_TOKEN not found in environment")
-        (js/process.exit 1))
-      (-> (axios/get "https://api.figuremarkets.com/v1/markets"
-                     #js {:headers #js {"Authorization" (str "Bearer " api-token)}})
-          (.then #(.-data %))
-          (.catch #(do
-                     (println "❌ Error fetching Figure Markets data:" (.-message %))
-                     (js/process.exit 1)))))))
+  "Fetch data from GitHub raw data branch (same source as the main app)"
+  (println "🔄 Fetching data from GitHub data branch...")
+  (let [url (str "https://raw.githubusercontent.com/franks42/figure-fm-hash-prices/data-updates/data/crypto-prices.json?t=" (js/Date.now))]
+    (-> (js/fetch url)
+        (.then (fn [response]
+                 (if (.-ok response)
+                   (.json response)
+                   (throw (js/Error. (str "HTTP " (.-status response)))))))
+        (.then (fn [data]
+                 (let [clj-data (js->clj data)
+                       assets-array (vals clj-data)]
+                   (println "📊 Fetched" (count assets-array) "assets from GitHub")
+                   (clj->js assets-array))))
+        (.catch (fn [error]
+                  (println "❌ Error fetching from GitHub data branch:" (.-message error))
+                  (js/process.exit 1))))))
 
 (defn save-standardized-data [standardized-data]
   "Save standardized data with metadata"
@@ -168,28 +159,30 @@
                       (.stringify js/JSON (clj->js report) nil 2))
     report))
 
-(defn main []
+(defn -main []
   "Main function to fetch and convert crypto data"
-  (-> (js/Promise.resolve)
-      (.then #(do
-                (println "🚀 Starting standardized crypto data fetch...")
-                (load-field-mappings)))
-      (.then (fn [field-mappings]
-               (-> (fetch-figure-markets-data)
-                   (.then (fn [raw-data]
-                            (println "📊 Processing" (count raw-data) "assets...")
-                            (let [standardized-data (map #(map-figure-markets-asset field-mappings %) raw-data)
-                                  total-assets (count raw-data)
-                                  has-unmapped-fields (fs/existsSync "data/unmapped-fields.log")]
-                              (save-standardized-data standardized-data)
-                              (create-mapping-report total-assets has-unmapped-fields)
-                              (println "🎉 Standardized data fetch completed successfully!")
-                              (println "📋 Check data/mapping-report.json for mapping statistics")
-                              (when has-unmapped-fields
-                                (println "⚠️  Check data/unmapped-fields.log for unmapped fields"))))))))
-      (.catch (fn [error]
-                (println "❌ Error in main process:" (.-message error))
-                (js/process.exit 1)))))
+  (println "🚀 Starting standardized crypto data fetch...")
+  (let [field-mappings (load-field-mappings)]
+    (-> (fetch-figure-markets-data)
+        (.then (fn [raw-data]
+                 (try
+                   (println "📊 Processing" (count raw-data) "assets...")
+                   (let [standardized-data (doall (map map-github-data-to-standardized raw-data))
+                         total-assets (count raw-data)
+                         has-unmapped-fields (fs/existsSync "data/unmapped-fields.log")]
+                     (save-standardized-data standardized-data)
+                     (create-mapping-report total-assets has-unmapped-fields)
+                     (println "🎉 Standardized data fetch completed successfully!")
+                     (println "📋 Check data/mapping-report.json for mapping statistics")
+                     (when has-unmapped-fields
+                       (println "⚠️  Check data/unmapped-fields.log for unmapped fields")))
+                   (catch js/Error e
+                     (println "❌ Error processing data:" (.-message e))
+                     (println "Stack:" (.-stack e))
+                     (js/process.exit 1)))))
+        (.catch (fn [error]
+                  (println "❌ Error fetching data:" (.-message error))
+                  (js/process.exit 1))))))
 
 ;; Run the main function
-(main)
+(-main)
