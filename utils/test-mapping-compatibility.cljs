@@ -175,8 +175,8 @@
     (println (str "📊 Total assets in current data: " total-assets))
     (println (str "✅ Successfully mapped assets: " successful-conversions))
     (println (str "🎯 Success rate: " (if (> total-assets 0)
-                                         (str (Math/round (* 100 (/ successful-conversions total-assets))) "%")
-                                         "N/A")))
+                                        (str (Math/round (* 100 (/ successful-conversions total-assets))) "%")
+                                        "N/A")))
 
     (if (= total-assets successful-conversions)
       (println "\n🎉 All assets can be successfully converted to the new format!")

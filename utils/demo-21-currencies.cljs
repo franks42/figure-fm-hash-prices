@@ -1,8 +1,7 @@
 #!/usr/bin/env nbb
 
 (ns demo-21-currencies
-  "Demo of comprehensive 21-currency support"
-  (:require [clojure.pprint :as pprint]))
+  "Demo of comprehensive 21-currency support")
 
 (defn demo-complete-currency-coverage []
   "Show all 21 supported currencies"
