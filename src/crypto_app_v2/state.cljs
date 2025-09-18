@@ -14,6 +14,11 @@
 (def portfolio-atom (r/atom {}))           ; Simple holdings: crypto-id -> quantity
 (def show-portfolio-panel (r/atom nil))    ; crypto-id of asset whose portfolio modal is open, nil = closed
 
+;; Currency state atoms
+(def currency-atom (r/atom "USD"))         ; Currently selected currency
+(def show-currency-panel (r/atom false))   ; Currency selector modal open/closed
+(def exchange-rates-atom (r/atom {}))      ; Exchange rates: {"EUR" 0.85, "GBP" 0.73, ...}
+
 ;; Portfolio persistence functions (compositional approach)
 (defn save-portfolio-to-storage [portfolio-data]
   (try
@@ -50,6 +55,63 @@
   (reset! portfolio-atom {})
   (save-portfolio-to-storage {}))
 
+;; Currency persistence functions
+(defn save-currency-to-storage [currency]
+  (try
+    (js/console.log "💱 Saving currency to localStorage:" currency)
+    (.setItem js/localStorage "crypto-currency-v2" currency)
+    (js/console.log "✅ Currency saved successfully")
+    true
+    (catch :default e
+      (js/console.warn "❌ Failed to save currency to localStorage:" e)
+      false)))
+
+(defn load-currency-from-storage []
+  (try
+    (js/console.log "💱 Loading currency from localStorage...")
+    (let [stored-currency (.getItem js/localStorage "crypto-currency-v2")]
+      (js/console.log "💱 Raw stored currency:" stored-currency)
+      (if stored-currency
+        (do
+          (js/console.log "✅ Currency loaded successfully:" stored-currency)
+          stored-currency)
+        "USD"))
+    (catch :default e
+      (js/console.warn "❌ Failed to load currency from localStorage:" e)
+      "USD")))
+
+(defn persist-currency []
+  (save-currency-to-storage @currency-atom))
+
+(defn restore-currency []
+  (let [stored-currency (load-currency-from-storage)]
+    (reset! currency-atom stored-currency)))
+
+;; Currency conversion functions
+(defn convert-currency [usd-amount target-currency]
+  "Convert USD amount to target currency using current exchange rates"
+  (if (= target-currency "USD")
+    usd-amount
+    (let [rate (get @exchange-rates-atom target-currency)]
+      (if rate
+        (* usd-amount rate)
+        usd-amount))))  ; Fallback to USD if rate not available
+
+(defn get-currency-symbol [currency-code]
+  "Get currency symbol for display"
+  (case currency-code
+    "USD" "$"
+    "EUR" "€"
+    "GBP" "£"
+    "JPY" "¥"
+    "CAD" "C$"
+    "AUD" "A$"
+    "CHF" "CHF"
+    "CNY" "¥"
+    "KRW" "₩"
+    "SEK" "kr"
+    currency-code))
+
 ;; Configuration constants
 (def ^:const POLL_INTERVAL_MS 30000)
 (def ^:const FLASH_DURATION_MS 800)
@@ -67,6 +129,19 @@
    :hash "🔗"
    :figr_heloc "🏠"
    :figr "📈"})
+
+;; Supported currencies with symbols and names
+(def supported-currencies
+  [{:code "USD" :symbol "$" :name "US Dollar"}
+   {:code "EUR" :symbol "€" :name "Euro"}
+   {:code "GBP" :symbol "£" :name "British Pound"}
+   {:code "JPY" :symbol "¥" :name "Japanese Yen"}
+   {:code "CAD" :symbol "C$" :name "Canadian Dollar"}
+   {:code "AUD" :symbol "A$" :name "Australian Dollar"}
+   {:code "CHF" :symbol "CHF" :name "Swiss Franc"}
+   {:code "CNY" :symbol "¥" :name "Chinese Yuan"}
+   {:code "KRW" :symbol "₩" :name "Korean Won"}
+   {:code "SEK" :symbol "kr" :name "Swedish Krona"}])
 
 (def crypto-symbols
   {:btc "BTC"

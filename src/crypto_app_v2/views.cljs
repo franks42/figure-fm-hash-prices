@@ -11,17 +11,25 @@
                        :maximumFractionDigits decimals}))
 
 (defn format-price [price crypto-id]
-  (let [decimals (if (= crypto-id "hash") 3 2)]
-    (str "$" (format-number price decimals))))
+  (let [decimals (if (= crypto-id "hash") 3 2)
+        converted-price (state/convert-currency price @state/currency-atom)]
+    (format-number converted-price decimals)))
 
 (defn format-volume [vol]
-  (cond
-    (>= vol 1e9) (str "$" (format-number (/ vol 1e9) 2) "B")
-    (>= vol 1e6) (str "$" (format-number (/ vol 1e6) 2) "M")
-    :else (str "$" (format-number vol 0))))
+  (let [converted-vol (state/convert-currency vol @state/currency-atom)]
+    (cond
+      (>= converted-vol 1e9) (str (format-number (/ converted-vol 1e9) 2) "B")
+      (>= converted-vol 1e6) (str (format-number (/ converted-vol 1e6) 2) "M")
+      :else (format-number converted-vol 0))))
 
 (defn format-market-cap [cap]
   (format-volume cap))
+
+;; Currency button component
+(defn currency-button [currency-code]
+  [:button {:class "ml-1 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-0.5 transition-colors"
+            :onClick #(reset! state/show-currency-panel true)}
+   currency-code])
 
 ;; Data extraction helpers for standardized format
 (defn get-asset-by-symbol [assets symbol]
@@ -54,15 +62,34 @@
   (when holding-value
     [:div {:class "bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mt-4"}
      [:div {:class "text-xs text-blue-400 uppercase mb-1 tracking-widest"} "Portfolio Value"]
-     [:div {:class "text-lg font-bold text-blue-300 tabular-nums"} (format-price holding-value crypto-id)]]))
+     [:div {:class "text-lg font-bold text-blue-300 tabular-nums flex items-center"}
+      (format-price holding-value crypto-id)
+      (currency-button @state/currency-atom)]]))
 
 (defn portfolio-summary-header []
-  (let [total-value (portfolio/get-total-portfolio-value @state/portfolio-atom @state/prices-atom)]
+  (let [total-value (portfolio/get-total-portfolio-value @state/portfolio-atom @state/prices-atom)
+        current-currency @state/currency-atom
+        exchange-rate (get @state/exchange-rates-atom current-currency)]
     (when (> total-value 0)
       [:div {:class "bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-2xl p-6 mb-8"}
-       [:div {:class "text-center"}
-        [:div {:class "text-sm text-blue-400 uppercase mb-2 tracking-widest"} "Total Portfolio Value"]
-        [:div {:class "text-4xl font-bold text-white tabular-nums"} (str "$" (format-number total-value 2))]]])))
+       [:div {:class "flex items-center justify-between"}
+        ;; Left spacer for balance
+        [:div {:class "flex-1"}]
+
+        ;; Center - Portfolio value
+        [:div {:class "text-center"}
+         [:div {:class "text-sm text-blue-400 uppercase mb-2 tracking-widest"} "Total Portfolio Value"]
+         [:div {:class "text-4xl font-bold text-white tabular-nums flex items-center justify-center"}
+          (format-number (state/convert-currency total-value current-currency) 2)
+          (currency-button current-currency)]]
+
+        ;; Right - Exchange rate indicator
+        [:div {:class "flex-1 flex justify-end"}
+         (when (and exchange-rate (not= current-currency "USD"))
+           [:div {:class "text-xs text-gray-400 bg-white/5 border border-white/10 rounded-lg px-3 py-2"}
+            [:div {:class "text-gray-500 uppercase tracking-wider"} "Exchange Rate"]
+            [:div {:class "font-mono text-gray-300"}
+             (str "1 USD = " (format-number exchange-rate 3) " " current-currency)]])]]])))
 
 ;; UI Components
 (defn crypto-card [asset]
@@ -98,7 +125,9 @@
          name
          [:span {:class "text-sm text-gray-500 ml-2 uppercase"} symbol]]
         [:div {:class "text-xs text-neon-cyan mt-0.5"} (get asset :dataSource "Figure Markets")]]]]
-     [:div {:class "text-4xl font-bold mb-4 tabular-nums tracking-tight"} (format-price price crypto-id)]
+     [:div {:class "text-4xl font-bold mb-4 tabular-nums tracking-tight flex items-center"}
+      (format-price price crypto-id)
+      (currency-button @state/currency-atom)]
      [:div {:class (str "inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold mb-5 border " change-classes)}
       [:span {:class "mr-1.5 text-base"} arrow]
       (str (format-number (js/Math.abs (or change 0)) 2) "%")]
@@ -106,7 +135,9 @@
      [:div {:class "grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-white/5"}
       [:div {:class "flex flex-col"}
        [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Volume"]
-       [:div {:class "text-base font-semibold text-white tabular-nums"} (format-volume (or volume 0))]]
+       [:div {:class "text-base font-semibold text-white tabular-nums flex items-center"}
+        (format-volume (or volume 0))
+        (currency-button @state/currency-atom)]]
       [:div {:class "flex flex-col"}
        [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Data Source"]
        [:div {:class "text-base font-semibold text-neon-cyan tabular-nums"} (get asset :dataSource "FM")]]]
@@ -115,10 +146,14 @@
        [:div {:class "grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/5"}
         [:div {:class "flex flex-col"}
          [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Bid"]
-         [:div {:class "text-sm font-semibold text-green-400 tabular-nums"} (format-price bid crypto-id)]]
+         [:div {:class "text-sm font-semibold text-green-400 tabular-nums flex items-center"}
+          (format-price bid crypto-id)
+          (currency-button @state/currency-atom)]]
         [:div {:class "flex flex-col"}
          [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Ask"]
-         [:div {:class "text-sm font-semibold text-red-400 tabular-nums"} (format-price ask crypto-id)]]])
+         [:div {:class "text-sm font-semibold text-red-400 tabular-nums flex items-center"}
+          (format-price ask crypto-id)
+          (currency-button @state/currency-atom)]]])
      ;; Portfolio value display
      (portfolio-value-display holding-value crypto-id)
      ;; Portfolio button
@@ -207,6 +242,46 @@
        (modal-container
         [:div header content])))))
 
+;; Currency selector modal
+(defn currency-selector-panel []
+  (when @state/show-currency-panel
+    (let [current-currency @state/currency-atom
+          close-fn #(reset! state/show-currency-panel false)
+          select-currency-fn (fn [currency-code]
+                               (js/console.log "💱 Selected currency:" currency-code)
+                               (reset! state/currency-atom currency-code)
+                               (state/persist-currency)
+                               (reset! state/show-currency-panel false))]
+
+      (modal-backdrop
+       (modal-container
+        [:div
+         ;; Header
+         [:div {:class "flex items-center justify-between mb-6"}
+          [:div {:class "flex items-center"}
+           [:span {:class "text-2xl mr-3"} "💱"]
+           [:h2 {:class "text-xl font-bold text-white"} "Select Currency"]]
+          [:button {:class "text-gray-400 hover:text-white text-2xl"
+                    :onClick close-fn}
+           "×"]]
+
+         ;; Currency grid
+         [:div {:class "grid grid-cols-2 gap-3 max-h-80 overflow-y-auto"}
+          (doall (for [currency state/supported-currencies]
+                   ^{:key (:code currency)}
+                   [:button {:class (str "flex items-center justify-between p-3 rounded-lg border transition-colors "
+                                         (if (= current-currency (:code currency))
+                                           "bg-blue-600 border-blue-500 text-white"
+                                           "bg-gray-800 border-gray-600 hover:bg-gray-700 text-gray-300"))
+                             :onClick #(select-currency-fn (:code currency))}
+                    [:div {:class "flex items-center"}
+                     [:span {:class "text-lg mr-2"} (:symbol currency)]
+                     [:div
+                      [:div {:class "text-sm font-semibold"} (:code currency)]
+                      [:div {:class "text-xs opacity-75"} (:name currency)]]]
+                    (when (= current-currency (:code currency))
+                      [:span {:class "text-blue-300"} "✓"])]))]])))))
+
 (defn app-component []
   (let [last-update @state/last-update-atom
         loading @state/loading-atom
@@ -244,4 +319,5 @@
                                         "bg-neon-green animate-ping"
                                         "bg-neon-green animate-pulse-dot"))}]
                   "Last updated: " last-update]])])
-     [portfolio-panel]]))
+     [portfolio-panel]
+     [currency-selector-panel]]))

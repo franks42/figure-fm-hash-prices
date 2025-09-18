@@ -21,6 +21,11 @@
   (state/restore-portfolio)
   (js/console.log "📂 Portfolio state after restore:" @state/portfolio-atom)
 
+  ;; Restore currency from localStorage
+  (js/console.log "💱 Restoring currency from localStorage...")
+  (state/restore-currency)
+  (js/console.log "💱 Currency state after restore:" @state/currency-atom)
+
   ;; Start the app UI
   (mount-app)
 

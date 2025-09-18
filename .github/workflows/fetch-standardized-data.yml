@@ -38,18 +38,23 @@ jobs:
       env:
         FIGURE_API_TOKEN: ${{ secrets.FIGURE_API_TOKEN }}
 
+    - name: Fetch exchange rates
+      run: |
+        nbb .github/workflows/scripts/fetch-exchange-rates.cljs
+
     - name: Commit and push if changes
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
 
         # Check if there are changes to commit
-        if git diff --quiet data/standardized-prices.json; then
-          echo "No changes to standardized data"
+        if git diff --quiet data/standardized-prices.json data/exchange-rates.json; then
+          echo "No changes to data files"
         else
           git add data/standardized-prices.json
+          git add data/exchange-rates.json
           git add data/unmapped-fields.log
-          git commit -m "Update standardized crypto prices data
+          git commit -m "Update crypto prices and exchange rates data
 
           🤖 Generated with standardized field mapping system
           📊 Unmapped fields logged for mapping table updates

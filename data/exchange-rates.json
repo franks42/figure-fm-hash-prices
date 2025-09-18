@@ -1,0 +1,17 @@
+{
+  "rates": {
+    "EUR": 0.8456,
+    "GBP": 0.7342,
+    "JPY": 109.85,
+    "CAD": 1.2534,
+    "AUD": 1.3467,
+    "CHF": 0.9234,
+    "CNY": 6.4521,
+    "KRW": 1178.45,
+    "SEK": 9.7823
+  },
+  "timestamp": 1705234567890,
+  "base": "USD",
+  "source": "exchangerate.host",
+  "lastUpdate": "2025-01-17T18:45:23.890Z"
+}

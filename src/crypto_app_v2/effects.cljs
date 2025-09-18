@@ -4,6 +4,18 @@
 
 ;; API data fetching and side effects
 
+;; Mock exchange rates for testing (will be replaced by API data)
+(def mock-exchange-rates
+  {"EUR" 0.85
+   "GBP" 0.73
+   "JPY" 110.0
+   "CAD" 1.25
+   "AUD" 1.35
+   "CHF" 0.92
+   "CNY" 6.45
+   "KRW" 1180.0
+   "SEK" 9.75})
+
 (defn show-fetch-indicator []
   (let [indicator (js/document.getElementById "fetch-indicator")]
     (when indicator
@@ -153,6 +165,25 @@
        (reset! state/error-atom "Timeout loading data")))
    state/TIMEOUT_MS))
 
+(defn fetch-exchange-rates []
+  "Fetch exchange rates from data file"
+  (js/console.log "💱 Fetching exchange rates...")
+  (-> (js/fetch "data/exchange-rates.json")
+      (.then (fn [response]
+               (if (.-ok response)
+                 (.json response)
+                 (throw (js/Error. (str "HTTP " (.-status response)))))))
+      (.then (fn [data]
+               (let [rates-data (js->clj data :keywordize-keys true)
+                     rates (:rates rates-data)]
+                 (js/console.log "✅ Exchange rates loaded from API:" rates)
+                 (reset! state/exchange-rates-atom rates))))
+      (.catch (fn [error]
+                (js/console.warn "💱 Failed to load exchange rates, using mock data:" error)
+                (reset! state/exchange-rates-atom mock-exchange-rates)
+                (js/console.log "💱 Mock exchange rates loaded:" @state/exchange-rates-atom)))))
+
 (defn start-polling []
+  (fetch-exchange-rates)
   (fetch-crypto-data)
   (js/setInterval fetch-crypto-data state/POLL_INTERVAL_MS))
