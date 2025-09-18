@@ -1,0 +1,206 @@
+[
+  {
+    "assetType": "crypto",
+    "priceChange24h": 1.8819,
+    "currentPrice": {
+      "amount": 117741.08,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715548,
+    "volume24h": {
+      "amount": 197068.327892,
+      "currency": "USD"
+    },
+    "symbol": "BTC-USD",
+    "askPrice": 117794.87,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": 117687.29
+  },
+  {
+    "assetType": "crypto",
+    "priceChange24h": 3.4800999999999997,
+    "currentPrice": {
+      "amount": 3.1162,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715548,
+    "volume24h": {
+      "amount": 11363.662645,
+      "currency": "USD"
+    },
+    "symbol": "XRP-USD",
+    "askPrice": 3.1183,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": 3.1141
+  },
+  {
+    "assetType": "crypto",
+    "priceChange24h": 2.5641000000000003,
+    "currentPrice": {
+      "amount": 0.039,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715548,
+    "volume24h": {
+      "amount": 42803.558237,
+      "currency": "USD"
+    },
+    "symbol": "HASH-USD",
+    "askPrice": 0.04,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": 0.038
+  },
+  {
+    "assetType": "crypto",
+    "priceChange24h": 7.2031,
+    "currentPrice": {
+      "amount": 249.27,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715549,
+    "volume24h": {
+      "amount": 20855.406381,
+      "currency": "USD"
+    },
+    "symbol": "SOL-USD",
+    "askPrice": 249.36,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": 249.18
+  },
+  {
+    "assetType": null,
+    "priceChange24h": null,
+    "currentPrice": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715549,
+    "volume24h": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "symbol": null,
+    "askPrice": null,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": null
+  },
+  {
+    "assetType": "stock",
+    "priceChange24h": 14.891041162227591,
+    "currentPrice": {
+      "amount": 42.705,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715549,
+    "volume24h": {
+      "amount": 4037972,
+      "currency": "USD"
+    },
+    "symbol": "FIGR",
+    "askPrice": null,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": null
+  },
+  {
+    "assetType": "crypto",
+    "priceChange24h": 6.6041,
+    "currentPrice": {
+      "amount": 24.401,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715549,
+    "volume24h": {
+      "amount": 17785.29898,
+      "currency": "USD"
+    },
+    "symbol": "LINK-USD",
+    "askPrice": 24.421,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": 24.381
+  },
+  {
+    "assetType": null,
+    "priceChange24h": null,
+    "currentPrice": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715549,
+    "volume24h": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "symbol": null,
+    "askPrice": null,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": null
+  },
+  {
+    "assetType": "crypto",
+    "priceChange24h": 2.9029,
+    "currentPrice": {
+      "amount": 4609.16,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715550,
+    "volume24h": {
+      "amount": 15017.877121,
+      "currency": "USD"
+    },
+    "symbol": "ETH-USD",
+    "askPrice": 4610.37,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": 4607.96
+  },
+  {
+    "assetType": null,
+    "priceChange24h": null,
+    "currentPrice": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715550,
+    "volume24h": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "symbol": null,
+    "askPrice": null,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": null
+  },
+  {
+    "assetType": "crypto",
+    "priceChange24h": 2.1395999999999997,
+    "currentPrice": {
+      "amount": 1.0262973,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715550,
+    "volume24h": {
+      "amount": 70008359.39858617,
+      "currency": "USD"
+    },
+    "symbol": "FIGR_HELOC-USD",
+    "askPrice": 0,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": 0
+  },
+  {
+    "assetType": "crypto",
+    "priceChange24h": 4.6152999999999995,
+    "currentPrice": {
+      "amount": 9.578,
+      "currency": "USD"
+    },
+    "timestamp": 1758212715550,
+    "volume24h": {
+      "amount": 0,
+      "currency": "USD"
+    },
+    "symbol": "UNI-USD",
+    "askPrice": 9.587,
+    "dataSource": "GitHub/Figure Markets",
+    "bidPrice": 9.568
+  }
+]

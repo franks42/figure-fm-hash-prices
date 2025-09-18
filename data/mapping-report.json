@@ -1,0 +1,12 @@
+{
+  "timestamp": "2025-09-18T16:25:15.553Z",
+  "source": "Figure Markets",
+  "totalAssets": 12,
+  "hasUnmappedFields": false,
+  "mappingCoverage": "Complete",
+  "recommendation": "All fields successfully mapped",
+  "logFiles": [
+    "data/unmapped-fields.log",
+    "data/mapping-report.json"
+  ]
+}
