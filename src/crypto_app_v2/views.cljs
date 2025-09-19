@@ -54,6 +54,12 @@
 (defn get-ask [asset]
   (get asset :askPrice))
 
+(defn get-high [asset]
+  (get asset :dayHigh))
+
+(defn get-low [asset]
+  (get asset :dayLow))
+
 (defn get-asset-type [asset]
   (get asset :assetType))
 
@@ -158,6 +164,24 @@
        (format-price ask crypto-id)
        (currency-button @state/currency-atom)]]]))
 
+(defn card-high-low [high low crypto-id]
+  (when (or high low)
+    [:div {:class "grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/5"}
+     [:div {:class "flex flex-col"}
+      [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h High"]
+      [:div {:class "text-sm font-semibold text-green-400 tabular-nums flex items-center"}
+       (if high
+         (format-price high crypto-id)
+         "N/A")
+       (currency-button @state/currency-atom)]]
+     [:div {:class "flex flex-col"}
+      [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Low"]
+      [:div {:class "text-sm font-semibold text-red-400 tabular-nums flex items-center"}
+       (if low
+         (format-price low crypto-id)
+         "N/A")
+       (currency-button @state/currency-atom)]]]))
+
 (defn card-portfolio-button [holding-value crypto-id]
   [:div {:class "flex mt-4"}
    [:button {:class (str "flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors "
@@ -183,8 +207,8 @@
         price (get-price asset)
         change (get-change asset)
         volume (get-volume asset)
-        bid (get-bid asset)
-        ask (get-ask asset)
+        high (get-high asset)
+        low (get-low asset)
         quantity @(r/cursor state/portfolio-atom [crypto-id])
         holding-value (when quantity (portfolio/calculate-holding-value quantity price))]
     [:div {:class "relative bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1 hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/10 scan-line overflow-hidden animate-fade-in"}
@@ -192,7 +216,7 @@
      (card-price price crypto-id)
      (card-change change)
      (card-stats volume asset)
-     (card-bid-ask bid ask crypto-id)
+     (card-high-low high low crypto-id)
      (card-portfolio-button holding-value crypto-id)]))
 
 ;; Portfolio modal components (compositional approach)

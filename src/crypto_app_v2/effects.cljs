@@ -69,6 +69,8 @@
               :priceChange24h (get data "usd_24h_change" 0)
               :bidPrice (get data "bid" 0)
               :askPrice (get data "ask" 0)
+              :dayHigh (get data "day_high" nil)
+              :dayLow (get data "day_low" nil)
               :assetType (get data "type" "crypto")
               :dataSource (if is-fallback
                             "MOCK-DATA"
