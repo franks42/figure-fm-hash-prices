@@ -261,6 +261,22 @@
       [:div {:class "font-semibold"} "Using Mock Exchange Rates"]
       [:div {:class "text-sm text-amber-300"} "Real-time rates unavailable. Currency conversions use demo values."]]]))
 
+;; Timestamp indicator component (positioned top-right)
+(defn timestamp-indicator []
+  (let [last-update @state/last-update-atom
+        flash @state/update-flash-atom]
+    (when last-update
+      [:div {:class "fixed top-5 right-5 z-10"}
+       [:div {:class (str "inline-flex items-center px-4 py-2 rounded-full text-gray-400 text-xs transition-all duration-300 "
+                          (if flash
+                            "bg-neon-green/20 border border-neon-green/40 text-neon-green"
+                            "bg-white/[0.03] border border-white/10"))}
+        [:span {:class (str "w-2 h-2 rounded-full mr-2 "
+                            (if flash
+                              "bg-neon-green animate-ping"
+                              "bg-neon-green animate-pulse-dot"))}]
+        "Last updated: " last-update]])))
+
 ;; Standalone exchange rate indicator (always visible)
 (defn exchange-rate-indicator []
   (let [current-currency @state/currency-atom
@@ -333,7 +349,8 @@
        loading [:div {:class "text-center text-gray-400 text-xl py-24"}
                 [:div {:class "inline-block w-10 h-10 border-3 border-gray-700 border-t-neon-green rounded-full animate-spin mb-5"}]
                 [:div "Loading standardized market data..."]]
-       :else [:div
+       :else [:<>
+              (timestamp-indicator)
               (mock-data-warning)
               (exchange-rate-indicator)
               (portfolio-summary-header)
@@ -346,17 +363,6 @@
                                                   (= symbol-key :figr) "1-figr"  ; Put FIGR second
                                                   :else (name symbol-key)))) prices)]
                  (doall (for [asset sorted-assets]
-                          ^{:key (get asset :symbol)} [crypto-card asset])))]
-              (when last-update
-                [:div {:class "text-center mt-15 pb-10"}
-                 [:div {:class (str "inline-flex items-center px-6 py-3 rounded-full text-gray-400 text-sm transition-all duration-300 "
-                                    (if flash
-                                      "bg-neon-green/20 border border-neon-green/40 text-neon-green"
-                                      "bg-white/[0.03] border border-white/10"))}
-                  [:span {:class (str "w-2 h-2 rounded-full mr-2.5 "
-                                      (if flash
-                                        "bg-neon-green animate-ping"
-                                        "bg-neon-green animate-pulse-dot"))}]
-                  "Last updated: " last-update]])])
+                          ^{:key (get asset :symbol)} [crypto-card asset])))]])
      [portfolio-panel]
      [currency-selector-panel]]))
