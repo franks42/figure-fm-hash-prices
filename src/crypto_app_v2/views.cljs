@@ -100,6 +100,79 @@
             (when @state/using-mock-rates-atom
               [:div {:class "text-xs text-amber-300 mt-1"} "Mock data"])])]]])))
 
+;; Card component parts
+(defn card-header [asset icon name symbol]
+  [:div {:class "flex items-center justify-between mb-5"}
+   [:div {:class "flex items-center"}
+    [:div {:class "w-11 h-11 rounded-xl mr-4 flex items-center justify-center text-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/10"}
+     icon]
+    [:div
+     [:div {:class "text-lg font-semibold text-white tracking-wide"}
+      name
+      [:span {:class "text-sm text-gray-500 ml-2 uppercase"} symbol]]
+     [:div {:class "text-xs text-neon-cyan mt-0.5"} (get asset :dataSource "Figure Markets")]]]])
+
+(defn card-price [price crypto-id]
+  [:div {:class "text-4xl font-bold mb-4 tabular-nums tracking-tight flex items-center"}
+   (format-price price crypto-id)
+   (currency-button @state/currency-atom)])
+
+(defn card-change [change]
+  (let [positive? (>= (or change 0) 0)
+        arrow (if positive? "▲" "▼")
+        change-classes (if positive?
+                         "bg-neon-green/10 text-neon-green border-neon-green/20"
+                         "bg-neon-red/10 text-neon-red border-neon-red/20")]
+    [:div {:class (str "inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold mb-5 border " change-classes)}
+     [:span {:class "mr-1.5 text-base"} arrow]
+     (str (format-number (js/Math.abs (or change 0)) 2) "%")]))
+
+(defn card-stats [volume asset]
+  [:div {:class "grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-white/5"}
+   [:div {:class "flex flex-col"}
+    [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Volume"]
+    [:div {:class "text-base font-semibold text-white tabular-nums flex items-center"}
+     (format-volume (or volume 0))
+     (currency-button @state/currency-atom)]]
+   [:div {:class "flex flex-col"}
+    [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Data Source"]
+    (let [data-source (get asset :dataSource "FM")
+          is-mock? (= data-source "MOCK-DATA")]
+      [:div {:class (str "text-base font-semibold tabular-nums "
+                         (if is-mock?
+                           "text-red-400"
+                           "text-neon-cyan"))}
+       data-source])]])
+
+(defn card-bid-ask [bid ask crypto-id]
+  (when (and bid ask (> bid 0) (> ask 0))
+    [:div {:class "grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/5"}
+     [:div {:class "flex flex-col"}
+      [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Bid"]
+      [:div {:class "text-sm font-semibold text-green-400 tabular-nums flex items-center"}
+       (format-price bid crypto-id)
+       (currency-button @state/currency-atom)]]
+     [:div {:class "flex flex-col"}
+      [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Ask"]
+      [:div {:class "text-sm font-semibold text-red-400 tabular-nums flex items-center"}
+       (format-price ask crypto-id)
+       (currency-button @state/currency-atom)]]]))
+
+(defn card-portfolio-button [holding-value crypto-id]
+  [:div {:class "flex mt-4"}
+   [:button {:class (str "flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors "
+                         (if holding-value
+                           "bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20"
+                           "bg-white/[0.05] hover:bg-white/[0.10] border border-white/20"))
+             :onClick #(reset! state/show-portfolio-panel crypto-id)}
+    (if holding-value
+      [:div {:class "flex flex-col items-center"}
+       [:div {:class "text-xs text-blue-400 uppercase tracking-widest"} "Portfolio Value"]
+       [:div {:class "text-lg font-bold text-blue-300 tabular-nums flex items-center"}
+        (format-price holding-value crypto-id)
+        (currency-button @state/currency-atom)]]
+      "📊 Portfolio")]])
+
 ;; UI Components
 (defn crypto-card [asset]
   (let [symbol-key (extract-symbol-key asset)
@@ -112,71 +185,15 @@
         volume (get-volume asset)
         bid (get-bid asset)
         ask (get-ask asset)
-        asset-type (get-asset-type asset)
-        ;; Enhanced FIGR stock data (keeping for compatibility)
-        is-stock? (= asset-type "stock")
-        ;; Portfolio data
         quantity @(r/cursor state/portfolio-atom [crypto-id])
-        holding-value (when quantity (portfolio/calculate-holding-value quantity price))
-        ;; Display logic
-        positive? (>= (or change 0) 0)
-        arrow (if positive? "▲" "▼")
-        change-classes (if positive?
-                         "bg-neon-green/10 text-neon-green border-neon-green/20"
-                         "bg-neon-red/10 text-neon-red border-neon-red/20")]
+        holding-value (when quantity (portfolio/calculate-holding-value quantity price))]
     [:div {:class "relative bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1 hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/10 scan-line overflow-hidden animate-fade-in"}
-     [:div {:class "flex items-center justify-between mb-5"}
-      [:div {:class "flex items-center"}
-       [:div {:class "w-11 h-11 rounded-xl mr-4 flex items-center justify-center text-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/10"}
-        icon]
-       [:div
-        [:div {:class "text-lg font-semibold text-white tracking-wide"}
-         name
-         [:span {:class "text-sm text-gray-500 ml-2 uppercase"} symbol]]
-        [:div {:class "text-xs text-neon-cyan mt-0.5"} (get asset :dataSource "Figure Markets")]]]]
-     [:div {:class "text-4xl font-bold mb-4 tabular-nums tracking-tight flex items-center"}
-      (format-price price crypto-id)
-      (currency-button @state/currency-atom)]
-     [:div {:class (str "inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold mb-5 border " change-classes)}
-      [:span {:class "mr-1.5 text-base"} arrow]
-      (str (format-number (js/Math.abs (or change 0)) 2) "%")]
-     ;; Main stats grid
-     [:div {:class "grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-white/5"}
-      [:div {:class "flex flex-col"}
-       [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Volume"]
-       [:div {:class "text-base font-semibold text-white tabular-nums flex items-center"}
-        (format-volume (or volume 0))
-        (currency-button @state/currency-atom)]]
-      [:div {:class "flex flex-col"}
-       [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Data Source"]
-       [:div {:class "text-base font-semibold text-neon-cyan tabular-nums"} (get asset :dataSource "FM")]]]
-     ;; Bid/Ask for crypto
-     (when (and bid ask (> bid 0) (> ask 0))
-       [:div {:class "grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/5"}
-        [:div {:class "flex flex-col"}
-         [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Bid"]
-         [:div {:class "text-sm font-semibold text-green-400 tabular-nums flex items-center"}
-          (format-price bid crypto-id)
-          (currency-button @state/currency-atom)]]
-        [:div {:class "flex flex-col"}
-         [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Ask"]
-         [:div {:class "text-sm font-semibold text-red-400 tabular-nums flex items-center"}
-          (format-price ask crypto-id)
-          (currency-button @state/currency-atom)]]])
-     ;; Portfolio button (shows value if holdings exist, otherwise shows "Portfolio")
-     [:div {:class "flex mt-4"}
-      [:button {:class (str "flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors "
-                            (if holding-value
-                              "bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20"
-                              "bg-white/[0.05] hover:bg-white/[0.10] border border-white/20"))
-                :onClick #(reset! state/show-portfolio-panel crypto-id)}
-       (if holding-value
-         [:div {:class "flex flex-col items-center"}
-          [:div {:class "text-xs text-blue-400 uppercase tracking-widest"} "Portfolio Value"]
-          [:div {:class "text-lg font-bold text-blue-300 tabular-nums flex items-center"}
-           (format-price holding-value crypto-id)
-           (currency-button @state/currency-atom)]]
-         "📊 Portfolio")]]]))
+     (card-header asset icon name symbol)
+     (card-price price crypto-id)
+     (card-change change)
+     (card-stats volume asset)
+     (card-bid-ask bid ask crypto-id)
+     (card-portfolio-button holding-value crypto-id)]))
 
 ;; Portfolio modal components (compositional approach)
 (defn modal-backdrop [content]
@@ -343,10 +360,8 @@
                       [:span {:class "text-blue-300"} "✓"])]))]])))))
 
 (defn app-component []
-  (let [last-update @state/last-update-atom
-        loading @state/loading-atom
-        error @state/error-atom
-        flash @state/update-flash-atom]
+  (let [loading @state/loading-atom
+        error @state/error-atom]
     [:div
      (cond
        error [:div {:class "bg-neon-red/10 border border-neon-red/20 text-neon-red p-5 rounded-xl my-5 text-center"}

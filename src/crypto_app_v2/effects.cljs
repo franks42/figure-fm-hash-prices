@@ -48,21 +48,33 @@
   (when-let [symbol (get asset :symbol)]
     (keyword (str/lower-case (first (str/split symbol #"-"))))))
 
-(defn transform-to-standardized [old-data]
-  (let [prices (dissoc old-data "timestamp" "source" "last_update")]
-    (mapv (fn [[crypto-id data]]
-            {:symbol (get data "symbol" (.toUpperCase crypto-id))
-             :currentPrice {:amount (get data "usd" 0)
-                            :currency "USD"}
-             :volume24h {:amount (get data "usd_24h_vol" 0)
-                         :currency "USD"}
-             :priceChange24h (get data "usd_24h_change" 0)
-             :bidPrice (get data "bid" 0)
-             :askPrice (get data "ask" 0)
-             :assetType (get data "type" "crypto")
-             :dataSource "Figure Markets"
-             :timestamp (js/Date.now)})
-          prices)))
+(defn get-data-source [crypto-id data-type]
+  "Determine the actual data source for each asset"
+  (cond
+    (= crypto-id "figr") "Yahoo Finance"
+    (contains? #{"hash" "figr_heloc"} crypto-id) "Figure Markets"
+    (= data-type "stock") "Yahoo Finance"
+    :else "Figure Markets"))
+
+(defn transform-to-standardized
+  ([old-data] (transform-to-standardized old-data false))
+  ([old-data is-fallback]
+   (let [prices (dissoc old-data "timestamp" "source" "last_update")]
+     (mapv (fn [[crypto-id data]]
+             {:symbol (get data "symbol" (.toUpperCase crypto-id))
+              :currentPrice {:amount (get data "usd" 0)
+                             :currency "USD"}
+              :volume24h {:amount (get data "usd_24h_vol" 0)
+                          :currency "USD"}
+              :priceChange24h (get data "usd_24h_change" 0)
+              :bidPrice (get data "bid" 0)
+              :askPrice (get data "ask" 0)
+              :assetType (get data "type" "crypto")
+              :dataSource (if is-fallback
+                            "MOCK-DATA"
+                            (get-data-source crypto-id (get data "type" "crypto")))
+              :timestamp (js/Date.now)})
+           prices))))
 
 (defn process-data-changes [old-prices new-prices]
   (let [old-by-symbol (into {} (map (fn [asset] [(extract-symbol-key asset) asset]) old-prices))
@@ -104,22 +116,24 @@
     (when (not= new-keys old-keys)
       (reset! state/price-keys-atom (map extract-symbol-key prices)))))
 
-(defn handle-fetch-success [data]
-  ;; Transform current format to standardized format
-  (let [js-data (js->clj data :keywordize-keys false)
-        standardized-data (transform-to-standardized js-data)]
-    (update-price-data standardized-data)
+(defn handle-fetch-success
+  ([data] (handle-fetch-success data false))
+  ([data is-fallback]
+   ;; Transform current format to standardized format
+   (let [js-data (js->clj data :keywordize-keys false)
+         standardized-data (transform-to-standardized js-data is-fallback)]
+     (update-price-data standardized-data)
 
-    ;; Always update timestamp and flash indicator
-    (update-timestamp)
-    (flash-update-indicator)
-    (hide-fetch-indicator)
+     ;; Always update timestamp and flash indicator
+     (update-timestamp)
+     (flash-update-indicator)
+     (hide-fetch-indicator)
 
-    ;; Update loading state only for initial load
-    (when (not @state/initial-load-complete)
-      (reset! state/initial-load-complete true)
-      (when @state/loading-atom
-        (reset! state/loading-atom false)))))
+     ;; Update loading state only for initial load
+     (when (not @state/initial-load-complete)
+       (reset! state/initial-load-complete true)
+       (when @state/loading-atom
+         (reset! state/loading-atom false))))))
 
 (defn handle-fetch-error [error]
   (js/console.error "Failed to fetch crypto data:" error)
@@ -161,7 +175,7 @@
       (.catch (fn [error]
                 (js/console.warn "Remote fetch failed, using fallback data:" error)
                 ;; Use fallback data when remote fetch fails (e.g., CORS with file://)
-                (handle-fetch-success (clj->js fallback-data))))))
+                (handle-fetch-success (clj->js fallback-data) true)))))
 
 (defn setup-timeout-handler []
   (js/setTimeout
