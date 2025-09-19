@@ -28,7 +28,7 @@
 ;; Currency button component
 (defn currency-button [currency-code]
   [:button {:class "ml-1 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-0.5 transition-colors"
-            :onClick #(reset! state/show-currency-panel true)}
+            :onClick #(do (.stopPropagation %) (reset! state/show-currency-panel true))}
    currency-code])
 
 ;; Data extraction helpers for standardized format
@@ -163,13 +163,20 @@
          [:div {:class "text-sm font-semibold text-red-400 tabular-nums flex items-center"}
           (format-price ask crypto-id)
           (currency-button @state/currency-atom)]]])
-     ;; Portfolio value display
-     (portfolio-value-display holding-value crypto-id)
-     ;; Portfolio button
+     ;; Portfolio button (shows value if holdings exist, otherwise shows "Portfolio")
      [:div {:class "flex mt-4"}
-      [:button {:class "flex-1 bg-white/[0.05] hover:bg-white/[0.10] border border-white/20 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+      [:button {:class (str "flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors "
+                            (if holding-value
+                              "bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20"
+                              "bg-white/[0.05] hover:bg-white/[0.10] border border-white/20"))
                 :onClick #(reset! state/show-portfolio-panel crypto-id)}
-       "📊 Portfolio"]]]))
+       (if holding-value
+         [:div {:class "flex flex-col items-center"}
+          [:div {:class "text-xs text-blue-400 uppercase tracking-widest"} "Portfolio Value"]
+          [:div {:class "text-lg font-bold text-blue-300 tabular-nums flex items-center"}
+           (format-price holding-value crypto-id)
+           (currency-button @state/currency-atom)]]
+         "📊 Portfolio")]]]))
 
 ;; Portfolio modal components (compositional approach)
 (defn modal-backdrop [content]
@@ -203,7 +210,7 @@
             :step "0.0001"
             :placeholder "0.0000"
             :class "bg-gray-800 border border-white/20 rounded-lg px-3 py-2 text-white text-center focus:outline-none focus:border-white/40"
-            :defaultValue current-quantity
+            :defaultValue (when (> current-quantity 0) current-quantity)
             :id "quantity-input"}]])
 
 (defn action-buttons [save-fn cancel-fn]

@@ -35,7 +35,11 @@
       "Bash(cat:*)",
       "Bash(cljfmt check:*)",
       "Bash(cljfmt fix:*)",
-      "WebFetch(domain:franks42.github.io)"
+      "WebFetch(domain:franks42.github.io)",
+      "Bash(open http://localhost:8000/index-v2.html)",
+      "Bash(node:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(nbb:*)"
     ],
     "deny": [],
     "ask": []

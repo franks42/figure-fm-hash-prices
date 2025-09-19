@@ -174,7 +174,7 @@
 (defn fetch-exchange-rates []
   "Fetch exchange rates from data file"
   (js/console.log "💱 Fetching exchange rates...")
-  (-> (js/fetch (str "https://raw.githubusercontent.com/franks42/figure-fm-hash-prices/data-updates/data/exchange-rates.json?t=" (js/Date.now)))
+  (-> (js/fetch (str "data/exchange-rates.json?t=" (js/Date.now)))
       (.then (fn [response]
                (if (.-ok response)
                  (.json response)
