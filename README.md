@@ -1,69 +1,76 @@
-# Figure Markets Hash Prices Tracker
+# Figure Markets Hash Prices Tracker - V2 Interface
 
-A real-time cryptocurrency and digital asset price tracking system that combines automated data fetching with a modern web interface. This project specifically tracks Figure Markets assets (HASH, FIGR) alongside major cryptocurrencies (BTC, ETH) with portfolio management capabilities.
+A real-time cryptocurrency and digital asset price tracking system with multi-currency support and portfolio management. The V2 interface provides a modern, reactive UI for tracking Figure Markets assets (HASH, FIGR) alongside major cryptocurrencies.
 
-## Architecture Overview
+## V2 Interface Features
 
-This project consists of two independent components working together:
+### Multi-Currency Support
+- **10 Global Currencies**: USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY, KRW, SEK
+- **Real-time Exchange Rates**: Live currency conversion with exchange rate indicators
+- **Persistent Preferences**: Selected currency saved across sessions
+- **Visual Indicators**: Shows when using mock data vs. live exchange rates
 
-### 1. Automated Data Pipeline (GitHub Actions)
-- **Cron-based fetching**: Automatically retrieves market data every 5-15 minutes
-- **Multi-source aggregation**: Fetches from Figure Markets API and external sources
-- **Standardized data format**: Converts all API responses into a unified schema
-- **Intelligent scheduling**: More frequent updates during market hours (9 AM - 6 PM EST, Mon-Fri)
-- **Robust error handling**: Logs unmapped fields for continuous schema improvement
+### Enhanced Portfolio Management
+- **Multi-currency Valuation**: View portfolio value in any supported currency
+- **Persistent Storage**: Holdings saved locally with automatic restoration
+- **Per-asset Management**: Individual portfolio panels for each asset
+- **Live Calculations**: Real-time portfolio value updates with currency conversion
 
-### 2. Web Interface (GitHub Pages + Scittle)
-- **ClojureScript frontend**: Modern reactive UI built with Reagent and Scittle
-- **Real-time updates**: Displays live market data without server infrastructure
-- **Portfolio tracking**: Persistent portfolio management with localStorage
-- **Responsive design**: Beautiful glass-morphism UI with Tailwind CSS
-- **Modular architecture**: Separate ClojureScript modules for maintainability
-
-## Features
-
-### Market Data
+### Market Data Display
 - **Figure Markets Assets**: HASH token and FIGR stock with specialized formatting
-- **Major Cryptocurrencies**: Bitcoin (BTC), Ethereum (ETH)
-- **Comprehensive metrics**: Current prices, 24h volume, bid/ask spreads, price changes
-- **Real-time updates**: Auto-refreshing data with visual indicators
+- **Major Cryptocurrencies**: BTC, ETH, LINK, SOL, UNI, XRP
+- **Comprehensive Metrics**:
+  - Current prices with currency conversion
+  - 24h volume in selected currency
+  - Bid/Ask spreads
+  - Price change percentages
+- **Real-time Updates**: 30-second auto-refresh with visual indicators
 
-### Portfolio Management
-- **Holdings tracking**: Track quantities for each asset
-- **Value calculations**: Real-time portfolio valuation
-- **Persistent storage**: Holdings saved locally across sessions
-- **Individual asset views**: Detailed breakdown per holding
+### User Experience
+- **Glass-morphism Design**: Modern UI with transparency effects
+- **Responsive Layout**: Optimized for desktop and mobile viewing
+- **Visual Feedback**:
+  - Scanning animation during data fetch
+  - Flash indicators for price updates
+  - Warning system for mock data usage
+- **Error Handling**: Graceful fallbacks with clear error messaging
 
-### Data Sources
-- **Figure Markets API**: Primary source for HASH and FIGR data
-- **External APIs**: Backup sources for major cryptocurrencies
-- **Fallback mechanisms**: Embedded test data for offline functionality
+## Technical Architecture
 
-## Technical Implementation
+### Data Pipeline
+- **Automated Fetching**: GitHub Actions retrieve data every 5-15 minutes
+- **Standardized Format**: All data normalized to consistent schema
+- **Exchange Rates**: Updated from exchangerate-api.com
+- **Branch Strategy**: Data stored in `data-updates` branch, code in `main`
 
-### Standardized Data Dictionary
-All market data is normalized into a consistent schema:
+### Frontend Stack
+- **ClojureScript + Scittle**: No-build reactive UI with Reagent
+- **Tailwind CSS**: Utility-first styling with custom components
+- **Modular Architecture**: Separate namespaces for state, effects, and views
 
-```json
-{
-  "symbol": "BTC-USD",
-  "currentPrice": {"amount": 45000.50, "currency": "USD"},
-  "volume24h": {"amount": 1500000000, "currency": "USD"},
-  "priceChange24h": 1250.30,
-  "bidPrice": 44999.00,
-  "askPrice": 45001.00,
-  "assetType": "crypto",
-  "dataSource": "Figure Markets",
-  "timestamp": 1705234567890
-}
+### Data Schema
+```clojure
+{:symbol "BTC-USD"
+ :currentPrice {:amount 116662.10 :currency "USD"}
+ :volume24h {:amount 237253.72 :currency "USD"}
+ :priceChange24h 0.0292
+ :bidPrice 116621.34
+ :askPrice 116702.85
+ :assetType "crypto"
+ :dataSource "Figure Markets"
+ :timestamp 1705234567890}
 ```
 
-### Deployment
-- **Live interface**: https://franks42.github.io/figure-fm-hash-prices/
-- **V2 standardized format**: https://franks42.github.io/figure-fm-hash-prices/index-v2.html
-- **Local development**: `python3 -m http.server 8000`
+## Deployment
 
-### GitHub Actions Workflows
-- `fetch-standardized-data.yml`: Main data pipeline with intelligent scheduling
-- `fetch-crypto-data-nbb.yml`: nbb-based alternative implementation
-- Automated commits with timestamped updates
+### Live V2 Interface
+- **GitHub Pages**: https://franks42.github.io/figure-fm-hash-prices/index-v2.html
+- **Local Development**: `python3 -m http.server 8000`
+- **Data Updates**: Automatic via GitHub Actions
+
+### Key Files
+- `index-v2.html`: V2 interface entry point
+- `src/crypto_app_v2/`: ClojureScript modules
+  - `state.cljs`: Application state and persistence
+  - `views.cljs`: UI components and rendering
+  - `effects.cljs`: Data fetching and side effects
