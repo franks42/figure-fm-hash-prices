@@ -46,6 +46,8 @@
                            :ask (js/parseFloat (or (j/get item :bestAsk) 0))
                            :last_price (js/parseFloat (or (j/get item :lastTradedPrice) 0))
                            :trades_24h (js/parseInt (or (j/get item :tradeCount24h) 0))
+                           :day_high (js/parseFloat (or (j/get item :high24h) 0))
+                           :day_low (js/parseFloat (or (j/get item :low24h) 0))
                            :type "crypto"}))) {})))
 
 (defn process-stock-data [stock-response]
