@@ -58,12 +58,20 @@
     (>= vol 1e6) (str "$" (format-number (/ vol 1e6) 2) "M")
     :else (str "$" (format-number vol 0))))
 
+;; Currency button component (copy V2 exactly) - MOVED UP
+(defn currency-button [currency-code]
+  [:button {:class "ml-1 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-0.5 transition-colors"
+            :on-click #(do (.stopPropagation %) (rf/dispatch [:currency/show-selector]))}
+   currency-code])
+
 ;; Portfolio display components (copy V2)
-(defn portfolio-value-display [holding-value crypto-id]
+(defn portfolio-value-display [holding-value crypto-id current-currency exchange-rates]
   (when holding-value
     [:div {:class "bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mt-4"}
      [:div {:class "text-xs text-blue-400 uppercase mb-1 tracking-widest"} "Portfolio Value"]
-     [:div {:class "text-lg font-bold text-blue-300 tabular-nums"} (format-price holding-value crypto-id)]]))
+     [:div {:class "text-lg font-bold text-blue-300 tabular-nums flex items-center"}
+      (format-price holding-value crypto-id current-currency exchange-rates)
+      [currency-button current-currency]]]))
 
 ;; Copy V2 supported currencies exactly
 (def supported-currencies
@@ -77,12 +85,6 @@
    {:code "CNY" :symbol "¥" :name "Chinese Yuan"}
    {:code "KRW" :symbol "₩" :name "Korean Won"}
    {:code "SEK" :symbol "kr" :name "Swedish Krona"}])
-
-;; Currency button component (copy V2 exactly)
-(defn currency-button [currency-code]
-  [:button {:class "ml-1 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-0.5 transition-colors"
-            :on-click #(do (.stopPropagation %) (rf/dispatch [:currency/show-selector]))}
-   currency-code])
 
 (defn portfolio-summary-header []
   (let [total-value @(rf/subscribe [:portfolio/total-value])
@@ -199,26 +201,34 @@
                            "text-neon-cyan"))}
        (or data-source "FM")])]])
 
-(defn crypto-card-bid-ask [bid ask crypto-id]
+(defn crypto-card-bid-ask [bid ask crypto-id current-currency exchange-rates]
   (when (and bid ask (> bid 0) (> ask 0))
     [:div {:class "grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/5"}
      [:div {:class "flex flex-col"}
       [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Bid"]
-      [:div {:class "text-sm font-semibold text-green-400 tabular-nums"} (format-price bid crypto-id)]]
+      [:div {:class "text-sm font-semibold text-green-400 tabular-nums flex items-center"}
+       (format-price bid crypto-id current-currency exchange-rates)
+       [currency-button current-currency]]]
      [:div {:class "flex flex-col"}
       [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Ask"]
-      [:div {:class "text-sm font-semibold text-red-400 tabular-nums"} (format-price ask crypto-id)]]]))
+      [:div {:class "text-sm font-semibold text-red-400 tabular-nums flex items-center"}
+       (format-price ask crypto-id current-currency exchange-rates)
+       [currency-button current-currency]]]]))
 
 ;; Enhanced stock data display (copy V2 52-week range)
-(defn stock-52w-range [fifty-two-week-high fifty-two-week-low crypto-id]
+(defn stock-52w-range [fifty-two-week-high fifty-two-week-low crypto-id current-currency exchange-rates]
   (when (and fifty-two-week-high fifty-two-week-low)
     [:div {:class "grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/5"}
      [:div {:class "flex flex-col"}
       [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "52W High"]
-      [:div {:class "text-sm font-semibold text-green-400 tabular-nums"} (format-price fifty-two-week-high crypto-id)]]
+      [:div {:class "text-sm font-semibold text-green-400 tabular-nums flex items-center"}
+       (format-price fifty-two-week-high crypto-id current-currency exchange-rates)
+       [currency-button current-currency]]]
      [:div {:class "flex flex-col"}
       [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "52W Low"]
-      [:div {:class "text-sm font-semibold text-red-400 tabular-nums"} (format-price fifty-two-week-low crypto-id)]]]))
+      [:div {:class "text-sm font-semibold text-red-400 tabular-nums flex items-center"}
+       (format-price fifty-two-week-low crypto-id current-currency exchange-rates)
+       [currency-button current-currency]]]]))
 
 ;; Portfolio button (copy V2)
 (defn portfolio-button [crypto-id]
@@ -264,10 +274,10 @@
        [crypto-stats volume trades-24h data-source])
      ;; Bid/ask for crypto or 52-week range for stocks (copy V2 logic)
      (if is-stock?
-       [stock-52w-range fifty-two-week-high fifty-two-week-low crypto-id]
-       [crypto-card-bid-ask bid ask crypto-id])
+       [stock-52w-range fifty-two-week-high fifty-two-week-low crypto-id current-currency exchange-rates]
+       [crypto-card-bid-ask bid ask crypto-id current-currency exchange-rates])
      ;; Portfolio value display
-     [portfolio-value-display holding-value crypto-id]
+     [portfolio-value-display holding-value crypto-id current-currency exchange-rates]
      ;; Portfolio button (V2 feature!)
      [portfolio-button crypto-id]]))
 

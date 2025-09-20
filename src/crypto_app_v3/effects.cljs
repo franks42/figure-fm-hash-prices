@@ -105,3 +105,47 @@
  :start-auto-polling
  (fn [_ _]
    {:start-polling 30000}))
+
+;; Mock exchange rates (copy V2)
+(def mock-exchange-rates
+  {:EUR 0.85
+   :GBP 0.73
+   :JPY 110.0
+   :CAD 1.25
+   :AUD 1.35
+   :CHF 0.92
+   :CNY 6.45
+   :KRW 1180.0
+   :SEK 9.75})
+
+;; Exchange rate effects (copy V2)
+(rf/reg-fx
+ :http-exchange-rates
+ (fn [{:keys [url on-success on-failure]}]
+   (-> (js/fetch (cache-bust-url url))
+       (.then (fn [response] 
+                (if (.-ok response)
+                  (.json response)
+                  (throw (js/Error. (str "HTTP " (.-status response)))))))
+       (.then (fn [data]
+                (let [rates-data (js->clj data :keywordize-keys true)
+                      rates (:rates rates-data)]
+                  (rf/dispatch [on-success rates false]))))
+       (.catch (fn [error]
+                  (js/console.warn "💱 Failed to load exchange rates, using mock:" error)
+                  (rf/dispatch [on-success mock-exchange-rates true]))))))
+
+;; Exchange rate events
+(rf/reg-event-fx
+ :fetch-exchange-rates
+ (fn [_ _]
+   {:http-exchange-rates {:url "data/exchange-rates.json"
+                          :on-success :exchange-rates-success
+                          :on-failure :exchange-rates-failure}}))
+
+(rf/reg-event-fx
+ :exchange-rates-success
+ (fn [{:keys [db]} [_ rates using-mock?]]
+   {:db (-> db
+            (assoc-in [:currency :exchange-rates] rates)
+            (assoc-in [:currency :using-mock-rates?] using-mock?))}))

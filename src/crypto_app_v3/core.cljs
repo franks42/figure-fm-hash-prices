@@ -34,6 +34,7 @@
    10000))
 
 (defn start-data-fetching []
+  (rf/dispatch [:fetch-exchange-rates])  ; Fetch exchange rates first
   (rf/dispatch [:fetch-crypto-data])
   (rf/dispatch [:start-auto-polling]))
 
