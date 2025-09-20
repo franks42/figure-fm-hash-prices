@@ -19,6 +19,13 @@
        (.catch (fn [error]
                  (rf/dispatch [on-failure (.-message error)]))))))
 
+;; Timer effect for flash animation
+(rf/reg-fx
+ :dispatch-later
+ (fn [events]
+   (doseq [{:keys [ms dispatch]} events]
+     (js/setTimeout #(rf/dispatch dispatch) ms))))
+
 ;; Basic fetch event (placeholder)
 (rf/reg-event-fx
  :fetch-crypto-data
@@ -27,13 +34,11 @@
                :on-success :fetch-success
                :on-failure :fetch-failure}}))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  :fetch-success
- (fn [db [_ data]]
+ (fn [_ [_ data]]
    (println "✅ V3 Data received:", (keys data))
-   (-> db
-       (assoc-in [:ui :loading?] false)
-       (assoc-in [:ui :error] nil))))
+   {:dispatch [:smart-price-update data]}))
 
 (rf/reg-event-db
  :fetch-failure

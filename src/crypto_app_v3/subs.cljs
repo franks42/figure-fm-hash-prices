@@ -27,3 +27,27 @@
  :last-update
  (fn [db]
    (get-in db [:meta :last-update])))
+
+(rf/reg-sub
+ :price-keys
+ (fn [db]
+   (get-in db [:meta :price-keys])))
+
+(rf/reg-sub
+ :initial-load-complete?
+ (fn [db]
+   (get-in db [:ui :initial-load-complete?])))
+
+;; Copy V2 sorting logic (small function)
+(defn sort-crypto-keys [keys]
+  (sort-by (fn [crypto-id]
+             (cond
+               (= crypto-id "hash") "0-hash"
+               (= crypto-id "figr") "1-figr"
+               :else crypto-id)) keys))
+
+(rf/reg-sub
+ :sorted-price-keys
+ :<- [:price-keys]
+ (fn [price-keys]
+   (sort-crypto-keys price-keys)))
