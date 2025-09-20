@@ -121,12 +121,14 @@
          updated-holdings (if (and quantity (> quantity 0))
                            (assoc current-holdings crypto-id quantity)
                            (dissoc current-holdings crypto-id))
+         ;; Convert ClojureScript map to plain JS object for storage
+         plain-holdings (into {} updated-holdings)
          updated-db (assoc-in db [:portfolio :holdings] updated-holdings)]
      (js/console.log "🔴 Current holdings:" current-holdings)
      (js/console.log "🔴 Updated holdings:" updated-holdings)
-     (js/console.log "🔴 Updated holdings type:" (type updated-holdings))
+     (js/console.log "🔴 Plain holdings for storage:" plain-holdings)
      {:db updated-db
-      :fx [[:local-storage/persist-portfolio updated-holdings]]})))
+      :fx [[:local-storage/persist-portfolio plain-holdings]]})))
 
 (rf/reg-event-db
  :portfolio/restore
