@@ -6,10 +6,36 @@
             ["fs" :as fs]
             [promesa.core :as p]
             [clojure.string :as str]
+            [clojure.set]
             [applied-science.js-interop :as j]))
 
 (defn log [& args]
   (apply js/console.log args))
+
+(defn valid-price? [price]
+  (and price (number? price) (> price 0)))
+
+(defn has-required-fields? [coin-data]
+  (and (:usd coin-data)
+       (valid-price? (:usd coin-data))))
+
+(defn validate-crypto-data [data]
+  (let [required-coins #{"btc" "eth" "hash"}
+        present-coins (set (map name (keys data)))]
+    (when-not (every? present-coins required-coins)
+      (throw (js/Error. (str "Missing required crypto data: "
+                             (clojure.set/difference required-coins present-coins)))))
+    (doseq [[coin-id coin-data] data]
+      (when-not (has-required-fields? coin-data)
+        (throw (js/Error. (str "Invalid data for " coin-id ": " (:usd coin-data))))))
+    data))
+
+(defn validate-output-data [combined-data]
+  (when (< (count (keys combined-data)) 5)
+    (throw (js/Error. "Insufficient data - too few assets")))
+  (when-not (:timestamp combined-data)
+    (throw (js/Error. "Missing timestamp in output")))
+  combined-data)
 
 (defn fetch-figure-markets []
   (-> (fetch "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets")
@@ -25,6 +51,32 @@
       (p/then (fn [data]
                 (log "✅ Yahoo Finance data fetched")
                 data))))
+
+(defn fetch-alpha-vantage [api-key]
+  (if api-key
+    (-> (fetch (str "https://www.alphavantage.co/query"
+                    "?function=GLOBAL_QUOTE&symbol=FIGR"
+                    "&apikey=" api-key))
+        (p/then (fn [response] (.json response)))
+        (p/then (fn [data]
+                  (log "✅ Alpha Vantage data fetched")
+                  data))
+        (p/catch (fn [error]
+                   (log "❌ Alpha Vantage failed:" (.-message error))
+                   nil)))
+    (p/resolved nil)))
+
+(defn get-fallback-stock-data
+  "Hardcoded fallback when all APIs fail"
+  []
+  {:figr {:usd 37.33
+          :usd_24h_change 0
+          :usd_24h_vol 1500000
+          :symbol "FIGR"
+          :type "stock"
+          :company_name "Figure Technology Solutions, Inc."
+          :exchange "Fallback"
+          :currency "USD"}})
 
 (defn process-crypto-data [crypto-response]
   (->> (j/get crypto-response :data)
@@ -50,13 +102,16 @@
                            :day_low (js/parseFloat (or (j/get item :low24h) 0))
                            :type "crypto"}))) {})))
 
+(defn calculate-change-percent [current-price previous-close]
+  (if (and current-price previous-close (> previous-close 0))
+    (* (/ (- current-price previous-close) previous-close) 100)
+    0))
+
 (defn process-stock-data [stock-response]
   (let [meta (j/get-in stock-response [:chart :result 0 :meta])
         current-price (j/get meta :regularMarketPrice)
         previous-close (j/get meta :previousClose)
-        change-percent (if (and current-price previous-close)
-                         (* (/ (- current-price previous-close) previous-close) 100)
-                         0)]
+        change-percent (calculate-change-percent current-price previous-close)]
     {:figr {:usd (js/parseFloat current-price)
             :usd_24h_change (js/parseFloat change-percent)
             :usd_24h_vol (js/parseInt (or (j/get meta :regularMarketVolume) 0))
@@ -81,34 +136,100 @@
             :timezone (or (j/get meta :timezone) "EDT")
             :last_trade_time (js/parseInt (or (j/get meta :regularMarketTime) 0))}}))
 
+(defn process-alpha-vantage-stock [alpha-data]
+  (when alpha-data
+    (let [quote (j/get alpha-data "Global Quote")
+          price (js/parseFloat (j/get quote "05. price"))
+          change-percent (-> (j/get quote "10. change percent")
+                             (str/replace "%" "")
+                             js/parseFloat)]
+      {:figr {:usd price
+              :usd_24h_change change-percent
+              :usd_24h_vol (js/parseInt (j/get quote "06. volume"))
+              :usd_market_cap nil
+              :symbol "FIGR"
+              :bid nil
+              :ask nil
+              :last_price price
+              :trades_24h nil
+              :type "stock"
+              :company_name "Figure Technology Solutions, Inc."
+              :exchange "Alpha Vantage"
+              :currency "USD"}})))
+
+(defn yahoo-data-valid? [yahoo-data]
+  (and yahoo-data
+       (j/get-in yahoo-data [:chart :result 0 :meta :regularMarketPrice])))
+
+(defn fetch-stock-with-yahoo [yahoo-data]
+  (if (yahoo-data-valid? yahoo-data)
+    (p/resolved {:data yahoo-data :source "yahoo"})
+    (p/rejected (js/Error. "Yahoo data invalid"))))
+
+(defn fetch-stock-with-alpha-vantage [api-key]
+  (-> (fetch-alpha-vantage api-key)
+      (p/then (fn [alpha-data]
+                (if alpha-data
+                  {:data alpha-data :source "alphavantage"}
+                  (throw (js/Error. "Alpha Vantage failed")))))))
+
+(defn fetch-stock-with-fallback []
+  (log "⚠️ All APIs failed, using fallback data")
+  (p/resolved {:data (get-fallback-stock-data) :source "fallback"}))
+
+(defn fetch-stock-data-with-fallbacks [api-key]
+  (-> (fetch-yahoo-finance)
+      (p/then fetch-stock-with-yahoo)
+      (p/catch (fn [_]
+                 (log "⚠️ Yahoo Finance failed, trying Alpha Vantage...")
+                 (-> (fetch-stock-with-alpha-vantage api-key)
+                     (p/catch (fn [_] (fetch-stock-with-fallback))))))))
+
+(defn process-stock-by-source [stock-result]
+  (case (:source stock-result)
+    "yahoo" (process-stock-data (:data stock-result))
+    "alphavantage" (process-alpha-vantage-stock (:data stock-result))
+    "fallback" (:data stock-result)))
+
+(defn create-combined-data [processed-crypto processed-stock source]
+  (let [timestamp (.getTime (js/Date.))]
+    (merge processed-crypto
+           processed-stock
+           {:timestamp (/ timestamp 1000)
+            :source (str "figuremarkets+" source)
+            :last_update (.toISOString (js/Date.))})))
+
+(defn ensure-data-directory []
+  (when-not (fs/existsSync "../../../data")
+    (fs/mkdirSync "../../../data" (clj->js {:recursive true}))))
+
+(defn write-data-file [combined-data]
+  (fs/writeFileSync "../../../data/crypto-prices.json"
+                    (js/JSON.stringify (clj->js combined-data) nil 2)))
+
 (defn main []
-  (-> (p/all [(fetch-figure-markets) (fetch-yahoo-finance)])
-      (p/then (fn [[crypto-data stock-data]]
-                (log "🚀 Starting crypto data fetch action...")
-                (core/info "Action started successfully")
+  (let [api-key (core/getInput "alpha-vantage-api-key")]
+    (-> (p/all [(fetch-figure-markets)
+                (fetch-stock-data-with-fallbacks api-key)])
+        (p/then (fn [[crypto-data stock-result]]
+                  (log "🚀 Starting crypto data fetch action...")
+                  (core/info "Action started successfully")
 
-                (let [processed-crypto (process-crypto-data crypto-data)
-                      processed-stock (process-stock-data stock-data)
-                      timestamp (.getTime (js/Date.))
-                      combined-data (merge processed-crypto
-                                           processed-stock
-                                           {:timestamp (/ timestamp 1000)
-                                            :source "figuremarkets+yahoo"
-                                            :last_update (.toISOString (js/Date.))})]
+                  (let [processed-crypto (validate-crypto-data (process-crypto-data crypto-data))
+                        processed-stock (process-stock-by-source stock-result)
+                        combined-data (validate-output-data
+                                       (create-combined-data processed-crypto
+                                                             processed-stock
+                                                             (:source stock-result)))]
 
-                  ;; Ensure data directory exists
-                  (when-not (fs/existsSync "../../../data")
-                    (fs/mkdirSync "../../../data" (clj->js {:recursive true})))
+                    (ensure-data-directory)
+                    (write-data-file combined-data)
 
-                  ;; Write JSON file
-                  (fs/writeFileSync "../../../data/crypto-prices.json"
-                                    (js/JSON.stringify (clj->js combined-data) nil 2))
-
-                  (log "📊 Processed" (count (keys processed-crypto)) "crypto currencies")
-                  (log "📊 FIGR stock price:" (get-in combined-data [:figr :usd]))
-                  (log "💾 Data written to data/crypto-prices.json")
-                  (core/setOutput "data-file" "data/crypto-prices.json")
-                  (log "✅ Action completed"))))))
+                    (log "📊 Processed" (count (keys processed-crypto)) "crypto currencies")
+                    (log "📊 FIGR stock price:" (get-in combined-data [:figr :usd]))
+                    (log "💾 Data written to data/crypto-prices.json")
+                    (core/setOutput "data-file" "data/crypto-prices.json")
+                    (log "✅ Action completed")))))))
 
 ;; Run main when script is executed directly
 (-> (main)
