@@ -5,7 +5,7 @@
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
 ;; Import version from core
-(def VERSION "v3.2.6-filename-fix")
+(def VERSION "v3.2.7-portfolio-displays-fixed")
 
 ;; Copy V2 constants exactly
 (def crypto-icons
@@ -92,7 +92,16 @@
    {:code "SEK" :symbol "kr" :name "Swedish Krona"}])
 
 (defn portfolio-summary-header []
-  (let [total-value @(rf/subscribe [:portfolio/total-value])
+  (let [portfolio @portfolio-atoms/portfolio-atom
+        prices @(rf/subscribe [:prices])
+        ;; Calculate total value manually like V2
+        total-value (reduce-kv (fn [total crypto-id quantity]
+                                 (let [current-price (get-in prices [crypto-id "usd"])]
+                                   (if (and current-price (> current-price 0))
+                                     (+ total (* quantity current-price))
+                                     total)))
+                               0
+                               portfolio)
         current-currency @(rf/subscribe [:currency/current])
         exchange-rates @(rf/subscribe [:currency/exchange-rates])
         converted-value (convert-currency total-value current-currency exchange-rates)
@@ -264,8 +273,9 @@
         fifty-two-week-high (get data "fifty_two_week_high")
         fifty-two-week-low (get data "fifty_two_week_low")
         previous-close (get data "previous_close")
-        ;; Portfolio data
-        holding-value @(rf/subscribe [:portfolio/holding-value crypto-id])
+        ;; Portfolio data (hybrid - use atoms)
+        portfolio-quantity (get @portfolio-atoms/portfolio-atom crypto-id 0)
+        holding-value (portfolio-atoms/calculate-holding-value portfolio-quantity price)
         ;; Currency data (V2 feature!)
         current-currency @(rf/subscribe [:currency/current])
         exchange-rates @(rf/subscribe [:currency/exchange-rates])]
