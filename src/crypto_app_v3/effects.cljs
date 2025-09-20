@@ -150,36 +150,30 @@
             (assoc-in [:currency :exchange-rates] rates)
             (assoc-in [:currency :using-mock-rates?] using-mock?))}))
 
-;; localStorage effects for portfolio persistence
+;; Copy V2's EXACT working localStorage implementation
 (rf/reg-fx
  :local-storage/persist-portfolio
  (fn [holdings]
-   (js/console.log "🔴 Persisting portfolio:" holdings)
-   (js/console.log "🔴 Holdings type:" (type holdings))
-   ;; Convert to simple JavaScript object
-   (let [js-obj (js/Object.)
-         _ (doseq [[k v] holdings]
-             (aset js-obj (str k) v))
-         json-str (js/JSON.stringify js-obj)]
-     (js/console.log "🔴 Created JS object:" js-obj)
-     (js/console.log "🔴 JSON string:" json-str)
-     (js/localStorage.setItem "crypto-portfolio" json-str)
-     (js/console.log "🔴 Saved to localStorage"))))
+   (try
+     (js/console.log "💾 Saving portfolio to localStorage:" holdings)
+     (.setItem js/localStorage "crypto-portfolio-v3" (.stringify js/JSON (clj->js holdings)))
+     (js/console.log "✅ Portfolio saved successfully")
+     (catch :default e
+       (js/console.warn "❌ Failed to save portfolio to localStorage:" e)))))
 
 (rf/reg-fx
  :local-storage/load-portfolio
  (fn [_]
-   (js/console.log "🔴 Loading portfolio from localStorage...")
-   (if-let [stored (js/localStorage.getItem "crypto-portfolio")]
-     (do
-       (js/console.log "🔴 Found stored portfolio:" stored)
-       (try
-         (let [holdings (js->clj (js/JSON.parse stored) :keywordize-keys false)]
-           (js/console.log "🔴 Parsed holdings:" holdings)
-           (rf/dispatch [:portfolio/restore holdings]))
-         (catch js/Error e
-           (js/console.warn "Failed to load portfolio from localStorage:" e))))
-     (js/console.log "🔴 No stored portfolio found"))))
+   (try
+     (js/console.log "📖 Loading portfolio from localStorage...")
+     (let [stored-data (.getItem js/localStorage "crypto-portfolio-v3")]
+       (js/console.log "📖 Raw stored data:" stored-data)
+       (when stored-data
+         (let [parsed-data (js->clj (.parse js/JSON stored-data))]
+           (js/console.log "✅ Portfolio loaded successfully:" parsed-data)
+           (rf/dispatch [:portfolio/restore parsed-data]))))
+     (catch :default e
+       (js/console.warn "❌ Failed to load portfolio from localStorage:" e)))))
 
 (rf/reg-fx
  :local-storage/persist-currency
