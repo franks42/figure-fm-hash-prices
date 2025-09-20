@@ -18,6 +18,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 1      # Only fetch latest commit for faster CI
+        ref: main           # Ensure we're on main branch
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
