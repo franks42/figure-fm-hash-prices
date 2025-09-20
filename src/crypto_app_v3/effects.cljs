@@ -153,9 +153,8 @@
 ;; localStorage effects for portfolio persistence
 (rf/reg-fx
  :local-storage/persist-portfolio
- (fn [_]
-   (let [holdings @(rf/subscribe [:portfolio/holdings])]
-     (js/localStorage.setItem "crypto-portfolio" (js/JSON.stringify (clj->js holdings))))))
+ (fn [holdings]
+   (js/localStorage.setItem "crypto-portfolio" (js/JSON.stringify (clj->js holdings)))))
 
 (rf/reg-fx
  :local-storage/load-portfolio

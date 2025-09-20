@@ -116,10 +116,12 @@
 (rf/reg-event-fx
  :portfolio/set-quantity
  (fn [{:keys [db]} [_ crypto-id quantity]]
-   {:db (if (and quantity (> quantity 0))
-          (assoc-in db [:portfolio :holdings crypto-id] quantity)
-          (update-in db [:portfolio :holdings] dissoc crypto-id))
-    :fx [[:local-storage/persist-portfolio]]}))
+   (let [updated-db (if (and quantity (> quantity 0))
+                      (assoc-in db [:portfolio :holdings crypto-id] quantity)
+                      (update-in db [:portfolio :holdings] dissoc crypto-id))
+         updated-holdings (get-in updated-db [:portfolio :holdings])]
+     {:db updated-db
+      :fx [[:local-storage/persist-portfolio updated-holdings]]})))
 
 (rf/reg-event-db
  :portfolio/restore
