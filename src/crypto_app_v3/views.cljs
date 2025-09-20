@@ -201,11 +201,19 @@
                            "text-neon-cyan"))}
        (or data-source "YF")])]])
 
-(defn crypto-stats [volume trades-24h data-source]
+(defn crypto-stats [volume trades-24h data-source crypto-id current-price current-currency exchange-rates]
   [:div {:class "grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-white/5"}
    [:div {:class "flex flex-col"}
     [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Volume"]
-    [:div {:class "text-base font-semibold text-white tabular-nums"} (format-volume (or volume 0))]]
+    [:div {:class "text-base font-semibold text-white tabular-nums flex items-center"}
+     (format-volume (or volume 0))
+     [currency-button current-currency]]
+    ;; Add token volume calculation
+    (when (and volume current-price (> current-price 0))
+      (let [token-volume (/ volume current-price)
+            symbol (get-crypto-symbol crypto-id)]
+        [:div {:class "text-xs text-gray-400 mt-1"}
+         (str (format-number token-volume 0) " " symbol)]))]
    [:div {:class "flex flex-col"}
     [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Data Source"]
     (let [is-mock? (= data-source "MOCK-DATA")]
@@ -290,7 +298,7 @@
      ;; Different stats for stocks vs crypto (copy V2 logic)
      (if is-stock?
        [stock-stats open-price volume crypto-id data-source]
-       [crypto-stats volume trades-24h data-source])
+       [crypto-stats volume trades-24h data-source crypto-id price current-currency exchange-rates])
      ;; 24h High/Low for crypto or 52-week range for stocks (copy V2 logic)
      (if is-stock?
        [stock-52w-range fifty-two-week-high fifty-two-week-low crypto-id current-currency exchange-rates]
