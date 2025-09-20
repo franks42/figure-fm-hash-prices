@@ -19,12 +19,17 @@
        (.catch (fn [error]
                  (rf/dispatch [on-failure (.-message error)]))))))
 
-;; Timer effect for flash animation
+;; Timer effects (small, focused)
 (rf/reg-fx
  :dispatch-later
  (fn [events]
    (doseq [{:keys [ms dispatch]} events]
      (js/setTimeout #(rf/dispatch dispatch) ms))))
+
+(rf/reg-fx
+ :start-polling
+ (fn [interval-ms]
+   (js/setInterval #(rf/dispatch [:fetch-crypto-data]) interval-ms)))
 
 ;; Basic fetch event (placeholder)
 (rf/reg-event-fx
@@ -47,3 +52,9 @@
    (-> db
        (assoc-in [:ui :loading?] false)
        (assoc-in [:ui :error] error))))
+
+;; Start polling event (copy V2's 30-second interval)
+(rf/reg-event-fx
+ :start-auto-polling
+ (fn [_ _]
+   {:start-polling 30000}))

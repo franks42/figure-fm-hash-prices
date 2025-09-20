@@ -19,10 +19,14 @@
 (defn mount-app []
   (rdom/render [views/app] (.getElementById js/document "app")))
 
+(defn start-polling []
+  (rf/dispatch [:start-auto-polling]))
+
 (defn ^:export init []
   (log-startup)
   (initialize-app)
   (start-data-fetch)
+  (start-polling)
   (mount-app))
 
 ;; Auto-start
