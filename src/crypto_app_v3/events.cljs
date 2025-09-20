@@ -14,6 +14,17 @@
 (defn format-timestamp [iso-string]
   (.replace iso-string "T" " "))
 
+(defn update-timestamp []
+  (let [now (js/Date.)
+        formatted-time (.toLocaleString now "en-US" #js{:year "numeric"
+                                                        :month "2-digit"
+                                                        :day "2-digit"
+                                                        :hour "2-digit"
+                                                        :minute "2-digit"
+                                                        :second "2-digit"
+                                                        :hour12 false})]
+    formatted-time))
+
 (defn current-iso-timestamp []
   (.toISOString (js/Date.)))
 
@@ -223,9 +234,9 @@
          keys-changed? (price-keys-changed? old-keys new-keys)]
 
      (cond-> {:db (-> db
-                      (assoc :last-update timestamp)
-                      (assoc-in [:ui :loading?] false)
-                      (assoc-in [:ui :error] nil))}
+     (assoc :last-update (update-timestamp))
+     (assoc-in [:ui :loading?] false)
+     (assoc-in [:ui :error] nil))}
 
        has-changes?
        (assoc-in [:db :prices] (merge old-prices changes))

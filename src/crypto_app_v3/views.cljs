@@ -5,7 +5,7 @@
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
 ;; Import version from core
-(def VERSION "v3.3.2-volume-currency-conversion")
+(def VERSION "v3.3.3-timestamp-top-right-local")
 
 ;; Copy V2 constants exactly
 (def crypto-icons
@@ -330,12 +330,12 @@
   (let [last-update @(rf/subscribe [:last-update])
         flash? @(rf/subscribe [:flash-active?])]
     (when last-update
-      [:div {:class "text-center mt-15 pb-10"}
-       [:div {:class (str "inline-flex items-center px-6 py-3 rounded-full text-gray-400 text-sm transition-all duration-300 "
+      [:div {:class "fixed top-5 right-5 z-10"}
+       [:div {:class (str "inline-flex items-center px-4 py-2 rounded-full text-gray-400 text-xs transition-all duration-300 "
                           (if flash?
                             "bg-neon-green/20 border border-neon-green/40 text-neon-green"
                             "bg-white/[0.03] border border-white/10"))}
-        [:span {:class (str "w-2 h-2 rounded-full mr-2.5 "
+        [:span {:class (str "w-2 h-2 rounded-full mr-2 "
                             (if flash?
                               "bg-neon-green animate-ping"
                               "bg-neon-green animate-pulse-dot"))}]

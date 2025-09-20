@@ -10,7 +10,7 @@
 
 ;; Copy V2 initialization logic (small functions)
 
-(def ^:const VERSION "v3.3.2-volume-currency-conversion")
+(def ^:const VERSION "v3.3.3-timestamp-top-right-local")
 
 (defn log-startup []
   (js/console.log "🚀 V3 Re-frame Crypto Tracker Starting...")
