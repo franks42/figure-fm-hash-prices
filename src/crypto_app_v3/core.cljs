@@ -10,7 +10,7 @@
 
 ;; Copy V2 initialization logic (small functions)
 
-(def ^:const VERSION "v3.2.7-portfolio-displays-fixed")
+(def ^:const VERSION "v3.2.8-24h-high-low-fix")
 
 (defn log-startup []
   (js/console.log "🚀 V3 Re-frame Crypto Tracker Starting...")

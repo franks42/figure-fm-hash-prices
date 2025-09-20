@@ -5,7 +5,7 @@
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
 ;; Import version from core
-(def VERSION "v3.2.7-portfolio-displays-fixed")
+(def VERSION "v3.2.8-24h-high-low-fix")
 
 ;; Copy V2 constants exactly
 (def crypto-icons
@@ -215,18 +215,22 @@
                            "text-neon-cyan"))}
        (or data-source "FM")])]])
 
-(defn crypto-card-bid-ask [bid ask crypto-id current-currency exchange-rates]
-  (when (and bid ask (> bid 0) (> ask 0))
+(defn crypto-card-high-low [high low crypto-id current-currency exchange-rates]
+  (when (or high low)
     [:div {:class "grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/5"}
      [:div {:class "flex flex-col"}
-      [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Bid"]
+      [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h High"]
       [:div {:class "text-sm font-semibold text-green-400 tabular-nums flex items-center"}
-       (format-price bid crypto-id current-currency exchange-rates)
+       (if high
+         (format-price high crypto-id current-currency exchange-rates)
+         "N/A")
        [currency-button current-currency]]]
      [:div {:class "flex flex-col"}
-      [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Ask"]
+      [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Low"]
       [:div {:class "text-sm font-semibold text-red-400 tabular-nums flex items-center"}
-       (format-price ask crypto-id current-currency exchange-rates)
+       (if low
+         (format-price low crypto-id current-currency exchange-rates)
+         "N/A")
        [currency-button current-currency]]]]))
 
 ;; Enhanced stock data display (copy V2 52-week range)
@@ -259,8 +263,8 @@
         price (get data "usd")
         change (get data "usd_24h_change")
         volume (get data "usd_24h_vol")
-        bid (get data "bid")
-        ask (get data "ask")
+        high (get data "high_24h")
+        low (get data "low_24h")
         trades-24h (get data "trades_24h")
         data-source (get data "dataSource")  ; Market feed indicator data
         ;; Enhanced FIGR stock data (copy V2)
@@ -287,10 +291,10 @@
      (if is-stock?
        [stock-stats open-price volume crypto-id data-source]
        [crypto-stats volume trades-24h data-source])
-     ;; Bid/ask for crypto or 52-week range for stocks (copy V2 logic)
+     ;; 24h High/Low for crypto or 52-week range for stocks (copy V2 logic)
      (if is-stock?
        [stock-52w-range fifty-two-week-high fifty-two-week-low crypto-id current-currency exchange-rates]
-       [crypto-card-bid-ask bid ask crypto-id current-currency exchange-rates])
+       [crypto-card-high-low high low crypto-id current-currency exchange-rates])
      ;; Portfolio value display
      [portfolio-value-display holding-value crypto-id current-currency exchange-rates]
      ;; Portfolio button (V2 feature!)
