@@ -37,7 +37,7 @@
 (defn price-keys-changed? [old-keys new-keys]
   (not= (set old-keys) (set new-keys)))
 
-;; Database structure
+;; Database structure - EDN handles ClojureScript data natively
 (defn initial-db []
   {:prices {}
    :price-keys []
@@ -47,7 +47,7 @@
         :flash? false
         :initial-load-complete? false
         :display-currency "USD"}
-   :portfolio {:holdings {}
+   :portfolio {:holdings {}  ; Regular ClojureScript map - EDN handles it fine
                :show-panel nil}
    :currency {:current "USD"
               :exchange-rates {}
@@ -116,26 +116,23 @@
 (rf/reg-event-fx
  :portfolio/set-quantity
  (fn [{:keys [db]} [_ crypto-id quantity]]
-   (js/console.log "🚨 Portfolio set-quantity called:" crypto-id quantity)
+   (js/console.log "📝 EDN Portfolio set-quantity called:" crypto-id quantity)
    (let [current-holdings (get-in db [:portfolio :holdings] {})
          updated-holdings (if (and quantity (> quantity 0))
                            (assoc current-holdings crypto-id quantity)
                            (dissoc current-holdings crypto-id))
-         ;; Create plain JS object for storage - FORCE plain object creation
-         js-obj (js-obj)
-         _ (doseq [[k v] updated-holdings] (aset js-obj k v))
-         plain-holdings (js->clj js-obj)
          updated-db (assoc-in db [:portfolio :holdings] updated-holdings)]
-     (js/console.log "🚨 Current holdings:" current-holdings)  
-     (js/console.log "🚨 Updated holdings:" updated-holdings)
-     (js/console.log "🚨 JS object created:" js-obj)
-     (js/console.log "🚨 Plain holdings for storage:" plain-holdings)
+     (js/console.log "📝 EDN Current holdings:" current-holdings)  
+     (js/console.log "📝 EDN Updated holdings:" updated-holdings)
+     (js/console.log "📝 EDN Holdings type:" (type updated-holdings))
      {:db updated-db
-      :fx [[:local-storage/persist-portfolio plain-holdings]]})))
+      :fx [[:local-storage/persist-portfolio updated-holdings]]})))
 
 (rf/reg-event-db
  :portfolio/restore
  (fn [db [_ holdings]]
+   (js/console.log "📝 EDN Restoring holdings to database:" holdings)
+   (js/console.log "📝 EDN Holdings type:" (type holdings))
    (assoc-in db [:portfolio :holdings] holdings)))
 
 (rf/reg-event-fx
