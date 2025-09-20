@@ -4,6 +4,9 @@
             [clojure.string :as str]
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
+;; Import version from core
+(def VERSION "v3.2.4-version-display")
+
 ;; Copy V2 constants exactly
 (def crypto-icons
   {:btc "₿" :eth "Ξ" :link "⬡" :sol "◎" :uni "🦄"
@@ -439,11 +442,19 @@
 (defn currency-toggle []
   [:div])
 
+;; Version display component
+(defn version-display []
+  [:div {:class "fixed top-4 left-4 z-50 bg-black/80 border border-white/20 rounded-lg px-3 py-1.5 text-xs text-gray-300"}
+   [:span {:class "text-neon-cyan"} "V3"] 
+   [:span {:class "mx-1"} "•"] 
+   [:span VERSION]])
+
 ;; Main app component (copy V2 structure)
 (defn app-component []
   (let [loading? @(rf/subscribe [:loading?])
         error @(rf/subscribe [:error-message])]
     [:div
+     [version-display]           ; Version indicator in top-left!
      [portfolio-summary-header]  ; V2 feature!
      [exchange-rate-indicator]   ; V2 market feed indicator!
      [currency-toggle]           ; V2 feature!
