@@ -52,13 +52,22 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action - Monthly Cleanup"
           
+          # Ensure we have a data file to commit
+          if [ ! -s data/crypto-prices.json ]; then
+            echo "❌ No data file available after fetch"
+            exit 1
+          fi
+          
+          # Backup the data file before orphan branch creation
+          cp data/crypto-prices.json /tmp/fresh-crypto-data.json
+          
           # Create fresh branch with no history
           git checkout --orphan data-updates-clean
           git rm -rf . 2>/dev/null || true
           
           # Re-add only necessary files
           mkdir -p data
-          cp data/crypto-prices.json data/ 2>/dev/null || echo "No data file to copy"
+          cp /tmp/fresh-crypto-data.json data/crypto-prices.json
           git add data/crypto-prices.json
           
           # Commit with cleanup message
