@@ -12,10 +12,14 @@
 
 ## Architecture & Structure
 - **Frontend**: ClojureScript + Scittle (browser-based, no build step) + Reagent + Tailwind CSS
-- **Data Pipeline**: GitHub Actions → Figure Markets API + Yahoo Finance → JSON files
+- **Data Pipeline**: GitHub Actions → Figure Markets API + Yahoo Finance → JSON files  
 - **Hosting**: GitHub Pages (serverless, static site)
-- **Core Files**: `src/crypto_app.cljs`, `data/crypto-prices.json`, `.github/workflows/fetch-crypto-data.yml`
-- **Fine-grained state**: Separate Reagent atoms for selective updates (prices, loading, errors)
+- **Core Files**: 
+  - V2 (Current): `index.html`, `src/crypto_app.cljs` (6 atoms architecture)
+  - V3 (In Development): `index-v3.html`, `src/crypto_app_v3/` (re-frame architecture)
+- **State Management**:
+  - V2: Fine-grained atoms for selective updates (prices, loading, errors)
+  - V3: Single re-frame app-db with event-driven architecture
 
 ## Code Style & Conventions
 - **Language**: ClojureScript with Reagent components
