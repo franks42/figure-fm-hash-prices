@@ -4,12 +4,13 @@
             [crypto-app-v3.events]
             [crypto-app-v3.subs]
             [crypto-app-v3.portfolio]
+            [crypto-app-v3.portfolio-atoms :as portfolio-atoms]
             [crypto-app-v3.views :as views]
             [crypto-app-v3.effects]))
 
 ;; Copy V2 initialization logic (small functions)
 
-(def ^:const VERSION "v3.2.2-json-fix-scittle")
+(def ^:const VERSION "v3.2.3-hybrid-atoms")
 
 (defn log-startup []
   (js/console.log "🚀 V3 Re-frame Crypto Tracker Starting...")
@@ -29,7 +30,7 @@
 
 (defn restore-portfolio []
   (js/console.log "📂 V3 Restoring portfolio from localStorage...")
-  (rf/dispatch [:portfolio/initialize]))
+  (portfolio-atoms/restore-portfolio))
 
 (defn restore-currency []
   (js/console.log "💱 V3 Restoring currency from localStorage...")

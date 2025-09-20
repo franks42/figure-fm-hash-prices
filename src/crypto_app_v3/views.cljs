@@ -1,6 +1,8 @@
 (ns crypto-app-v3.views
   (:require [re-frame.core :as rf]
-            [clojure.string :as str]))
+            [reagent.core :as r]
+            [clojure.string :as str]
+            [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
 ;; Copy V2 constants exactly
 (def crypto-icons
@@ -230,11 +232,11 @@
        (format-price fifty-two-week-low crypto-id current-currency exchange-rates)
        [currency-button current-currency]]]]))
 
-;; Portfolio button (copy V2)
+;; Portfolio button (hybrid - use portfolio atoms)
 (defn portfolio-button [crypto-id]
   [:div {:class "flex mt-4"}
    [:button {:class "flex-1 bg-white/[0.05] hover:bg-white/[0.10] border border-white/20 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-             :on-click #(rf/dispatch [:portfolio/show-panel crypto-id])}
+             :on-click #(reset! portfolio-atoms/show-portfolio-panel crypto-id)}
     "📊 Portfolio"]])
 
 ;; Main crypto card (copy V2 exactly but use subscriptions)
@@ -354,18 +356,19 @@
    [action-buttons save-fn cancel-fn]])
 
 (defn portfolio-panel []
-  (when-let [crypto-id @(rf/subscribe [:portfolio/panel-crypto-id])]
+  (when-let [crypto-id @portfolio-atoms/show-portfolio-panel]
     (let [symbol (get-crypto-symbol crypto-id)
           icon (get-crypto-icon crypto-id)
-          current-quantity @(rf/subscribe [:portfolio/quantity crypto-id])
+          current-quantity (get @portfolio-atoms/portfolio-atom crypto-id 0)
           price (get-in @(rf/subscribe [:prices]) [crypto-id "usd"] 0)
-          holding-value (when (> current-quantity 0) (* current-quantity price))
-          close-fn #(rf/dispatch [:portfolio/hide-panel])
+          holding-value (portfolio-atoms/calculate-holding-value current-quantity price)
+          close-fn #(reset! portfolio-atoms/show-portfolio-panel nil)
           save-fn #(do
                      (let [input-val (-> js/document (.getElementById "quantity-input") .-value js/parseFloat)]
                        (when-not (js/isNaN input-val)
-                         (rf/dispatch [:portfolio/set-quantity crypto-id input-val])
-                         (rf/dispatch [:portfolio/hide-panel]))))
+                         (swap! portfolio-atoms/portfolio-atom assoc crypto-id input-val)
+                         (portfolio-atoms/persist-portfolio)
+                         (reset! portfolio-atoms/show-portfolio-panel nil))))
           header [modal-header icon symbol close-fn]
           holdings [holdings-display current-quantity holding-value crypto-id]
           form [input-form current-quantity save-fn close-fn]
