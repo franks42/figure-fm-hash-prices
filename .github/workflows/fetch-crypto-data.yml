@@ -1,20 +1,37 @@
-name: Fetch Crypto Data
+# DEPRECATED: This workflow has been replaced by fetch-crypto-data-nbb.yml
+# Keeping for reference during migration period
+# TODO: Delete after 2 weeks of successful nbb operation
+
+name: Fetch Crypto Data (DEPRECATED)
 
 on:
-  # Manual trigger for testing
+  # Disable all triggers
   workflow_dispatch:
-  
-  # Run automatically every 10 minutes
-  # DISABLED - Using fetch-crypto-data-nbb.yml instead
-  # schedule:
-  #   # Run every 10 minutes
-  #   - cron: '*/10 * * * *'
+    inputs:
+      force_run:
+        description: 'Emergency run only (true/false)'
+        required: true
+        default: 'false'
+        type: boolean
 
 permissions:
   contents: write
 
 jobs:
+  deprecated-notice:
+    if: github.event.inputs.force_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deprecated workflow notice
+        run: |
+          echo "❌ This workflow has been deprecated"
+          echo "✅ Use fetch-crypto-data-nbb.yml instead"
+          echo "🔧 For emergency: set force_run=true"
+          exit 1
+
+  # Keep original job but only run if force_run=true
   fetch-data:
+    if: github.event.inputs.force_run == 'true'
     runs-on: ubuntu-latest
     
     steps:

@@ -6,6 +6,10 @@
 - **Local development**: `python3 -m http.server 8000`
 - **Deploy**: Push to GitHub (GitHub Pages auto-deploys, Actions fetch data every 10 minutes)
 
+## Workflows
+- **Primary**: `fetch-crypto-data-nbb.yml` - Active data fetching with multi-source fallback
+- **Deprecated**: `fetch-crypto-data.yml` - Legacy jq-based workflow (emergency use only)
+
 ## Architecture & Structure
 - **Frontend**: ClojureScript + Scittle (browser-based, no build step) + Reagent + Tailwind CSS
 - **Data Pipeline**: GitHub Actions → Figure Markets API + Yahoo Finance → JSON files

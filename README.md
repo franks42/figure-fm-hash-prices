@@ -38,9 +38,12 @@ A real-time cryptocurrency and digital asset price tracking system with multi-cu
 ## Technical Architecture
 
 ### Data Pipeline
-- **Automated Fetching**: GitHub Actions retrieve data every 5-15 minutes
+- **Active Pipeline**: `.github/workflows/fetch-crypto-data-nbb.yml`
+  - Uses ClojureScript (nbb) for data processing
+  - Runs every 10 minutes
+  - Multi-source fallback: Yahoo Finance → Alpha Vantage → Hardcoded fallback
+- **Automated Fetching**: GitHub Actions retrieve data every 10 minutes
 - **Standardized Format**: All data normalized to consistent schema
-- **Exchange Rates**: Updated from exchangerate-api.com
 - **Branch Strategy**: Data stored in `data-updates` branch, code in `main`
 
 ### Frontend Stack
