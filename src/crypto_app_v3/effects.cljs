@@ -176,9 +176,12 @@
      (let [stored-data (.getItem js/localStorage "crypto-portfolio-v3")]
        (js/console.log "📖 Raw stored data:" stored-data)
        (when stored-data
-         (let [parsed-data (js->clj (.parse js/JSON stored-data))]
-           (js/console.log "✅ Portfolio loaded successfully:" parsed-data)
-           (rf/dispatch [:portfolio/restore parsed-data]))))
+         (let [js-data (.parse js/JSON stored-data)
+               plain-data (js->clj js-data :keywordize-keys false)]
+           (js/console.log "📖 JS parsed data:" js-data)
+           (js/console.log "✅ Portfolio loaded successfully:" plain-data)
+           (js/console.log "✅ Portfolio data type:" (type plain-data))
+           (rf/dispatch [:portfolio/restore plain-data]))))
      (catch :default e
        (js/console.warn "❌ Failed to load portfolio from localStorage:" e)))))
 
