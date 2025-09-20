@@ -39,7 +39,8 @@
       "Bash(open http://localhost:8000/index-v2.html)",
       "Bash(node:*)",
       "WebFetch(domain:localhost)",
-      "Bash(nbb:*)"
+      "Bash(nbb:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": [],
     "ask": []

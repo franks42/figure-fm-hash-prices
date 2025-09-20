@@ -5,9 +5,10 @@ on:
   workflow_dispatch:
   
   # Run automatically every 10 minutes
-  schedule:
-    # Run every 10 minutes
-    - cron: '*/10 * * * *'
+  # DISABLED - Using fetch-crypto-data-nbb.yml instead
+  # schedule:
+  #   # Run every 10 minutes
+  #   - cron: '*/10 * * * *'
 
 permissions:
   contents: write
