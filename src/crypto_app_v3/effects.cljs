@@ -149,3 +149,31 @@
    {:db (-> db
             (assoc-in [:currency :exchange-rates] rates)
             (assoc-in [:currency :using-mock-rates?] using-mock?))}))
+
+;; localStorage effects for portfolio persistence
+(rf/reg-fx
+ :local-storage/persist-portfolio
+ (fn [_]
+   (let [holdings @(rf/subscribe [:portfolio/holdings])]
+     (js/localStorage.setItem "crypto-portfolio" (js/JSON.stringify (clj->js holdings))))))
+
+(rf/reg-fx
+ :local-storage/load-portfolio
+ (fn [_]
+   (when-let [stored (js/localStorage.getItem "crypto-portfolio")]
+     (try
+       (let [holdings (js->clj (js/JSON.parse stored) :keywordize-keys true)]
+         (rf/dispatch [:portfolio/restore holdings]))
+       (catch js/Error e
+         (js/console.warn "Failed to load portfolio from localStorage:" e))))))
+
+(rf/reg-fx
+ :local-storage/persist-currency
+ (fn [currency]
+   (js/localStorage.setItem "selected-currency" currency)))
+
+(rf/reg-fx
+ :local-storage/load-currency
+ (fn [_]
+   (when-let [currency (js/localStorage.getItem "selected-currency")]
+     (rf/dispatch [:currency/set currency]))))

@@ -22,6 +22,11 @@
   (js/console.log "📂 V3 Restoring portfolio from localStorage...")
   (rf/dispatch [:portfolio/initialize]))
 
+(defn restore-currency []
+  (js/console.log "💱 V3 Restoring currency from localStorage...")
+  (when-let [currency (js/localStorage.getItem "selected-currency")]
+    (rf/dispatch-sync [:currency/set currency])))
+
 (defn mount-app []
   (rdom/render [views/app-component] (.getElementById js/document "app")))
 
@@ -42,6 +47,7 @@
   (log-startup)
   (initialize-db)
   (restore-portfolio)
+  (restore-currency)
   (mount-app)
   (setup-timeout-handler)
   (start-data-fetching)

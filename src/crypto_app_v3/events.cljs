@@ -121,6 +121,16 @@
           (update-in db [:portfolio :holdings] dissoc crypto-id))
     :fx [[:local-storage/persist-portfolio]]}))
 
+(rf/reg-event-db
+ :portfolio/restore
+ (fn [db [_ holdings]]
+   (assoc-in db [:portfolio :holdings] holdings)))
+
+(rf/reg-event-fx
+ :portfolio/initialize
+ (fn [_ _]
+   {:fx [[:local-storage/load-portfolio]]}))
+
 ;; Currency conversion functions (copy V2)
 (defn convert-currency [usd-amount target-currency exchange-rates]
   "Convert USD amount to target currency using current exchange rates"
