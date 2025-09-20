@@ -116,17 +116,20 @@
 (rf/reg-event-fx
  :portfolio/set-quantity
  (fn [{:keys [db]} [_ crypto-id quantity]]
-   (js/console.log "🔴 Portfolio set-quantity called:" crypto-id quantity)
+   (js/console.log "🚨 Portfolio set-quantity called:" crypto-id quantity)
    (let [current-holdings (get-in db [:portfolio :holdings] {})
          updated-holdings (if (and quantity (> quantity 0))
                            (assoc current-holdings crypto-id quantity)
                            (dissoc current-holdings crypto-id))
-         ;; Convert ClojureScript map to plain JS object for storage
-         plain-holdings (into {} updated-holdings)
+         ;; Create plain JS object for storage - FORCE plain object creation
+         js-obj (js-obj)
+         _ (doseq [[k v] updated-holdings] (aset js-obj k v))
+         plain-holdings (js->clj js-obj)
          updated-db (assoc-in db [:portfolio :holdings] updated-holdings)]
-     (js/console.log "🔴 Current holdings:" current-holdings)
-     (js/console.log "🔴 Updated holdings:" updated-holdings)
-     (js/console.log "🔴 Plain holdings for storage:" plain-holdings)
+     (js/console.log "🚨 Current holdings:" current-holdings)  
+     (js/console.log "🚨 Updated holdings:" updated-holdings)
+     (js/console.log "🚨 JS object created:" js-obj)
+     (js/console.log "🚨 Plain holdings for storage:" plain-holdings)
      {:db updated-db
       :fx [[:local-storage/persist-portfolio plain-holdings]]})))
 

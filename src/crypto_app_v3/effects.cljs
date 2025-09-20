@@ -155,9 +155,10 @@
  :local-storage/persist-portfolio
  (fn [holdings]
    (try
-     (js/console.log "💾 Saving portfolio to localStorage:" holdings)
+     (js/console.log "🚨 FINAL - Saving portfolio to localStorage:" holdings)
+     (js/console.log "🚨 FINAL - Holdings type:" (type holdings))
      (.setItem js/localStorage "crypto-portfolio-v3" (.stringify js/JSON (clj->js holdings)))
-     (js/console.log "✅ Portfolio saved successfully")
+     (js/console.log "🚨 FINAL - Portfolio saved successfully")
      (catch :default e
        (js/console.warn "❌ Failed to save portfolio to localStorage:" e)))))
 
