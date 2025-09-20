@@ -116,10 +116,12 @@
 (rf/reg-event-fx
  :portfolio/set-quantity
  (fn [{:keys [db]} [_ crypto-id quantity]]
+   (js/console.log "🔴 Portfolio set-quantity called:" crypto-id quantity)
    (let [updated-db (if (and quantity (> quantity 0))
                       (assoc-in db [:portfolio :holdings crypto-id] quantity)
                       (update-in db [:portfolio :holdings] dissoc crypto-id))
          updated-holdings (get-in updated-db [:portfolio :holdings])]
+     (js/console.log "🔴 Updated holdings:" updated-holdings)
      {:db updated-db
       :fx [[:local-storage/persist-portfolio updated-holdings]]})))
 
