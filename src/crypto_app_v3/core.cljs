@@ -9,7 +9,7 @@
 
 ;; Copy V2 initialization logic (small functions)
 
-(def ^:const VERSION "v3.2.1-edn-version-tracking")
+(def ^:const VERSION "v3.2.2-json-fix-scittle")
 
 (defn log-startup []
   (js/console.log "🚀 V3 Re-frame Crypto Tracker Starting...")

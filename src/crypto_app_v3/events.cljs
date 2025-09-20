@@ -130,10 +130,11 @@
 
 (rf/reg-event-db
  :portfolio/restore
- (fn [db [_ holdings]]
-   (js/console.log "📝 EDN Restoring holdings to database:" holdings)
-   (js/console.log "📝 EDN Holdings type:" (type holdings))
-   (assoc-in db [:portfolio :holdings] holdings)))
+ (fn [db [_ js-holdings]]
+   (js/console.log "📖 Restoring JS holdings to database:" js-holdings)
+   (js/console.log "📖 JS holdings type:" (type js-holdings))
+   ;; Store JS object directly to avoid persistent map conversion
+   (assoc-in db [:portfolio :holdings] js-holdings)))
 
 (rf/reg-event-fx
  :portfolio/initialize

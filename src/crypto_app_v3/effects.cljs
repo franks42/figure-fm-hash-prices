@@ -1,6 +1,5 @@
 (ns crypto-app-v3.effects
-  (:require [re-frame.core :as rf]
-            [cljs.reader :as reader]))
+  (:require [re-frame.core :as rf]))
 
 ;; Copy V2 data processing logic (small functions)
 
@@ -151,21 +150,25 @@
             (assoc-in [:currency :exchange-rates] rates)
             (assoc-in [:currency :using-mock-rates?] using-mock?))}))
 
-;; EDN-based portfolio persistence - native ClojureScript format
+;; Simple JSON persistence with manual plain object creation
 (rf/reg-fx
  :local-storage/persist-portfolio
  (fn [holdings]
    (try
-     (js/console.log "📝 EDN - Saving portfolio to localStorage:" holdings)
-     (js/console.log "📝 EDN - Holdings type:" (type holdings))
-     (let [edn-string (pr-str holdings)]
-       (js/console.log "📝 EDN - EDN string being saved:" edn-string)
-       (.setItem js/localStorage "crypto-portfolio-v3-edn" edn-string)
-       ;; IMMEDIATE READ-BACK VERIFICATION
-       (let [read-back (.getItem js/localStorage "crypto-portfolio-v3-edn")]
-         (js/console.log "📝 VERIFICATION - Read back from localStorage:" read-back)
-         (js/console.log "📝 VERIFICATION - Read-back matches saved?" (= edn-string read-back))))
-     (js/console.log "📝 EDN - Portfolio saved successfully")
+     (js/console.log "💾 Saving portfolio to localStorage:" holdings)
+     (js/console.log "💾 Holdings type:" (type holdings))
+     ;; Create completely fresh plain object
+     (let [plain-obj #js{}]
+       (doseq [[k v] holdings]
+         (aset plain-obj (str k) v))
+       (let [json-string (js/JSON.stringify plain-obj)]
+         (js/console.log "💾 Plain JS object:" plain-obj)
+         (js/console.log "💾 JSON string:" json-string)
+         (.setItem js/localStorage "crypto-portfolio-v3-simple" json-string)
+         ;; VERIFICATION
+         (let [read-back (.getItem js/localStorage "crypto-portfolio-v3-simple")]
+           (js/console.log "💾 VERIFICATION - Read back:" read-back))))
+     (js/console.log "💾 Portfolio saved successfully")
      (catch :default e
        (js/console.warn "❌ Failed to save portfolio to localStorage:" e)))))
 
@@ -173,14 +176,17 @@
  :local-storage/load-portfolio
  (fn [_]
    (try
-     (js/console.log "📖 EDN - Loading portfolio from localStorage...")
-     (let [stored-data (.getItem js/localStorage "crypto-portfolio-v3-edn")]
-       (js/console.log "📖 EDN - Raw stored data:" stored-data)
+     (js/console.log "📖 Loading portfolio from localStorage...")
+     (let [stored-data (.getItem js/localStorage "crypto-portfolio-v3-simple")]
+       (js/console.log "📖 Raw stored data:" stored-data)
        (when stored-data
-         (let [parsed-data (reader/read-string stored-data)]
-           (js/console.log "📖 EDN - Parsed data:" parsed-data)
-           (js/console.log "📖 EDN - Parsed data type:" (type parsed-data))
-           (rf/dispatch [:portfolio/restore parsed-data]))))
+         (let [js-data (.parse js/JSON stored-data)
+               ;; Keep as JS object - don't convert to ClojureScript
+               plain-data (js->clj js-data :keywordize-keys false)]
+           (js/console.log "📖 JS parsed data:" js-data)
+           (js/console.log "📖 Plain data:" plain-data)
+           (js/console.log "📖 Plain data type:" (type plain-data))
+           (rf/dispatch [:portfolio/restore js-data]))))  ; Pass JS object directly
      (catch :default e
        (js/console.warn "❌ Failed to load portfolio from localStorage:" e)))))
 
