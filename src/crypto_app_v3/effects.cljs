@@ -157,7 +157,13 @@
    (try
      (js/console.log "🚨 FINAL - Saving portfolio to localStorage:" holdings)
      (js/console.log "🚨 FINAL - Holdings type:" (type holdings))
-     (.setItem js/localStorage "crypto-portfolio-v3" (.stringify js/JSON (clj->js holdings)))
+     (let [json-string (.stringify js/JSON (clj->js holdings))]
+       (js/console.log "🚨 FINAL - JSON string being saved:" json-string)
+       (.setItem js/localStorage "crypto-portfolio-v3" json-string)
+       ;; IMMEDIATE READ-BACK VERIFICATION
+       (let [read-back (.getItem js/localStorage "crypto-portfolio-v3")]
+         (js/console.log "🚨 VERIFICATION - Read back from localStorage:" read-back)
+         (js/console.log "🚨 VERIFICATION - Read-back matches saved?" (= json-string read-back))))
      (js/console.log "🚨 FINAL - Portfolio saved successfully")
      (catch :default e
        (js/console.warn "❌ Failed to save portfolio to localStorage:" e)))))
