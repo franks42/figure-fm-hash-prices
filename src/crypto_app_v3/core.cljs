@@ -9,11 +9,17 @@
 
 ;; Copy V2 initialization logic (small functions)
 
-(def ^:const VERSION "v3.2.0-edn")
+(def ^:const VERSION "v3.2.1-edn-version-tracking")
 
 (defn log-startup []
   (js/console.log "🚀 V3 Re-frame Crypto Tracker Starting...")
-  (js/console.log "🔢 VERSION:" VERSION "- EDN Portfolio Persistence")
+  (js/console.log "🔢 VERSION:" VERSION "- EDN Portfolio Persistence + Version Tracking")
+  ;; Store and check version in localStorage
+  (let [stored-version (js/localStorage.getItem "crypto-app-v3-version")]
+    (js/console.log "📦 STORED VERSION:" stored-version)
+    (js/console.log "🆕 CURRENT VERSION:" VERSION)
+    (js/console.log "✅ VERSION UP-TO-DATE?" (= stored-version VERSION))
+    (js/localStorage.setItem "crypto-app-v3-version" VERSION))
   (js/console.log "🌍 Current URL:" js/window.location.href)
   (js/console.log "🌍 Domain:" js/window.location.hostname)
   (js/console.log "🌍 Protocol:" js/window.location.protocol))
