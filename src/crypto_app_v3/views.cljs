@@ -5,7 +5,7 @@
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
 ;; Import version from core
-(def VERSION "v3.3.1-correct-field-names")
+(def VERSION "v3.3.2-volume-currency-conversion")
 
 ;; Copy V2 constants exactly
 (def crypto-icons
@@ -57,11 +57,19 @@
          symbol (get-currency-symbol currency)]
      (str symbol (format-number converted-price decimals)))))
 
-(defn format-volume [vol]
-  (cond
-    (>= vol 1e9) (str "$" (format-number (/ vol 1e9) 2) "B")
-    (>= vol 1e6) (str "$" (format-number (/ vol 1e6) 2) "M")
-    :else (str "$" (format-number vol 0))))
+(defn format-volume 
+  ([vol]
+   (cond
+     (>= vol 1e9) (str "$" (format-number (/ vol 1e9) 2) "B")
+     (>= vol 1e6) (str "$" (format-number (/ vol 1e6) 2) "M")
+     :else (str "$" (format-number vol 0))))
+  ([vol current-currency exchange-rates]
+   (let [converted-vol (convert-currency vol current-currency exchange-rates)
+         symbol (get-currency-symbol current-currency)]
+     (cond
+       (>= converted-vol 1e9) (str symbol (format-number (/ converted-vol 1e9) 2) "B")
+       (>= converted-vol 1e6) (str symbol (format-number (/ converted-vol 1e6) 2) "M")
+       :else (str symbol (format-number converted-vol 0))))))
 
 ;; Currency button component (copy V2 exactly) - MOVED UP
 (defn currency-button [currency-code]
@@ -207,7 +215,7 @@
    [:div {:class "flex flex-col"}
     [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Volume"]
     [:div {:class "text-base font-semibold text-white tabular-nums flex items-center"}
-     (format-volume (or volume 0))
+     (format-volume (or volume 0) current-currency exchange-rates)
      [currency-button current-currency]]
     ;; Add token volume calculation
     (when (and volume current-price (> current-price 0))
