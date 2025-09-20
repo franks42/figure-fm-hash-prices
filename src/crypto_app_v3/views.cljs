@@ -5,7 +5,7 @@
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
 ;; Import version from core
-(def VERSION "v3.2.8-24h-high-low-fix")
+(def VERSION "v3.2.9-volume-debug")
 
 ;; Copy V2 constants exactly
 (def crypto-icons
@@ -202,6 +202,7 @@
        (or data-source "YF")])]])
 
 (defn crypto-stats [volume trades-24h data-source crypto-id current-price current-currency exchange-rates]
+  (js/console.log "🔍 CRYPTO STATS called with volume:" volume "price:" current-price "crypto:" crypto-id)
   [:div {:class "grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-white/5"}
    [:div {:class "flex flex-col"}
     [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Volume"]
