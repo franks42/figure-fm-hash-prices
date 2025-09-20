@@ -117,11 +117,14 @@
  :portfolio/set-quantity
  (fn [{:keys [db]} [_ crypto-id quantity]]
    (js/console.log "🔴 Portfolio set-quantity called:" crypto-id quantity)
-   (let [updated-db (if (and quantity (> quantity 0))
-                      (assoc-in db [:portfolio :holdings crypto-id] quantity)
-                      (update-in db [:portfolio :holdings] dissoc crypto-id))
-         updated-holdings (get-in updated-db [:portfolio :holdings])]
+   (let [current-holdings (get-in db [:portfolio :holdings] {})
+         updated-holdings (if (and quantity (> quantity 0))
+                           (assoc current-holdings crypto-id quantity)
+                           (dissoc current-holdings crypto-id))
+         updated-db (assoc-in db [:portfolio :holdings] updated-holdings)]
+     (js/console.log "🔴 Current holdings:" current-holdings)
      (js/console.log "🔴 Updated holdings:" updated-holdings)
+     (js/console.log "🔴 Updated holdings type:" (type updated-holdings))
      {:db updated-db
       :fx [[:local-storage/persist-portfolio updated-holdings]]})))
 
