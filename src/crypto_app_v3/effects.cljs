@@ -155,8 +155,10 @@
  :local-storage/persist-portfolio
  (fn [holdings]
    (js/console.log "🔴 Persisting portfolio:" holdings)
-   (js/localStorage.setItem "crypto-portfolio" (js/JSON.stringify (clj->js holdings)))
-   (js/console.log "🔴 Saved to localStorage")))
+   (let [js-holdings (into {} holdings)]  ; Convert to plain JS object
+     (js/console.log "🔴 Converted to JS:" js-holdings)
+     (js/localStorage.setItem "crypto-portfolio" (js/JSON.stringify js-holdings))
+     (js/console.log "🔴 Saved to localStorage"))))
 
 (rf/reg-fx
  :local-storage/load-portfolio
@@ -166,7 +168,7 @@
      (do
        (js/console.log "🔴 Found stored portfolio:" stored)
        (try
-         (let [holdings (js->clj (js/JSON.parse stored) :keywordize-keys true)]
+         (let [holdings (js->clj (js/JSON.parse stored) :keywordize-keys false)]
            (js/console.log "🔴 Parsed holdings:" holdings)
            (rf/dispatch [:portfolio/restore holdings]))
          (catch js/Error e
