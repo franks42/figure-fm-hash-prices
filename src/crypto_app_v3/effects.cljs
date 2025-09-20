@@ -155,10 +155,15 @@
  :local-storage/persist-portfolio
  (fn [holdings]
    (js/console.log "🔴 Persisting portfolio:" holdings)
-   (let [js-holdings (into {} holdings)]  ; Convert to plain JS object
+   (js/console.log "🔴 Holdings type:" (type holdings))
+   ;; Convert explicitly to simple JS object
+   (let [js-holdings (reduce-kv (fn [acc k v] (assoc acc k v)) {} holdings)]
      (js/console.log "🔴 Converted to JS:" js-holdings)
-     (js/localStorage.setItem "crypto-portfolio" (js/JSON.stringify js-holdings))
-     (js/console.log "🔴 Saved to localStorage"))))
+     (js/console.log "🔴 JS holdings type:" (type js-holdings))
+     (let [json-str (js/JSON.stringify (clj->js js-holdings))]
+       (js/console.log "🔴 JSON string:" json-str)
+       (js/localStorage.setItem "crypto-portfolio" json-str)
+       (js/console.log "🔴 Saved to localStorage")))))
 
 (rf/reg-fx
  :local-storage/load-portfolio
