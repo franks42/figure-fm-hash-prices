@@ -1,12 +1,28 @@
-# Re-frame Migration Plan
-*Step-by-step migration from multiple atoms to re-frame*
+# V3 Re-frame Migration Plan
+*Build V3 with re-frame alongside working V2 - all client-side*
 
-## Overview
+## V3 Approach - Parallel Development
 
-Migrate from 6 separate atoms to a single re-frame app-db while maintaining full functionality. Each step includes validation and rollback procedures.
+**Keep V2 Running**: All existing code stays untouched and functional
+**Build V3 Separately**: New files, new namespace, new architecture
+**Client-Side Only**: No server/workflow changes needed
+**Side-by-Side**: Easy comparison and gradual migration
 
+```
+V2 (Keep Working)           V3 (New Re-frame)
+├── index.html              ├── index-v3.html
+├── src/crypto_app.cljs     ├── src/crypto_app_v3/
+│   ├── 6 atoms approach    │   ├── core.cljs
+│   └── Working perfectly   │   ├── events.cljs
+                            │   ├── subs.cljs
+                            │   ├── views.cljs
+                            │   └── effects.cljs
+```
+
+## State Architecture Comparison
+
+**V2 Current** (6 separate atoms - keep working):
 ```clojure
-;; Current state (6 atoms)
 (def prices-atom (r/atom {}))
 (def price-keys-atom (r/atom []))
 (def last-update-atom (r/atom nil))
@@ -14,8 +30,10 @@ Migrate from 6 separate atoms to a single re-frame app-db while maintaining full
 (def error-atom (r/atom nil))
 (def initial-load-complete (r/atom false))
 (def update-flash-atom (r/atom false))
+```
 
-;; Target state (1 app-db)
+**V3 Target** (single re-frame app-db):
+```clojure
 {:prices {:btc {...} :eth {...}}
  :ui {:loading? false :error nil :flash? false :initial-load-complete? true}
  :meta {:last-update "2025-09-19" :price-keys [:btc :eth :hash]}}
@@ -23,71 +41,91 @@ Migrate from 6 separate atoms to a single re-frame app-db while maintaining full
 
 ---
 
-## Phase 1: Foundation Setup (1-2 hours)
+## Phase 1: V3 Foundation Setup (1-2 hours)
 
-### Step 1.1: Add Re-frame Dependencies
-**Goal**: Set up re-frame alongside existing code without breaking anything
+### Step 1.1: Create V3 File Structure
+**Goal**: Set up V3 files without touching V2
 
-**Changes**:
-```clojure
-;; Add to crypto_app.cljs after existing requires
-(:require [clojure.string :as str]
-          [reagent.core :as r]
-          [reagent.dom :as rdom]
-          [re-frame.core :as rf])   ;; <- ADD THIS
+**Create New Files**:
+```bash
+mkdir -p src/crypto_app_v3
+touch index-v3.html
+touch src/crypto_app_v3/core.cljs
+touch src/crypto_app_v3/events.cljs  
+touch src/crypto_app_v3/subs.cljs
+touch src/crypto_app_v3/views.cljs
+touch src/crypto_app_v3/effects.cljs
 ```
 
-**HTML Changes**:
+**HTML Structure** (`index-v3.html`):
 ```html
-<!-- Add to index.html after reagent -->
-<script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.re-frame.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Crypto Price Tracker V3 (Re-frame)</title>
+    <!-- Copy V2 styling but load V3 scripts -->
+    <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.reagent.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.re-frame.js"></script>
+</head>
+<body>
+    <div id="app"></div>
+    <!-- Load V3 ClojureScript modules -->
+    <script type="application/x-scittle" src="src/crypto_app_v3/events.cljs"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/subs.cljs"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/views.cljs"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/effects.cljs"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/core.cljs"></script>
+</body>
+</html>
 ```
 
 **Validation**:
-- [ ] App still loads normally
-- [ ] Console shows no errors
-- [ ] All price updates work as before
+- [ ] V2 (index.html) still works perfectly
+- [ ] V3 (index-v3.html) loads without errors
+- [ ] Can develop V3 independently
 
-**Test Script**:
-```clojure
-;; Add to end of crypto_app.cljs temporarily
-(js/console.log "Re-frame available:" (exists? rf/dispatch))
+### Step 1.2: Copy V2 Styling to V3
+**Goal**: V3 looks identical to V2 but uses re-frame architecture
+
+**Copy Styling** (`index-v3.html`):
+```bash
+# Copy the entire head section from index.html to index-v3.html
+# Including: Tailwind config, fonts, animations, custom CSS
+# Only change: script loading for V3 modules
 ```
 
-### Step 1.2: Initialize App-DB
-**Goal**: Create the app-db structure without using it yet
-
-**Add to crypto_app.cljs**:
+**Basic V3 Structure** (`src/crypto_app_v3/core.cljs`):
 ```clojure
-;; Initialize empty app-db (coexists with atoms)
-(rf/reg-event-db
-  ::initialize-db
-  (fn [_ _]
-    {:prices {}
-     :ui {:loading? true
-          :error nil
-          :flash? false  
-          :initial-load-complete? false}
-     :meta {:last-update nil
-            :price-keys []}}))
+(ns crypto-app-v3.core
+  (:require [reagent.dom :as rdom]
+            [re-frame.core :as rf]
+            [crypto-app-v3.events]   ; Load events
+            [crypto-app-v3.subs]     ; Load subscriptions  
+            [crypto-app-v3.views :as views]))
 
-;; Initialize on startup
-(rf/dispatch-sync [::initialize-db])
+(defn ^:export init []
+  (rf/dispatch-sync [:initialize-db])
+  (rf/dispatch [:fetch-crypto-data])
+  (rdom/render [views/app] (.getElementById js/document "app")))
+
+;; Auto-start
+(init)
 ```
 
 **Validation**:
-- [ ] App-db is created: `@re-frame.db/app-db` in browser console
-- [ ] Existing functionality unaffected
-- [ ] No console errors
+- [ ] V3 loads with basic structure
+- [ ] V2 remains completely untouched
+- [ ] Ready for modular development
 
 ---
 
-## Phase 2: Migrate Loading States (2 hours)
+## Phase 2: Build V3 Events & Subs (2-3 hours)
 
-### Step 2.1: Add Loading Event Handlers
-**Goal**: Create re-frame handlers for loading state
+### Step 2.1: Create V3 Events (Copy & Adapt from V2)
+**Goal**: Build re-frame events by copying V2 logic
 
-**Add to crypto_app.cljs**:
+**File**: `src/crypto_app_v3/events.cljs`
 ```clojure
 ;; Events for loading state
 (rf/reg-event-db
