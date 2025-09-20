@@ -1,0 +1,84 @@
+name: Repository Health Check
+
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly on Monday 6 AM UTC
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyze repository size
+        run: |
+          echo "🔍 Repository Health Analysis"
+          echo "=============================="
+          
+          # Total repo size
+          REPO_SIZE=$(du -sh .git | cut -f1)
+          echo "📁 Total repository size: $REPO_SIZE"
+          
+          # Count commits in data-updates branch
+          DATA_COMMITS=$(git rev-list --count origin/data-updates 2>/dev/null || echo "0")
+          echo "📊 data-updates commits: $DATA_COMMITS"
+          
+          # Size of data-updates branch
+          if [ "$DATA_COMMITS" -gt "0" ]; then
+            git checkout origin/data-updates
+            DATA_SIZE=$(du -sh data/ 2>/dev/null | cut -f1 || echo "N/A")
+            echo "💾 data/ directory size: $DATA_SIZE"
+            git checkout main
+          fi
+          
+          # Alert if too many commits (should be ~1 after cleanup)
+          if [ "$DATA_COMMITS" -gt "100" ]; then
+            echo "⚠️  WARNING: data-updates branch has $DATA_COMMITS commits"
+            echo "🧹 Monthly cleanup may have failed"
+            echo "📋 Consider manual cleanup or investigate automation"
+          else
+            echo "✅ Repository size appears healthy"
+          fi
+          
+          # Check latest data file age
+          if [ -f "data/crypto-prices.json" ]; then
+            LAST_MODIFIED=$(stat -c %Y data/crypto-prices.json 2>/dev/null || stat -f %m data/crypto-prices.json)
+            CURRENT_TIME=$(date +%s)
+            AGE_MINUTES=$(( (CURRENT_TIME - LAST_MODIFIED) / 60 ))
+            
+            if [ "$AGE_MINUTES" -gt "30" ]; then
+              echo "⚠️  Data files appear stale (>30 min old)"
+            else
+              echo "✅ Data files are fresh"
+            fi
+          fi
+
+      - name: Create size report
+        run: |
+          cat > /tmp/repo-health.md << EOF
+          # Repository Health Report
+          **Date**: $(date -u)
+          
+          ## Size Metrics
+          - Repository size: $(du -sh .git | cut -f1)
+          - data-updates commits: $(git rev-list --count origin/data-updates 2>/dev/null || echo "0")
+          - Data directory size: $(du -sh data/ 2>/dev/null | cut -f1 || echo "N/A")
+          
+          ## Status
+          $(if [ "$(git rev-list --count origin/data-updates 2>/dev/null || echo "0")" -gt "100" ]; then
+            echo "- ⚠️ Consider running monthly cleanup manually"
+          else
+            echo "- ✅ Repository health is good"
+          fi)
+          
+          ## Next Actions
+          - Monthly cleanup: $(date -d "$(date -d 'next month' '+%Y-%m-01')" '+%B %d, %Y')
+          - Weekly health check: $(date -d 'next monday' '+%B %d, %Y')
+          EOF
+          
+          echo "📊 Health Report Generated:"
+          cat /tmp/repo-health.md

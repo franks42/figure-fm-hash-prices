@@ -22,6 +22,9 @@ jobs:
         fetch-depth: 1      # Only fetch latest commit for faster CI
         ref: main           # Ensure we're on main branch
 
+    - name: Install utilities
+      run: sudo apt-get update && sudo apt-get install -y bc jq
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -32,22 +35,52 @@ jobs:
       with:
         alpha-vantage-api-key: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
 
-    - name: Commit and push to data branch
+    - name: Smart commit and push to data branch
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-
-        # Check if file exists and has content
-        if [ -s data/crypto-prices.json ]; then
-          # Simple approach: create new branch from main, add file, force push
+        
+        # Validate data file exists and has content
+        if [ ! -s data/crypto-prices.json ]; then
+          echo "❌ Error: crypto-prices.json is empty or doesn't exist"
+          exit 1
+        fi
+        
+        # Validate JSON structure
+        if ! jq empty data/crypto-prices.json; then
+          echo "❌ Error: Invalid JSON format"
+          exit 1
+        fi
+        
+        # Check critical data presence
+        HASH_PRICE=$(jq -r '.hash.usd // 0' data/crypto-prices.json)
+        BTC_PRICE=$(jq -r '.btc.usd // 0' data/crypto-prices.json)
+        
+        if [ "$HASH_PRICE" = "0" ] || [ "$HASH_PRICE" = "null" ]; then
+          echo "⚠️  Warning: HASH price missing or zero"
+        fi
+        
+        if (( $(echo "$BTC_PRICE < 10000" | bc -l) )); then
+          echo "⚠️  Warning: BTC price seems unusually low: $BTC_PRICE"
+        fi
+        
+        # Check if data actually changed (avoid unnecessary commits)
+        DATA_CHANGED=true
+        if git show-ref --verify --quiet refs/remotes/origin/data-updates; then
+          git fetch origin data-updates:data-updates --depth=1
+          if git diff --quiet data-updates -- data/crypto-prices.json; then
+            echo "📊 No data changes detected, skipping commit"
+            DATA_CHANGED=false
+          fi
+        fi
+        
+        if [ "$DATA_CHANGED" = "true" ]; then
+          # Data changed or first run, create update
           git checkout -b data-updates-temp
           git add data/crypto-prices.json
           git commit -m "Update crypto data $(date -u '+%Y-%m-%d %H:%M:%S UTC') [nbb]"
-
-          # Force push to data-updates branch (overwrite completely)
           git push origin data-updates-temp:data-updates --force
-          echo "✅ Data force pushed to data-updates branch successfully"
+          echo "✅ Data updated successfully"
         else
-          echo "❌ Error: crypto-prices.json is empty or doesn't exist"
-          exit 1
+          echo "✅ Data validation passed, no update needed"
         fi

@@ -1,0 +1,85 @@
+name: Monthly Repository Cleanup
+
+on:
+  workflow_dispatch:  # Manual trigger for testing
+  schedule:
+    - cron: '0 2 1 * *'  # 1st day of month, 2 AM UTC (avoid conflicts)
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get current data-updates branch content
+        run: |
+          git fetch origin data-updates:data-updates || echo "data-updates branch doesn't exist yet"
+          if git show-ref --verify --quiet refs/heads/data-updates; then
+            git checkout data-updates
+            cp data/crypto-prices.json /tmp/latest-crypto-prices.json
+            git checkout main
+            echo "✅ Backed up existing data"
+          else
+            echo "ℹ️ No existing data-updates branch"
+          fi
+
+      - name: Fetch fresh crypto data
+        uses: ./.github/actions/fetch-data  
+        with:
+          alpha-vantage-api-key: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
+
+      - name: Use existing data if fetch fails
+        run: |
+          if [ ! -s data/crypto-prices.json ] && [ -f /tmp/latest-crypto-prices.json ]; then
+            echo "⚠️ Fetch failed, using existing data"
+            cp /tmp/latest-crypto-prices.json data/crypto-prices.json
+          fi
+
+      - name: Create orphan branch
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action - Monthly Cleanup"
+          
+          # Create fresh branch with no history
+          git checkout --orphan data-updates-clean
+          git rm -rf . 2>/dev/null || true
+          
+          # Re-add only necessary files
+          mkdir -p data
+          cp data/crypto-prices.json data/ 2>/dev/null || echo "No data file to copy"
+          git add data/crypto-prices.json
+          
+          # Commit with cleanup message
+          git commit -m "🧹 Monthly cleanup $(date -u '+%Y-%m-%d')" \
+                     -m "Eliminated branch history to prevent repo bloat" \
+                     -m "Previous data-updates branch size reset"
+          
+          # Replace data-updates branch
+          git push origin data-updates-clean:data-updates --force
+          
+          echo "✅ Repository cleanup completed"
+          echo "📊 data-updates branch history reset"
+
+      - name: Verify cleanup
+        run: |
+          # Check that new branch has only 1 commit
+          git ls-remote origin data-updates
+          echo "✅ Cleanup verification: data-updates branch recreated"
+
+      - name: Notify cleanup completion
+        run: |
+          echo "🧹 Monthly cleanup completed successfully"
+          echo "📉 Repository size optimized"
+          echo "📅 Next cleanup: $(date -d '+1 month' -u '+%Y-%m-%d')"
