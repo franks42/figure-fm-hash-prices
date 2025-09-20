@@ -5,7 +5,7 @@
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
 ;; Import version from core
-(def VERSION "v3.2.9-volume-debug")
+(def VERSION "v3.3.0-data-debug")
 
 ;; Copy V2 constants exactly
 (def crypto-icons
@@ -268,6 +268,7 @@
 (defn crypto-card [crypto-id]
   (let [prices @(rf/subscribe [:prices])
         data (get prices crypto-id)
+        _ (js/console.log "🔍 CRYPTO CARD DATA for" crypto-id ":" data)
         name (get-crypto-name crypto-id)
         price (get data "usd")
         change (get data "usd_24h_change")
