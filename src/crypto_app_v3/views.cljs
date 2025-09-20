@@ -5,7 +5,7 @@
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
 ;; Import version from core
-(def VERSION "v3.3.0-data-debug")
+(def VERSION "v3.3.1-correct-field-names")
 
 ;; Copy V2 constants exactly
 (def crypto-icons
@@ -273,8 +273,8 @@
         price (get data "usd")
         change (get data "usd_24h_change")
         volume (get data "usd_24h_vol")
-        high (get data "high_24h")
-        low (get data "low_24h")
+        high (get data "day_high")
+        low (get data "day_low")
         trades-24h (get data "trades_24h")
         data-source (get data "dataSource")  ; Market feed indicator data
         ;; Enhanced FIGR stock data (copy V2)
