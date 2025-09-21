@@ -18,8 +18,9 @@
       
       :reagent-render
       (fn [crypto-id]
-        ;; React owns this div - uPlot renders inside it
-        [:div {:class "absolute inset-0 opacity-30 pointer-events-none"
+        ;; React owns this div - uPlot renders inside it with fixed height
+        [:div {:class "absolute top-0 left-0 right-0 opacity-30 pointer-events-none"
+               :style {:height "120px"}  ; Fixed height for chart visibility
                :ref (fn [el] 
                       (when el
                         (js/console.log "📌 Chart ref set for" crypto-id el)
