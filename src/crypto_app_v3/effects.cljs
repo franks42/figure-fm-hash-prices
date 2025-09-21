@@ -1,5 +1,12 @@
 (ns crypto-app-v3.effects
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [ajax.core :as ajax]))
+
+;; Register HTTP effect handler for ajax requests
+(rf/reg-fx
+ :http-xhrio
+ (fn [request]
+   (ajax/ajax-request request)))
 
 ;; Copy V2 data processing logic (small functions)
 
