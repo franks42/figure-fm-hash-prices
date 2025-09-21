@@ -6,12 +6,17 @@ The V2→V3 migration was reported as complete but analysis revealed missing fea
 ## Issues Identified by Oracle Review
 
 ### 🚨 High Priority - Missing Core Features
-1. **24h Trades Count Missing** 
+1. **24h Trades Count Missing** ✅ COMPLETED
    - Present in V2 cards, omitted in V3
    - User loses liquidity indication
    - **Action**: Add trades-24h row back to crypto cards
 
-2. **Portfolio Storage Inconsistency**
+2. **Memory Usage Investigation** 🆘 URGENT
+   - Safari reports "significant memory" usage and reloads page
+   - **Action**: Profile memory usage, identify leaks/bloat sources, implement fixes
+   - Potential causes: setInterval leaks, DOM accumulation, re-frame subscription leaks, large data retention
+
+3. **Portfolio Storage Inconsistency**
    - Data stored in BOTH re-frame app-db AND reagent atoms
    - Re-frame code exists but unused (dead code)
    - Atoms currently handle all UI interactions
@@ -67,7 +72,15 @@ The previous instance claimed re-frame localStorage was problematic. Oracle anal
 - [ ] Commit/push/tag as `v3-pre-completion-fixes`
 - [ ] Oracle pre-analysis for each fix
 
-### Phase 2: Portfolio Storage Consolidation
+### Phase 2: Memory Usage Investigation
+- [ ] Oracle: Analyze V3 codebase for memory leak sources
+- [ ] Profile browser memory usage during normal operation
+- [ ] Check for setInterval cleanup issues
+- [ ] Investigate re-frame subscription lifecycle
+- [ ] Measure DOM node accumulation
+- [ ] Test with different browsers to isolate Safari-specific issues
+
+### Phase 3: Portfolio Storage Consolidation
 - [ ] Oracle: Analyze current portfolio code paths
 - [ ] Fix duplicate event registrations (remove portfolio.cljs or rename IDs)
 - [ ] Fix JS/CLJS data mixing (consistent keywordized maps)
@@ -75,18 +88,18 @@ The previous instance claimed re-frame localStorage was problematic. Oracle anal
 - [ ] Remove portfolio-atoms.cljs and related dead code
 - [ ] Test portfolio persistence thoroughly
 
-### Phase 3: Missing Features
+### Phase 4: Missing Features
 - [ ] Oracle: Review V2 trades-24h implementation  
 - [ ] Add trades-24h field to crypto cards in V3
 - [ ] Oracle: Analyze V2 portfolio UI behavior
 - [ ] Implement smart portfolio button/value component
 
-### Phase 4: Bug Fixes
+### Phase 5: Bug Fixes
 - [ ] Oracle: Review flash dispatch logic
 - [ ] Fix cond-> dispatch overwrite in `:smart-price-update`
 - [ ] Clear setInterval IDs to prevent memory leaks (optional)
 
-### Phase 5: Validation
+### Phase 6: Validation
 - [ ] Oracle: Final architecture review
 - [ ] Test all features against V2 parity checklist
 - [ ] Performance comparison
