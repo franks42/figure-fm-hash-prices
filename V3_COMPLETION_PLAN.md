@@ -20,12 +20,19 @@ The V2→V3 migration was reported as complete but analysis revealed missing fea
    - **Action**: Fix re-frame localStorage bugs and complete migration
 
 ### 🔧 Medium Priority - UI/UX Regressions  
-3. **Portfolio Button/Value UI Behavior**
+3. **Compact Header Layout**
+   - Current: Multi-line header takes too much vertical space
+   - **Action**: 
+     - Version - crypto tracker - timestamp on one line (smaller font for tracker)
+     - Remove "Real-time cryptocurrency prices - Re-frame Architecture" subtitle
+     - TOTAL PORTFOLIO VALUE and value on one line with smaller font
+
+4. **Portfolio Button/Value UI Behavior**
    - V2: Smart component - button when empty, clickable value when holdings exist
    - V3: Always shows both button AND value (redundant UI)
    - **Action**: Implement V2's conditional UI logic
 
-4. **Flash Dispatch Bug**
+5. **Flash Dispatch Bug**
    - First update flash never fires due to dispatch overwrite in `:smart-price-update`
    - **Action**: Fix cond-> logic to avoid :dispatch key collision
 
