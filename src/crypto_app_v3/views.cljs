@@ -47,7 +47,7 @@
     "SEK" "kr"
     currency-code))
 
-(defn format-price 
+(defn format-price
   ([price crypto-id]
    (let [decimals (if (= crypto-id "hash") 3 2)]
      (str "$" (format-number price decimals))))
@@ -57,7 +57,7 @@
          symbol (get-currency-symbol currency)]
      (str symbol (format-number converted-price decimals)))))
 
-(defn format-volume 
+(defn format-volume
   ([vol]
    (cond
      (>= vol 1e9) (str "$" (format-number (/ vol 1e9) 2) "B")
@@ -315,8 +315,8 @@
      [crypto-card-change change]
      ;; Different stats for stocks vs crypto (copy V2 logic)
      (if is-stock?
-     [stock-stats open-price trades-24h crypto-id]
-     [crypto-stats volume trades-24h crypto-id price current-currency exchange-rates])
+       [stock-stats open-price trades-24h crypto-id]
+       [crypto-stats volume trades-24h crypto-id price current-currency exchange-rates])
      ;; 24h High/Low for crypto or 52-week range for stocks (copy V2 logic)
      (if is-stock?
        [stock-52w-range fifty-two-week-high fifty-two-week-low crypto-id current-currency exchange-rates]
@@ -500,8 +500,8 @@
 ;; Version display component
 (defn version-display []
   [:div {:class "fixed top-4 left-4 z-50 bg-black/80 border border-white/20 rounded-lg px-3 py-1.5 text-xs text-gray-300"}
-   [:span {:class "text-neon-cyan"} "V3"] 
-   [:span {:class "mx-1"} "•"] 
+   [:span {:class "text-neon-cyan"} "V3"]
+   [:span {:class "mx-1"} "•"]
    [:span VERSION]])
 
 ;; Main app component (copy V2 structure)

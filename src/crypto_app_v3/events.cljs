@@ -138,10 +138,10 @@
    (js/console.log "📝 EDN Portfolio set-quantity called:" crypto-id quantity)
    (let [current-holdings (get-in db [:portfolio :holdings] {})
          updated-holdings (if (and quantity (> quantity 0))
-                           (assoc current-holdings crypto-id quantity)
-                           (dissoc current-holdings crypto-id))
+                            (assoc current-holdings crypto-id quantity)
+                            (dissoc current-holdings crypto-id))
          updated-db (assoc-in db [:portfolio :holdings] updated-holdings)]
-     (js/console.log "📝 EDN Current holdings:" current-holdings)  
+     (js/console.log "📝 EDN Current holdings:" current-holdings)
      (js/console.log "📝 EDN Updated holdings:" updated-holdings)
      (js/console.log "📝 EDN Holdings type:" (type updated-holdings))
      {:db updated-db
@@ -231,22 +231,22 @@
 (rf/reg-event-fx
  :smart-price-update
  (fn [{:keys [db]} [_ raw-data]]
- (let [js-data (js->clj raw-data :keywordize-keys false)
- new-prices (extract-prices-from-response js-data)
- data-sources (extract-data-sources js-data)
- old-prices (:prices db)
- old-keys (:price-keys db)
- new-keys (keys new-prices)
- changes (collect-price-changes old-prices new-prices)
- timestamp (format-timestamp (current-iso-timestamp))
- has-changes? (seq changes)
-          keys-changed? (price-keys-changed? old-keys new-keys)]
+   (let [js-data (js->clj raw-data :keywordize-keys false)
+         new-prices (extract-prices-from-response js-data)
+         data-sources (extract-data-sources js-data)
+         old-prices (:prices db)
+         old-keys (:price-keys db)
+         new-keys (keys new-prices)
+         changes (collect-price-changes old-prices new-prices)
+         timestamp (format-timestamp (current-iso-timestamp))
+         has-changes? (seq changes)
+         keys-changed? (price-keys-changed? old-keys new-keys)]
 
      (cond-> {:db (-> db
-     (assoc :last-update (update-timestamp))
-     (assoc :data-sources data-sources)
-     (assoc-in [:ui :loading?] false)
-     (assoc-in [:ui :error] nil))}
+                      (assoc :last-update (update-timestamp))
+                      (assoc :data-sources data-sources)
+                      (assoc-in [:ui :loading?] false)
+                      (assoc-in [:ui :error] nil))}
 
        has-changes?
        (assoc-in [:db :prices] (merge old-prices changes))

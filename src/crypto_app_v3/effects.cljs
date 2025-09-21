@@ -123,7 +123,7 @@
  :http-exchange-rates
  (fn [{:keys [url on-success on-failure]}]
    (-> (js/fetch (cache-bust-url url))
-       (.then (fn [response] 
+       (.then (fn [response]
                 (if (.-ok response)
                   (.json response)
                   (throw (js/Error. (str "HTTP " (.-status response)))))))
@@ -132,8 +132,8 @@
                       rates (:rates rates-data)]
                   (rf/dispatch [on-success rates false]))))
        (.catch (fn [error]
-                  (js/console.warn "💱 Failed to load exchange rates, using mock:" error)
-                  (rf/dispatch [on-success mock-exchange-rates true]))))))
+                 (js/console.warn "💱 Failed to load exchange rates, using mock:" error)
+                 (rf/dispatch [on-success mock-exchange-rates true]))))))
 
 ;; Exchange rate events
 (rf/reg-event-fx
