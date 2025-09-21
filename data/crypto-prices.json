@@ -18,17 +18,14 @@
     "last_price": 1,
     "usd_market_cap": null,
     "symbol": "FIGR_HELOC-USD",
-    "usd": 0.01,
+    "usd": 0.9974294,
     "type": "crypto",
-    "trades_24h": 0,
-    "usd_24h_vol": 0,
+    "trades_24h": 63,
+    "usd_24h_vol": 19542692.66800253,
     "day_high": 1,
     "usd_24h_change": 0,
     "ask": 0,
-    "bid": 0,
-    "data_status": "STALE_FALLBACK",
-    "error_reason": "invalid_price",
-    "last_valid_timestamp": 1705234567890
+    "bid": 0
   },
   "sol": {
     "day_low": 235.28,
