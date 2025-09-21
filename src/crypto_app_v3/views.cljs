@@ -5,7 +5,7 @@
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
 ;; Import version from core
-(def VERSION "v3.4.2-datasource-debug")
+(def VERSION "v3.4.3-datasource-debug2")
 
 ;; Copy V2 constants exactly
 (def crypto-icons
@@ -332,7 +332,9 @@
 (defn data-sources-display []
   (let [data-sources @(rf/subscribe [:data-sources])]
     (js/console.log "🔍 DATA SOURCES IN VIEW:" data-sources)
-    (when (seq data-sources)
+    (js/console.log "🔍 DATA SOURCES COUNT:" (count data-sources))
+    (js/console.log "🔍 DATA SOURCES SEQ?:" (seq data-sources))
+    (if (and data-sources (> (count data-sources) 0))
       [:div {:class "fixed top-5 left-1/2 transform -translate-x-1/2 z-10"}
        [:div {:class "inline-flex items-center px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/10 text-xs"}
         [:span {:class "text-gray-400 mr-2"} "Data sources:"]
@@ -341,7 +343,10 @@
           [:span {:class "inline-flex items-center"}
            [data-source-chip (clojure.string/upper-case source)]
            (when (< idx (dec (count data-sources)))
-             [:span {:class "text-gray-500 mx-1"} "•"])])]])))
+             [:span {:class "text-gray-500 mx-1"} "•"])])]]
+      [:div {:class "fixed top-5 left-1/2 transform -translate-x-1/2 z-10"}
+       [:div {:class "inline-flex items-center px-3 py-1.5 rounded-full bg-red-500/20 border border-red-500/40 text-xs text-red-400"}
+        "DEBUG: No data sources found"]])))
 
 ;; Last update footer (copy V2)
 (defn last-update-footer []
