@@ -306,7 +306,7 @@
         exchange-rates @(rf/subscribe [:currency/exchange-rates])]
     [:div {:class "relative bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1 hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/10 scan-line overflow-hidden animate-fade-in"}
      [crypto-card-header crypto-id is-stock? company-name exchange]
-     [crypto-card-price price crypto-id current-currency exchange-rates data-source]
+     [crypto-card-price price crypto-id current-currency exchange-rates nil]
      [crypto-card-change change]
      ;; Different stats for stocks vs crypto (copy V2 logic)
      (if is-stock?
@@ -327,6 +327,20 @@
     [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10"}
      (doall (for [crypto-id sorted-keys]
               ^{:key crypto-id} [crypto-card crypto-id]))]))
+
+;; Data sources indicator
+(defn data-sources-display []
+  (let [data-sources @(rf/subscribe [:data-sources])]
+    (when (seq data-sources)
+      [:div {:class "fixed top-5 left-1/2 transform -translate-x-1/2 z-10"}
+       [:div {:class "inline-flex items-center px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/10 text-xs"}
+        [:span {:class "text-gray-400 mr-2"} "Data sources:"]
+        (for [[idx source] (map-indexed vector data-sources)]
+          ^{:key idx}
+          [:span {:class "inline-flex items-center"}
+           [data-source-chip (clojure.string/upper-case source)]
+           (when (< idx (dec (count data-sources)))
+             [:span {:class "text-gray-500 mx-1"} "•"])])]])))
 
 ;; Last update footer (copy V2)
 (defn last-update-footer []
@@ -490,6 +504,7 @@
         error @(rf/subscribe [:error-message])]
     [:div
      [version-display]           ; Version indicator in top-left!
+     [data-sources-display]      ; Global data sources indicator!
      [portfolio-summary-header]  ; V2 feature!
      [exchange-rate-indicator]   ; V2 market feed indicator!
      [currency-toggle]           ; V2 feature!

@@ -11,6 +11,13 @@
 (defn extract-prices-from-response [js-data]
   (dissoc js-data "timestamp" "source" "last_update"))
 
+(defn extract-data-sources [js-data]
+  "Extract and parse the data sources from the top-level source field"
+  (when-let [source-str (get js-data "source")]
+    (if (clojure.string/includes? source-str "+")
+      (clojure.string/split source-str #"\+")
+      [source-str])))
+
 (defn format-timestamp [iso-string]
   (.replace iso-string "T" " "))
 
@@ -53,6 +60,7 @@
   {:prices {}
    :price-keys []
    :last-update nil
+   :data-sources []
    :ui {:loading? true
         :error nil
         :flash? false
@@ -223,18 +231,20 @@
 (rf/reg-event-fx
  :smart-price-update
  (fn [{:keys [db]} [_ raw-data]]
-   (let [js-data (js->clj raw-data :keywordize-keys false)
-         new-prices (extract-prices-from-response js-data)
-         old-prices (:prices db)
-         old-keys (:price-keys db)
-         new-keys (keys new-prices)
-         changes (collect-price-changes old-prices new-prices)
-         timestamp (format-timestamp (current-iso-timestamp))
-         has-changes? (seq changes)
-         keys-changed? (price-keys-changed? old-keys new-keys)]
+ (let [js-data (js->clj raw-data :keywordize-keys false)
+ new-prices (extract-prices-from-response js-data)
+ data-sources (extract-data-sources js-data)
+ old-prices (:prices db)
+ old-keys (:price-keys db)
+ new-keys (keys new-prices)
+ changes (collect-price-changes old-prices new-prices)
+ timestamp (format-timestamp (current-iso-timestamp))
+ has-changes? (seq changes)
+          keys-changed? (price-keys-changed? old-keys new-keys)]
 
      (cond-> {:db (-> db
      (assoc :last-update (update-timestamp))
+     (assoc :data-sources data-sources)
      (assoc-in [:ui :loading?] false)
      (assoc-in [:ui :error] nil))}
 

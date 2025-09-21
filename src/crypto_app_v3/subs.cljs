@@ -38,6 +38,11 @@
  (fn [db]
    (:last-update db)))
 
+(rf/reg-sub
+ :data-sources
+ (fn [db]
+   (:data-sources db)))
+
 ;; Portfolio subscriptions
 (rf/reg-sub
  :portfolio/holdings
