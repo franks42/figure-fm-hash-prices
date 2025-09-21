@@ -538,9 +538,11 @@
 ;; Widget mode detection
 (defn is-widget-mode? []
   "Check if we're in widget mode based on URL parameters"
-  (let [url (.-href js/window.location)]
-    (or (.includes url "widget=")
-        (.includes url "#widget"))))
+  (let [url (.-href js/window.location)
+        is-widget (or (.includes url "widget=")
+                     (.includes url "#widget"))]
+    (js/console.log "🎯 Widget mode check - URL:" url "Is widget:" is-widget)
+    is-widget))
 
 ;; Extract widget size from URL
 (defn get-widget-size []
@@ -582,8 +584,10 @@
                           "medium" 4  ; Show top 4 assets  
                           "large" 6   ; Show top 6 assets
                           4) sorted-keys)]
-    [:div {:class "widget-container bg-black text-white p-3 font-inter min-h-screen"
-           :id "widget-ready"}  ; Signal for Playwright that widget is loaded
+    (js/console.log "🎯 Widget layout - Size:" widget-size "Assets:" (count top-assets) "Keys:" (clj->js sorted-keys))
+    [:div {:class "widget-container bg-black text-white p-3 font-inter"
+           :id "widget-ready"
+           :style {:min-height "400px"}}  ; Fixed height, signal for Playwright
      [:div {:class "grid gap-2"
             :style {:grid-template-columns 
                    (case widget-size
@@ -591,8 +595,10 @@
                      "medium" "1fr 1fr"
                      "large" "1fr 1fr 1fr"
                      "1fr 1fr")}}
-      (doall (for [crypto-id top-assets]
-               ^{:key crypto-id} [widget-crypto-card crypto-id]))]
+      (if (empty? top-assets)
+        [:div {:class "text-center text-gray-400 p-4"} "Loading widget data..."]
+        (doall (for [crypto-id top-assets]
+                 ^{:key crypto-id} [widget-crypto-card crypto-id])))]
      ;; Compact timestamp
      [:div {:class "text-xs text-gray-400 text-center mt-3 opacity-70"}
       (format-timestamp @(rf/subscribe [:last-update-timestamp]))]]))
