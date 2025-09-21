@@ -5,7 +5,7 @@
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
 ;; Import version from core
-(def VERSION "v3.4.4-datasource-working")
+(def VERSION "v3.4.5-datasource-per-card")
 
 ;; Copy V2 constants exactly
 (def crypto-icons
@@ -190,11 +190,14 @@
       [crypto-card-icon icon]
       [crypto-card-title crypto-id is-stock? company-name exchange]]]))
 
-(defn crypto-card-price [price crypto-id current-currency exchange-rates data-source]
+(defn crypto-card-price [price crypto-id current-currency exchange-rates data-sources]
   [:div {:class "text-4xl font-bold mb-4 tabular-nums tracking-tight flex items-center"}
    (format-price price crypto-id current-currency exchange-rates)
    [currency-button current-currency]
-   [data-source-chip data-source]])
+   ;; Show first data source as chip
+   (when (and data-sources (> (count data-sources) 0))
+     [:span {:class "ml-1 text-xs font-semibold px-2 py-0.5 rounded border border-neon-cyan/40 text-neon-cyan bg-neon-cyan/10"}
+      (clojure.string/upper-case (first data-sources))])])
 
 (defn crypto-card-change [change]
   (let [positive? (price-positive? change)
@@ -303,10 +306,12 @@
         holding-value (portfolio-atoms/calculate-holding-value portfolio-quantity price)
         ;; Currency data (V2 feature!)
         current-currency @(rf/subscribe [:currency/current])
-        exchange-rates @(rf/subscribe [:currency/exchange-rates])]
+        exchange-rates @(rf/subscribe [:currency/exchange-rates])
+        ;; Global data sources
+        data-sources @(rf/subscribe [:data-sources])]
     [:div {:class "relative bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1 hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/10 scan-line overflow-hidden animate-fade-in"}
      [crypto-card-header crypto-id is-stock? company-name exchange]
-     [crypto-card-price price crypto-id current-currency exchange-rates nil]
+     [crypto-card-price price crypto-id current-currency exchange-rates data-sources]
      [crypto-card-change change]
      ;; Different stats for stocks vs crypto (copy V2 logic)
      (if is-stock?
@@ -505,7 +510,6 @@
         error @(rf/subscribe [:error-message])]
     [:div
      [version-display]           ; Version indicator in top-left!
-     [data-sources-display]      ; Global data sources indicator!
      [portfolio-summary-header]  ; V2 feature!
      [exchange-rate-indicator]   ; V2 market feed indicator!
      [currency-toggle]           ; V2 feature!
