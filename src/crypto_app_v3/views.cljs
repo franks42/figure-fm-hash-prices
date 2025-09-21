@@ -5,7 +5,7 @@
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]))
 
 ;; Import version from core
-(def VERSION "v3.4.5-datasource-per-card")
+(def VERSION "v4.0.0-production")
 
 ;; Copy V2 constants exactly
 (def crypto-icons
