@@ -344,17 +344,16 @@
         data-sources @(rf/subscribe [:data-sources])
         historical-data @(rf/subscribe [:historical-data crypto-id])]
 
-        ;; Fetch historical data for HASH on component mount
-    (when (= crypto-id "hash")
-      (js/console.log "🔎 HASH card - historical-data value:" historical-data "nil?" (nil? historical-data) "empty?" (empty? historical-data))
-      (when (or (nil? historical-data) (empty? historical-data))
-        (js/console.log "🚀 Triggering fetch for HASH")
+        ;; Fetch historical data for all crypto assets (not stocks)
+        (when (not= (get data "type") "stock")
+        (js/console.log "🔎" (str/upper-case crypto-id) "card - historical-data value:" historical-data "nil?" (nil? historical-data) "empty?" (empty? historical-data))
+        (when (or (nil? historical-data) (empty? historical-data))
+        (js/console.log "🚀 Triggering fetch for" crypto-id)
         (rf/dispatch [:fetch-historical-data crypto-id])))
 
     [:div {:class (stale-data-card-styling data "relative bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1 hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/10 scan-line overflow-hidden animate-fade-in")}
-     ;; Background chart for HASH only
-     (when (= crypto-id "hash")
-       [chart/hash-background-chart])
+     ;; Background chart for all crypto assets  
+     [chart/background-chart crypto-id]
      [stale-data-warning crypto-id data]
      [crypto-card-header crypto-id is-stock? company-name exchange]
      [crypto-card-price price crypto-id current-currency exchange-rates data-sources data]

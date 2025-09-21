@@ -2,8 +2,8 @@
   (:require [reagent.core :as r]
             [re-frame.core :as rf]))
 
-;; Simple working chart implementation
-(defn hash-background-chart []
+;; Generic background chart for any crypto asset
+(defn background-chart [crypto-id]
   (let [container-ref (r/atom nil)
         chart-instance (r/atom nil)]
 
@@ -16,7 +16,7 @@
 
       :component-did-update
       (fn [_ _]
-        (let [current-data @(rf/subscribe [:historical-data "hash"])]
+        (let [current-data @(rf/subscribe [:historical-data crypto-id])]
           (js/console.log "🔄 Chart update - data:" (pr-str current-data) "instance:" (some? @chart-instance))
           (when (and current-data @container-ref js/uPlot (not @chart-instance) (vector? current-data) (= (count current-data) 2))
             (let [[times prices] current-data]
@@ -40,7 +40,7 @@
 
       :reagent-render
       (fn []
-        (let [current-data @(rf/subscribe [:historical-data "hash"])
+        (let [current-data @(rf/subscribe [:historical-data crypto-id])
               has-data? (and current-data (vector? current-data) (not-empty (first current-data)))]
           [:div {:class "absolute top-0 left-0 right-0 opacity-50 pointer-events-none"
                  :style {:height "120px"}
