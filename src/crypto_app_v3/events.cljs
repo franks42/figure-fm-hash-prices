@@ -14,9 +14,12 @@
 (defn extract-data-sources [js-data]
   "Extract and parse the data sources from the top-level source field"
   (when-let [source-str (get js-data "source")]
-    (if (clojure.string/includes? source-str "+")
-      (clojure.string/split source-str #"\+")
-      [source-str])))
+    (js/console.log "🔍 SOURCE STRING:" source-str)
+    (let [parsed (if (clojure.string/includes? source-str "+")
+                   (clojure.string/split source-str #"\+")
+                   [source-str])]
+      (js/console.log "🔍 PARSED SOURCES:" parsed)
+      parsed)))
 
 (defn format-timestamp [iso-string]
   (.replace iso-string "T" " "))

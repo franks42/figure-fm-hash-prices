@@ -331,6 +331,7 @@
 ;; Data sources indicator
 (defn data-sources-display []
   (let [data-sources @(rf/subscribe [:data-sources])]
+    (js/console.log "🔍 DATA SOURCES IN VIEW:" data-sources)
     (when (seq data-sources)
       [:div {:class "fixed top-5 left-1/2 transform -translate-x-1/2 z-10"}
        [:div {:class "inline-flex items-center px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/10 text-xs"}
