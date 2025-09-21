@@ -43,11 +43,12 @@
       
       :component-did-update
       (fn [this old-argv new-argv]
-        (let [[_ old-data] old-argv
-              [_ new-data] new-argv]
-          (when (and @chart-instance chart-data (not= old-data new-data))
-            (js/console.log "📊 Updating chart data for" crypto-id (count (second chart-data)) "points")
-            (.setData @chart-instance (clj->js chart-data)))))
+        (js/console.log "🔄 Chart update check for" crypto-id "- has instance:" (some? @chart-instance) "has data:" (some? chart-data) "data length:" (when chart-data (count (second chart-data))))
+        (when (and @chart-instance chart-data (vector? chart-data) (= (count chart-data) 2))
+          (let [[times prices] chart-data]
+            (when (and (seq times) (seq prices))
+              (js/console.log "📊 Updating chart with" (count times) "time points and" (count prices) "price points")
+              (.setData @chart-instance (clj->js [times prices]))))))
       
       :component-will-unmount
       (fn [this]
