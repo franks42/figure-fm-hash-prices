@@ -7,7 +7,7 @@
 ;; Import version from core
 (def VERSION "v4.0.0-production")
 
-;; Background chart using Oracle's ref pattern to prevent React DOM conflicts
+;; Oracle's solution: Simplified chart with forced re-renders
 (defn background-chart [crypto-id]
   (let [chart-data @(rf/subscribe [:historical-data crypto-id])
         chart-instance (reagent.core/atom nil)
@@ -45,7 +45,13 @@
                            (clj->js [#js [] #js []])  ; Empty initial data
                            @chart-ref)]
             (reset! chart-instance instance)
-            (js/console.log "📈 uPlot instance created successfully for" crypto-id))))
+            (js/console.log "📈 uPlot instance created successfully for" crypto-id)
+            
+            ;; If data is already available, feed it immediately
+            (when (and chart-data (vector? chart-data) (= (count chart-data) 2))
+              (let [[times prices] chart-data]
+                (js/console.log "📊 Feeding initial data:" (count times) "times," (count prices) "prices")
+                (.setData instance (clj->js [times prices]))))))
       
       :component-did-update
       (fn [this old-argv new-argv]
@@ -403,9 +409,9 @@
             (rf/dispatch [:fetch-historical-data crypto-id])))
     
     [:div {:class (stale-data-card-styling data "relative bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1 hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/10 scan-line overflow-hidden animate-fade-in")}
-     ;; Background chart for HASH only
+     ;; Background chart for HASH only - using Oracle's solution
      (when (= crypto-id "hash")
-       [background-chart crypto-id])
+       [chart/hash-background-chart])
      [stale-data-warning crypto-id data]
      [crypto-card-header crypto-id is-stock? company-name exchange]
      [crypto-card-price price crypto-id current-currency exchange-rates data-sources data]
