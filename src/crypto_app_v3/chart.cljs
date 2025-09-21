@@ -13,7 +13,7 @@
       
       :component-did-mount
       (fn [_]
-        (js/console.log "🎯 Chart component mounted"))
+        (js/console.log "🎯 Chart component mounted - data available:" (some? chart-data) "data type:" (type chart-data)))
       
       :component-did-update
       (fn [_ _]
