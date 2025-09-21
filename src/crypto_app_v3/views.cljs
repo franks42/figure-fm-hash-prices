@@ -557,8 +557,7 @@
         price (get data "usd" 0)
         change (get data "usd_24h_change" 0)
         icon (get crypto-icons (keyword crypto-id) "💰")
-        display-name (get crypto-display-names (keyword crypto-id) 
-                         (clojure.string/upper-case crypto-id))
+        display-name (get-crypto-name crypto-id)
         current-currency @(rf/subscribe [:currency/current])
         exchange-rates @(rf/subscribe [:currency/exchange-rates])
         is-stale? (is-stale-data? data)]
@@ -601,7 +600,7 @@
                  ^{:key crypto-id} [widget-crypto-card crypto-id])))]
      ;; Compact timestamp
      [:div {:class "text-xs text-gray-400 text-center mt-3 opacity-70"}
-      (format-timestamp @(rf/subscribe [:last-update-timestamp]))]]))
+      "Live Data"]]))
 
 ;; Main app component with widget mode detection
 (defn app-component []
