@@ -72,7 +72,7 @@
               has-data? (and current-data (vector? current-data) (not-empty (first current-data)))]
           (js/console.log "🔄 Chart render - current data:" (pr-str current-data) "has-data?" has-data?)
           [:div {:class "absolute top-0 left-0 right-0 opacity-50 pointer-events-none"
-                 :style {:height "120px"}
-                 :ref (fn [el] (when el (reset! container-ref el)))}
-           (when has-data?
-             [:div {:class "absolute top-1 right-1 text-xs text-green-400"} "📈"])]))})))
+          :style {:height "120px"}
+          :ref (fn [el] (when el (reset! container-ref el)))}
+          (when has-data?
+          [:div {:class "absolute top-1 right-1 text-xs text-green-400"} "📈"])])))})))
