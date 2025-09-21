@@ -77,6 +77,16 @@
             :on-click #(do (.stopPropagation %) (rf/dispatch [:currency/show-selector]))}
    currency-code])
 
+;; Data source chip component - reusable
+(defn data-source-chip [data-source]
+  (when data-source
+    (let [is-mock? (= data-source "MOCK-DATA")]
+      [:span {:class (str "ml-3 text-xs font-semibold px-2 py-0.5 rounded border "
+                          (if is-mock?
+                            "border-red-400 text-red-400 bg-red-500/10"
+                            "border-neon-cyan/40 text-neon-cyan bg-neon-cyan/10"))}
+       data-source])))
+
 ;; Portfolio display components (copy V2)
 (defn portfolio-value-display [holding-value crypto-id current-currency exchange-rates]
   (when holding-value
@@ -180,10 +190,11 @@
       [crypto-card-icon icon]
       [crypto-card-title crypto-id is-stock? company-name exchange]]]))
 
-(defn crypto-card-price [price crypto-id current-currency exchange-rates]
+(defn crypto-card-price [price crypto-id current-currency exchange-rates data-source]
   [:div {:class "text-4xl font-bold mb-4 tabular-nums tracking-tight flex items-center"}
    (format-price price crypto-id current-currency exchange-rates)
-   [currency-button current-currency]])
+   [currency-button current-currency]
+   [data-source-chip data-source]])
 
 (defn crypto-card-change [change]
   (let [positive? (price-positive? change)
@@ -194,22 +205,18 @@
      (str (format-number (js/Math.abs (or change 0)) 2) "%")]))
 
 ;; Stock vs Crypto stats (copy V2 differentiation)
-(defn stock-stats [open-price volume crypto-id data-source]
+(defn stock-stats [open-price trades-24h crypto-id]
   [:div {:class "grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-white/5"}
    [:div {:class "flex flex-col"}
     [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Open"]
     [:div {:class "text-base font-semibold text-white tabular-nums"}
      (if open-price (format-price open-price crypto-id) "N/A")]]
    [:div {:class "flex flex-col"}
-    [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Data Source"]
-    (let [is-mock? (= data-source "MOCK-DATA")]
-      [:div {:class (str "text-base font-semibold tabular-nums "
-                         (if is-mock?
-                           "text-red-400"
-                           "text-neon-cyan"))}
-       (or data-source "YF")])]])
+    [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Trades"]
+    [:div {:class "text-base font-semibold text-white tabular-nums"}
+     (if trades-24h (format-number trades-24h 0) "N/A")]]])
 
-(defn crypto-stats [volume trades-24h data-source crypto-id current-price current-currency exchange-rates]
+(defn crypto-stats [volume trades-24h crypto-id current-price current-currency exchange-rates]
   (js/console.log "🔍 CRYPTO STATS called with volume:" volume "price:" current-price "crypto:" crypto-id)
   [:div {:class "grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-white/5"}
    [:div {:class "flex flex-col"}
@@ -224,13 +231,9 @@
         [:div {:class "text-xs text-gray-400 mt-1"}
          (str (format-number token-volume 0) " " symbol)]))]
    [:div {:class "flex flex-col"}
-    [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "Data Source"]
-    (let [is-mock? (= data-source "MOCK-DATA")]
-      [:div {:class (str "text-base font-semibold tabular-nums "
-                         (if is-mock?
-                           "text-red-400"
-                           "text-neon-cyan"))}
-       (or data-source "FM")])]])
+    [:div {:class "text-xs text-gray-500 uppercase mb-1.5 tracking-widest"} "24h Trades"]
+    [:div {:class "text-base font-semibold text-white tabular-nums"}
+     (if trades-24h (format-number trades-24h 0) "N/A")]]])
 
 (defn crypto-card-high-low [high low crypto-id current-currency exchange-rates]
   (when (or high low)
@@ -303,12 +306,12 @@
         exchange-rates @(rf/subscribe [:currency/exchange-rates])]
     [:div {:class "relative bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1 hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/10 scan-line overflow-hidden animate-fade-in"}
      [crypto-card-header crypto-id is-stock? company-name exchange]
-     [crypto-card-price price crypto-id current-currency exchange-rates]
+     [crypto-card-price price crypto-id current-currency exchange-rates data-source]
      [crypto-card-change change]
      ;; Different stats for stocks vs crypto (copy V2 logic)
      (if is-stock?
-       [stock-stats open-price volume crypto-id data-source]
-       [crypto-stats volume trades-24h data-source crypto-id price current-currency exchange-rates])
+     [stock-stats open-price trades-24h crypto-id]
+     [crypto-stats volume trades-24h crypto-id price current-currency exchange-rates])
      ;; 24h High/Low for crypto or 52-week range for stocks (copy V2 logic)
      (if is-stock?
        [stock-52w-range fifty-two-week-high fifty-two-week-low crypto-id current-currency exchange-rates]
