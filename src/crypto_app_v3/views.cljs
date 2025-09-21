@@ -7,6 +7,32 @@
 ;; Import version from core
 (def VERSION "v4.0.0-production")
 
+;; Stale data detection and warning functions
+(defn is-stale-data? [data]
+  "Check if this data is stale/fallback data"
+  (= (get data "data_status") "STALE_FALLBACK"))
+
+(defn stale-data-warning [crypto-id data]
+  "Show warning banner for stale data"
+  (when (is-stale-data? data)
+    (let [error-reason (get data "error_reason" "unknown")]
+      [:div {:class "absolute top-2 left-2 right-2 bg-neon-red/20 border border-neon-red/40 rounded-lg p-2 z-20"}
+       [:div {:class "flex items-center justify-between"}
+        [:div {:class "flex items-center"}
+         [:span {:class "text-neon-red text-xs font-bold mr-2"} "⚠️ STALE DATA"]
+         [:span {:class "text-neon-red/80 text-xs"} 
+          (case error-reason
+            "invalid_price" "API returned invalid price"
+            "missing_data" "API data unavailable" 
+            "Data feed issue")]]
+        [:div {:class "text-neon-red/60 text-xs"} "Using fallback"]]])))
+
+(defn stale-data-card-styling [data base-classes]
+  "Add visual styling for stale data cards"
+  (if (is-stale-data? data)
+    (str base-classes " border-neon-red/40 bg-neon-red/5")
+    base-classes))
+
 ;; Copy V2 constants exactly
 (def crypto-icons
   {:btc "₿" :eth "Ξ" :link "⬡" :sol "◎" :uni "🦄"
@@ -190,14 +216,18 @@
       [crypto-card-icon icon]
       [crypto-card-title crypto-id is-stock? company-name exchange]]]))
 
-(defn crypto-card-price [price crypto-id current-currency exchange-rates data-sources]
-  [:div {:class "text-4xl font-bold mb-4 tabular-nums tracking-tight flex items-center"}
-   (format-price price crypto-id current-currency exchange-rates)
-   [currency-button current-currency]
-   ;; Show first data source as chip
-   (when (and data-sources (> (count data-sources) 0))
-     [:span {:class "ml-1 text-xs font-semibold px-2 py-0.5 rounded border border-neon-cyan/40 text-neon-cyan bg-neon-cyan/10"}
-      (clojure.string/upper-case (first data-sources))])])
+(defn crypto-card-price [price crypto-id current-currency exchange-rates data-sources data]
+  (let [is-stale? (is-stale-data? data)]
+    [:div {:class "text-4xl font-bold mb-4 tabular-nums tracking-tight flex items-center"}
+     [:span {:class (if is-stale? "text-neon-red" "text-white")}
+      (format-price price crypto-id current-currency exchange-rates)]
+     (when is-stale?
+       [:span {:class "ml-2 text-xs bg-neon-red/20 text-neon-red px-2 py-1 rounded border border-neon-red/40"} "FALLBACK"])
+     [currency-button current-currency]
+     ;; Show first data source as chip
+     (when (and data-sources (> (count data-sources) 0))
+       [:span {:class "ml-1 text-xs font-semibold px-2 py-0.5 rounded border border-neon-cyan/40 text-neon-cyan bg-neon-cyan/10"}
+        (clojure.string/upper-case (first data-sources))])]))
 
 (defn crypto-card-change [change]
   (let [positive? (price-positive? change)
@@ -309,9 +339,10 @@
         exchange-rates @(rf/subscribe [:currency/exchange-rates])
         ;; Global data sources
         data-sources @(rf/subscribe [:data-sources])]
-    [:div {:class "relative bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1 hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/10 scan-line overflow-hidden animate-fade-in"}
+    [:div {:class (stale-data-card-styling data "relative bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1 hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/10 scan-line overflow-hidden animate-fade-in")}
+     [stale-data-warning crypto-id data]
      [crypto-card-header crypto-id is-stock? company-name exchange]
-     [crypto-card-price price crypto-id current-currency exchange-rates data-sources]
+     [crypto-card-price price crypto-id current-currency exchange-rates data-sources data]
      [crypto-card-change change]
      ;; Different stats for stocks vs crypto (copy V2 logic)
      (if is-stock?
