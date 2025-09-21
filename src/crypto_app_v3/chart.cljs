@@ -14,6 +14,8 @@
       :component-did-mount
       (fn [_]
         (js/console.log "🎯 Chart component mounted - data available:" (some? chart-data) "data type:" (type chart-data))
+        (js/console.log "🔍 Raw chart-data:" (pr-str chart-data))
+        (js/console.log "🔍 Chart-data as js:" (clj->js chart-data))
         ;; Try to create chart immediately if data is already available
         (js/setTimeout
          (fn []
