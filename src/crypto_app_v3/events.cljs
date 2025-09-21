@@ -9,7 +9,7 @@
 (def ^:const SCAN_HIDE_DELAY_MS 2100)
 (def ^:const TIMEOUT_MS 10000)
 
-;; Historical chart events using native fetch
+;; Historical chart events using custom :fetch effect
 (rf/reg-event-fx
  :fetch-historical-data
  (fn [{:keys [db]} [_ crypto-id]]
@@ -20,28 +20,23 @@
                   "/candles?start_date=" (.toISOString start-time)
                   "&end_date=" (.toISOString end-time)
                   "&interval_in_minutes=60&size=48")]
-     (js/console.log "📈 Fetching historical data for" crypto-id "from" url)
-     
-     ;; Use native fetch instead of ajax
-     (-> (js/fetch url)
-         (.then (fn [response]
-                  (if (.-ok response)
-                    (.json response)
-                    (throw (js/Error. (str "HTTP " (.-status response)))))))
-         (.then (fn [data]
-                  (js/console.log "✅ Raw fetch response:" data)
-                  (rf/dispatch [:historical-data-success crypto-id (js->clj data :keywordize-keys true)])))
-         (.catch (fn [error]
-                   (js/console.log "❌ Fetch error:" error)
-                   (rf/dispatch [:historical-data-failure crypto-id error]))))
-     
-     {}))) ; Return empty effect map
+     (js/console.log "📈 Dispatching fetch for" crypto-id)
+     {:db db
+      :fetch {:url url
+              :on-success [:historical-data-success crypto-id]
+              :on-failure [:historical-data-failure crypto-id]}})))
 
 (rf/reg-event-db
  :historical-data-success
  (fn [db [_ crypto-id response]]
-   (js/console.log "✅ Historical data received for" crypto-id ":" (count (:matchHistoryData response)) "points")
-   (assoc-in db [:historical-data crypto-id] (:matchHistoryData response))))
+   (let [raw-data (:matchHistoryData response)
+         chart-data (when (seq raw-data)
+                      (let [times (mapv #(-> % :date js/Date. .getTime (/ 1000)) raw-data)
+                            prices (mapv #(js/parseFloat (:close %)) raw-data)]
+                        [times prices]))]
+     (js/console.log "✅ Historical data received for" crypto-id ":" (count raw-data) "points")
+     (js/console.log "📊 Transformed to chart format:" chart-data)
+     (assoc-in db [:historical-data crypto-id] chart-data))))
 
 (rf/reg-event-db
  :historical-data-failure

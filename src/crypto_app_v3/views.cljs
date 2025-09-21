@@ -7,44 +7,53 @@
 ;; Import version from core
 (def VERSION "v4.0.0-production")
 
-;; Background chart component for price cards
+;; Background chart component with proper lifecycle
 (defn background-chart [crypto-id]
-  (let [historical-data @(rf/subscribe [:historical-data crypto-id])]
-    (when-not (empty? historical-data)
-      [:div {:class "absolute inset-0 opacity-20 pointer-events-none"
-             :id (str "chart-" crypto-id)}
-       [:canvas {:id (str "chart-canvas-" crypto-id)
-                 :style {:width "100%" :height "100%"}}]])))
-
-;; Chart creation function (called after component mounts)
-(defn create-background-chart [crypto-id historical-data]
-  (when (and (not-empty historical-data) js/uPlot)
-    (try
-      (let [canvas-el (.getElementById js/document (str "chart-canvas-" crypto-id))
-            times (map #(-> % :date js/Date. .getTime (/ 1000)) historical-data)
-            prices (map #(js/parseFloat (:close %)) historical-data)]
-        
-        (when (and canvas-el (not-empty times) (not-empty prices))
-          (js/console.log "📈 Creating chart for" crypto-id "with" (count times) "points")
-          
-          (js/uPlot.
-            (clj->js {:width 300
-                      :height 120
-                      :plugins [(js/uPlot.plugins.tooltip)]
-                      :series [{:stroke "rgba(0,255,136,0.3)"
-                               :width 2
-                               :points {:show false}}
-                               {:stroke "rgba(0,255,136,0.6)"
-                                :fill "rgba(0,255,136,0.1)"
-                                :width 1
-                                :points {:show false}}]
-                      :axes [{:show false} {:show false}]
-                      :legend {:show false}
-                      :cursor {:show false}})
-            (clj->js [times prices])
-            canvas-el)))
-      (catch js/Error e
-        (js/console.log "❌ Chart creation failed for" crypto-id ":" e)))))
+  (let [chart-data @(rf/subscribe [:historical-data crypto-id])
+        chart-instance (reagent.core/atom nil)
+        container-ref (reagent.core/atom nil)]
+    
+    (reagent.core/create-class
+     {:display-name (str "background-chart-" crypto-id)
+      
+      :reagent-render
+      (fn [crypto-id]
+        [:div {:class "absolute inset-0 opacity-30 pointer-events-none"
+               :ref #(reset! container-ref %)}])
+      
+      :component-did-mount
+      (fn [this]
+        (js/console.log "🎯 Chart component mounted for" crypto-id)
+        (when (and @container-ref js/uPlot)
+          (let [instance (js/uPlot. 
+                           (clj->js {:width 300
+                                    :height 120
+                                    :series [{:label ""} 
+                                             {:stroke "rgba(0,255,136,0.6)"
+                                              :fill "rgba(0,255,136,0.1)"
+                                              :width 2
+                                              :points {:show false}}]
+                                    :axes [{:show false} {:show false}]
+                                    :legend {:show false}
+                                    :cursor {:show false}})
+                           (clj->js [#js [] #js []])  ; Empty initial data
+                           @container-ref)]
+            (reset! chart-instance instance)
+            (js/console.log "📈 uPlot instance created for" crypto-id))))
+      
+      :component-did-update
+      (fn [this old-argv new-argv]
+        (let [[_ old-data] old-argv
+              [_ new-data] new-argv]
+          (when (and @chart-instance chart-data (not= old-data new-data))
+            (js/console.log "📊 Updating chart data for" crypto-id (count (second chart-data)) "points")
+            (.setData @chart-instance (clj->js chart-data)))))
+      
+      :component-will-unmount
+      (fn [this]
+        (when @chart-instance
+          (.destroy @chart-instance)
+          (reset! chart-instance nil)))})))
 
 ;; Stale data detection and warning functions
 (defn is-stale-data? [data]
@@ -378,15 +387,11 @@
         exchange-rates @(rf/subscribe [:currency/exchange-rates])
         ;; Global data sources
         data-sources @(rf/subscribe [:data-sources])
-             historical-data @(rf/subscribe [:historical-data crypto-id])]
+        historical-data @(rf/subscribe [:historical-data crypto-id])]
         
-    ;; Fetch historical data for HASH on component mount
-    (when (and (= crypto-id "hash") (empty? historical-data))
-      (rf/dispatch [:fetch-historical-data crypto-id]))
-    
-    ;; Create chart after historical data is loaded
-    (when (and (= crypto-id "hash") (not-empty historical-data))
-      (js/setTimeout #(create-background-chart crypto-id historical-data) 100))
+        ;; Fetch historical data for HASH on component mount
+        (when (and (= crypto-id "hash") (nil? historical-data))
+        (rf/dispatch [:fetch-historical-data crypto-id]))
     
     [:div {:class (stale-data-card-styling data "relative bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1 hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/10 scan-line overflow-hidden animate-fade-in")}
      ;; Background chart for HASH only

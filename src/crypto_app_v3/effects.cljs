@@ -1,12 +1,26 @@
 (ns crypto-app-v3.effects
-  (:require [re-frame.core :as rf]
-            [ajax.core :as ajax]))
+  (:require [re-frame.core :as rf]))
 
-;; Register HTTP effect handler for ajax requests
+;; Simple native fetch effect for Scittle compatibility
 (rf/reg-fx
- :http-xhrio
- (fn [request]
-   (ajax/ajax-request request)))
+ :fetch
+ (fn [{:keys [url method headers body on-success on-failure]}]
+   (js/console.log "🌐 Fetch effect triggered:" url)
+   (-> (js/fetch url
+                 (clj->js {:method  (or method "GET")
+                          :mode    "cors"
+                          :headers (or headers {})}))
+       (.then (fn [response]
+                (js/console.log "📡 Response status:" (.-status response) (.-ok response))
+                (if (.-ok response)
+                  (.json response)
+                  (throw (js/Error. (str "HTTP " (.-status response)))))))
+       (.then (fn [data]
+                (js/console.log "✅ Parsed JSON:" data)
+                (rf/dispatch (conj on-success (js->clj data :keywordize-keys true)))))
+       (.catch (fn [error]
+                 (js/console.log "❌ Fetch error:" error)
+                 (rf/dispatch (conj on-failure error)))))))
 
 ;; Copy V2 data processing logic (small functions)
 
