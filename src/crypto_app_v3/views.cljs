@@ -16,16 +16,16 @@
   "Show warning banner for stale data"
   (when (is-stale-data? data)
     (let [error-reason (get data "error_reason" "unknown")]
-      [:div {:class "absolute top-2 left-2 right-2 bg-neon-red/20 border border-neon-red/40 rounded-lg p-2 z-20"}
+      [:div {:class "bg-neon-red/15 border border-neon-red/30 rounded-lg p-3 mb-4"}
        [:div {:class "flex items-center justify-between"}
         [:div {:class "flex items-center"}
-         [:span {:class "text-neon-red text-xs font-bold mr-2"} "⚠️ STALE DATA"]
-         [:span {:class "text-neon-red/80 text-xs"} 
+         [:span {:class "text-neon-red text-xs font-bold mr-2"} "⚠️ DATA FEED ISSUE"]
+         [:span {:class "text-neon-red/90 text-xs"} 
           (case error-reason
             "invalid_price" "API returned invalid price"
             "missing_data" "API data unavailable" 
             "Data feed issue")]]
-        [:div {:class "text-neon-red/60 text-xs"} "Using fallback"]]])))
+        [:div {:class "text-neon-red/70 text-xs font-medium"} "USING FALLBACK"]]])))
 
 (defn stale-data-card-styling [data base-classes]
   "Add visual styling for stale data cards"
