@@ -535,20 +535,93 @@
    [:span {:class "mx-1"} "•"]
    [:span VERSION]])
 
-;; Main app component (copy V2 structure)
+;; Widget mode detection
+(defn is-widget-mode? []
+  "Check if we're in widget mode based on URL parameters"
+  (let [url (.-href js/window.location)]
+    (or (.includes url "widget=")
+        (.includes url "#widget"))))
+
+;; Extract widget size from URL
+(defn get-widget-size []
+  (let [url (.-search js/window.location)]
+    (if-let [match (.match url #"widget=(\w+)")]
+      (aget match 1)
+      "medium")))
+
+;; Compact crypto card for widgets
+(defn widget-crypto-card [crypto-id]
+  (let [data @(rf/subscribe [:crypto-data crypto-id])
+        price (get data "usd" 0)
+        change (get data "usd_24h_change" 0)
+        icon (get crypto-icons (keyword crypto-id) "💰")
+        display-name (get crypto-display-names (keyword crypto-id) 
+                         (clojure.string/upper-case crypto-id))
+        current-currency @(rf/subscribe [:currency/current])
+        exchange-rates @(rf/subscribe [:currency/exchange-rates])
+        is-stale? (is-stale-data? data)]
+    [:div {:class (str "bg-white/[0.08] rounded-xl p-3 text-center border border-white/10 " 
+                      (when is-stale? "border-neon-red/40 bg-neon-red/10"))}
+     [:div {:class "text-lg mb-1"} icon]
+     [:div {:class "text-xs font-semibold mb-1 text-gray-300"} display-name]
+     [:div {:class (str "text-sm font-bold mb-1 " 
+                       (if is-stale? "text-neon-red" "text-white"))}
+      (format-price price crypto-id current-currency exchange-rates)]
+     [:div {:class (str "text-xs font-semibold "
+                       (change-classes (price-positive? change)))}
+      (str (if (>= change 0) "+" "") (format-number change 2) "%")]
+     (when is-stale?
+       [:div {:class "text-xs text-neon-red mt-1"} "⚠ STALE"])]))
+
+;; Widget-specific compact layout
+(defn widget-layout []
+  (let [widget-size (get-widget-size)
+        sorted-keys @(rf/subscribe [:sorted-price-keys])
+        top-assets (take (case widget-size
+                          "small" 2   ; Show top 2 assets
+                          "medium" 4  ; Show top 4 assets  
+                          "large" 6   ; Show top 6 assets
+                          4) sorted-keys)]
+    [:div {:class "widget-container bg-black text-white p-3 font-inter min-h-screen"
+           :id "widget-ready"}  ; Signal for Playwright that widget is loaded
+     [:div {:class "grid gap-2"
+            :style {:grid-template-columns 
+                   (case widget-size
+                     "small" "1fr"
+                     "medium" "1fr 1fr"
+                     "large" "1fr 1fr 1fr"
+                     "1fr 1fr")}}
+      (doall (for [crypto-id top-assets]
+               ^{:key crypto-id} [widget-crypto-card crypto-id]))]
+     ;; Compact timestamp
+     [:div {:class "text-xs text-gray-400 text-center mt-3 opacity-70"}
+      (format-timestamp @(rf/subscribe [:last-update-timestamp]))]]))
+
+;; Main app component with widget mode detection
 (defn app-component []
   (let [loading? @(rf/subscribe [:loading?])
         error @(rf/subscribe [:error-message])]
-    [:div
-     [version-display]           ; Version indicator in top-left!
-     [portfolio-summary-header]  ; V2 feature!
-     [exchange-rate-indicator]   ; V2 market feed indicator!
-     [currency-toggle]           ; V2 feature!
-     (cond
-       error [error-view error]
-       loading? [loading-view]
-       :else [:div
-              [crypto-grid]
-              [last-update-footer]])
-     [portfolio-panel]
-     [currency-selector-panel]]))
+    (if (is-widget-mode?)
+      ;; Widget mode - compact layout optimized for screenshots
+      (cond
+        error [:div {:class "widget-container bg-black text-white p-4 text-center min-h-screen flex items-center justify-center"
+                     :id "widget-ready"}
+               [:div {:class "text-red-400 text-sm"} "Data Error"]]
+        loading? [:div {:class "widget-container bg-black text-white p-4 text-center min-h-screen flex items-center justify-center"
+                       :id "widget-ready"} 
+                  [:div {:class "text-gray-400 text-sm"} "Loading..."]]
+        :else [widget-layout])
+      ;; Normal mode - full layout  
+      [:div
+       [version-display]           ; Version indicator in top-left!
+       [portfolio-summary-header]  ; V2 feature!
+       [exchange-rate-indicator]   ; V2 market feed indicator!
+       [currency-toggle]           ; V2 feature!
+       (cond
+         error [error-view error]
+         loading? [loading-view]
+         :else [:div
+                [crypto-grid]
+                [last-update-footer]])
+       [portfolio-panel]
+       [currency-selector-panel]])))
