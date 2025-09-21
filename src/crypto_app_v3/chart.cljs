@@ -13,7 +13,30 @@
       
       :component-did-mount
       (fn [_]
-        (js/console.log "🎯 Chart component mounted - data available:" (some? chart-data) "data type:" (type chart-data)))
+        (js/console.log "🎯 Chart component mounted - data available:" (some? chart-data) "data type:" (type chart-data))
+        ;; Try to create chart immediately if data is already available
+        (js/setTimeout
+         (fn []
+           (when (and chart-data @container-ref js/uPlot (not @chart-instance))
+             (let [[times prices] chart-data]
+               (when (and (seq times) (seq prices))
+                 (js/console.log "📊 Creating chart immediately with" (count times) "points")
+                 (let [instance (js/uPlot.
+                                 (clj->js {:width (.-offsetWidth @container-ref)
+                                          :height 120
+                                          :series [{}  ; Time series
+                                                   {:stroke "#00ff88"  ; Bright green
+                                                    :fill "rgba(0,255,136,0.4)"
+                                                    :width 4  ; Thick line for visibility
+                                                    :points {:show false}}]
+                                          :axes [{:show false} {:show false}]
+                                          :legend {:show false}
+                                          :cursor {:show false}})
+                                 (clj->js [times prices])  ; Feed data immediately
+                                 @container-ref)]
+                   (reset! chart-instance instance)
+                   (js/console.log "✅ Chart created on mount with data"))))))
+         50))
       
       :component-did-update
       (fn [_ _]
