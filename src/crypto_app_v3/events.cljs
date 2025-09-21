@@ -1,11 +1,44 @@
 (ns crypto-app-v3.events
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [ajax.core :as ajax]
+            [clojure.string :as str]))
 
 ;; Copy V2 constants (small, focused)
 (def ^:const POLL_INTERVAL_MS 30000)
 (def ^:const FLASH_DURATION_MS 800)
 (def ^:const SCAN_HIDE_DELAY_MS 2100)
 (def ^:const TIMEOUT_MS 10000)
+
+;; Historical chart events
+(rf/reg-event-fx
+ :fetch-historical-data
+ (fn [{:keys [db]} [_ crypto-id]]
+   (let [end-time (js/Date.)
+         start-time (js/Date. (- (.getTime end-time) (* 24 60 60 1000)))  ; 24h ago
+         url (str "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets/"
+                  (str/upper-case crypto-id) "-USD"
+                  "/candles?start_date=" (.toISOString start-time)
+                  "&end_date=" (.toISOString end-time)
+                  "&interval_in_minutes=60&size=48")]
+     (js/console.log "📈 Fetching historical data for" crypto-id "from" url)
+     {:http-xhrio {:method          :get
+                   :uri             url
+                   :timeout         8000
+                   :response-format (ajax/json-response-format {:keywords? true})
+                   :on-success      [:historical-data-success crypto-id]
+                   :on-failure      [:historical-data-failure crypto-id]}})))
+
+(rf/reg-event-db
+ :historical-data-success
+ (fn [db [_ crypto-id response]]
+   (js/console.log "✅ Historical data received for" crypto-id ":" (count (:matchHistoryData response)) "points")
+   (assoc-in db [:historical-data crypto-id] (:matchHistoryData response))))
+
+(rf/reg-event-db
+ :historical-data-failure
+ (fn [db [_ crypto-id error]]
+   (js/console.log "❌ Historical data failed for" crypto-id ":" error)
+   (assoc-in db [:historical-data crypto-id] [])))
 
 ;; Helper functions FIRST (small, pure)
 (defn extract-prices-from-response [js-data]

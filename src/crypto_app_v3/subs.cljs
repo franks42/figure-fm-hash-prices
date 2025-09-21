@@ -1,6 +1,12 @@
 (ns crypto-app-v3.subs
   (:require [re-frame.core :as rf]))
 
+;; Historical data subscription
+(rf/reg-sub
+ :historical-data
+ (fn [db [_ crypto-id]]
+   (get-in db [:historical-data crypto-id] [])))
+
 ;; UI state subscriptions
 (rf/reg-sub
  :loading?
