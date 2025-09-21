@@ -8,59 +8,7 @@
 ;; Import version from core
 (def VERSION "v4.0.0-production")
 
-;; Background chart using Oracle's ref pattern to prevent React DOM conflicts
-(defn background-chart [crypto-id]
-  (let [chart-data @(rf/subscribe [:historical-data crypto-id])
-        chart-instance (reagent.core/atom nil)
-        chart-ref (reagent.core/atom nil)]
-    
-    (reagent.core/create-class
-     {:display-name (str "background-chart-" crypto-id)
-      
-      :reagent-render
-      (fn [crypto-id]
-        ;; React owns this div - uPlot renders inside it with fixed height
-        [:div {:class "absolute top-0 left-0 right-0 opacity-30 pointer-events-none"
-               :style {:height "120px"}  ; Fixed height for chart visibility
-               :ref (fn [el] 
-                      (when el
-                        (js/console.log "📌 Chart ref set for" crypto-id el)
-                        (reset! chart-ref el)))}])
-      
-      :component-did-mount
-      (fn [this]
-        (js/console.log "🎯 Chart mounting for" crypto-id "- ref available:" (some? @chart-ref))
-        (when (and @chart-ref js/uPlot)
-          (js/console.log "📏 Container dimensions:" (.-offsetWidth @chart-ref) "x" (.-offsetHeight @chart-ref))
-          (let [instance (js/uPlot. 
-                           (clj->js {:width (max 200 (.-offsetWidth @chart-ref))
-                                    :height (max 80 (.-offsetHeight @chart-ref))
-                                    :series [{}  ; Time axis
-                                             {:stroke "rgba(0,255,136,0.8)"
-                                              :fill "rgba(0,255,136,0.2)"
-                                              :width 2
-                                              :points {:show false}}]
-                                    :axes [{:show false} {:show false}]
-                                    :legend {:show false}
-                                    :cursor {:show false}})
-                           (clj->js [#js [] #js []])  ; Empty initial data
-                           @chart-ref)]
-            (reset! chart-instance instance)
-            (js/console.log "📈 uPlot instance created successfully for" crypto-id))))
-      
-      :component-did-update
-      (fn [this old-argv new-argv]
-        (js/console.log "🔄 Chart update for" crypto-id "- instance?" (some? @chart-instance) "data?" (some? chart-data))
-        (when (and @chart-instance chart-data (vector? chart-data) (= (count chart-data) 2))
-          (let [[times prices] chart-data]
-            (js/console.log "📊 Feeding chart:" (count times) "times," (count prices) "prices")
-            (.setData @chart-instance (clj->js [times prices])))))
-      
-      :component-will-unmount
-      (fn [this]
-        (when @chart-instance
-          (.destroy @chart-instance)
-          (reset! chart-instance nil)))})))
+;; Old background-chart removed - using chart.cljs instead to avoid conflicts
 
 ;; Stale data detection and warning functions
 (defn is-stale-data? [data]
