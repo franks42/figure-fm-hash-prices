@@ -9,7 +9,7 @@
 (def ^:const SCAN_HIDE_DELAY_MS 2100)
 (def ^:const TIMEOUT_MS 10000)
 
-;; Historical chart events
+;; Historical chart events using native fetch
 (rf/reg-event-fx
  :fetch-historical-data
  (fn [{:keys [db]} [_ crypto-id]]
@@ -21,12 +21,21 @@
                   "&end_date=" (.toISOString end-time)
                   "&interval_in_minutes=60&size=48")]
      (js/console.log "📈 Fetching historical data for" crypto-id "from" url)
-     {:http-xhrio {:method          :get
-                   :uri             url
-                   :timeout         8000
-                   :response-format (ajax/json-response-format {:keywords? true})
-                   :on-success      [:historical-data-success crypto-id]
-                   :on-failure      [:historical-data-failure crypto-id]}})))
+     
+     ;; Use native fetch instead of ajax
+     (-> (js/fetch url)
+         (.then (fn [response]
+                  (if (.-ok response)
+                    (.json response)
+                    (throw (js/Error. (str "HTTP " (.-status response)))))))
+         (.then (fn [data]
+                  (js/console.log "✅ Raw fetch response:" data)
+                  (rf/dispatch [:historical-data-success crypto-id (js->clj data :keywordize-keys true)])))
+         (.catch (fn [error]
+                   (js/console.log "❌ Fetch error:" error)
+                   (rf/dispatch [:historical-data-failure crypto-id error]))))
+     
+     {}))) ; Return empty effect map
 
 (rf/reg-event-db
  :historical-data-success
