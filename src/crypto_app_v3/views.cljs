@@ -7,48 +7,52 @@
 ;; Import version from core
 (def VERSION "v4.0.0-production")
 
-;; Background chart component with proper lifecycle
+;; Background chart using Oracle's ref pattern to prevent React DOM conflicts
 (defn background-chart [crypto-id]
   (let [chart-data @(rf/subscribe [:historical-data crypto-id])
         chart-instance (reagent.core/atom nil)
-        container-ref (reagent.core/atom nil)]
+        chart-ref (reagent.core/atom nil)]
     
     (reagent.core/create-class
      {:display-name (str "background-chart-" crypto-id)
       
       :reagent-render
       (fn [crypto-id]
+        ;; React owns this div - uPlot renders inside it
         [:div {:class "absolute inset-0 opacity-30 pointer-events-none"
-               :ref #(reset! container-ref %)}])
+               :ref (fn [el] 
+                      (when el
+                        (js/console.log "📌 Chart ref set for" crypto-id el)
+                        (reset! chart-ref el)))}])
       
       :component-did-mount
       (fn [this]
-        (js/console.log "🎯 Chart component mounted for" crypto-id)
-        (when (and @container-ref js/uPlot)
+        (js/console.log "🎯 Chart mounting for" crypto-id "- ref available:" (some? @chart-ref))
+        (when (and @chart-ref js/uPlot)
+          (js/console.log "📏 Container dimensions:" (.-offsetWidth @chart-ref) "x" (.-offsetHeight @chart-ref))
           (let [instance (js/uPlot. 
-                           (clj->js {:width 300
-                                    :height 120
-                                    :series [{:label ""} 
-                                             {:stroke "rgba(0,255,136,0.6)"
-                                              :fill "rgba(0,255,136,0.1)"
+                           (clj->js {:width (max 200 (.-offsetWidth @chart-ref))
+                                    :height (max 80 (.-offsetHeight @chart-ref))
+                                    :series [{}  ; Time axis
+                                             {:stroke "rgba(0,255,136,0.8)"
+                                              :fill "rgba(0,255,136,0.2)"
                                               :width 2
                                               :points {:show false}}]
                                     :axes [{:show false} {:show false}]
                                     :legend {:show false}
                                     :cursor {:show false}})
                            (clj->js [#js [] #js []])  ; Empty initial data
-                           @container-ref)]
+                           @chart-ref)]
             (reset! chart-instance instance)
-            (js/console.log "📈 uPlot instance created for" crypto-id))))
+            (js/console.log "📈 uPlot instance created successfully for" crypto-id))))
       
       :component-did-update
       (fn [this old-argv new-argv]
-        (js/console.log "🔄 Chart update check for" crypto-id "- has instance:" (some? @chart-instance) "has data:" (some? chart-data) "data length:" (when chart-data (count (second chart-data))))
+        (js/console.log "🔄 Chart update for" crypto-id "- instance?" (some? @chart-instance) "data?" (some? chart-data))
         (when (and @chart-instance chart-data (vector? chart-data) (= (count chart-data) 2))
           (let [[times prices] chart-data]
-            (when (and (seq times) (seq prices))
-              (js/console.log "📊 Updating chart with" (count times) "time points and" (count prices) "price points")
-              (.setData @chart-instance (clj->js [times prices]))))))
+            (js/console.log "📊 Feeding chart:" (count times) "times," (count prices) "prices")
+            (.setData @chart-instance (clj->js [times prices])))))
       
       :component-will-unmount
       (fn [this]
