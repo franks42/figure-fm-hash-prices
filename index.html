@@ -233,13 +233,13 @@
     <!-- Add re-frame script -->
     <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.re-frame.js"></script>
     
-    <!-- Load V3 ClojureScript Application -->
+    <!-- Load V3 ClojureScript Application - EFFECTS MUST LOAD FIRST -->
+    <script type="application/x-scittle" src="src/crypto_app_v3/effects.cljs"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/events.cljs"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/subs.cljs"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/portfolio.cljs"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/portfolio_atoms.cljs"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/views.cljs"></script>
-    <script type="application/x-scittle" src="src/crypto_app_v3/effects.cljs"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/core.cljs"></script>
 </body>
 </html>

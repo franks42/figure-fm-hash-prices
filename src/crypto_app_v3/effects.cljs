@@ -2,6 +2,8 @@
   (:require [re-frame.core :as rf]))
 
 ;; Simple native fetch effect for Scittle compatibility
+(js/console.log "🔧 Registering :fetch effect handler...")
+
 (rf/reg-fx
  :fetch
  (fn [{:keys [url method headers body on-success on-failure]}]
