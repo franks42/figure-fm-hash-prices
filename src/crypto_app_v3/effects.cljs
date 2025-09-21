@@ -10,8 +10,8 @@
    (js/console.log "🌐 Fetch effect triggered:" url)
    (-> (js/fetch url
                  (clj->js {:method  (or method "GET")
-                          :mode    "cors"
-                          :headers (or headers {})}))
+                           :mode    "cors"
+                           :headers (or headers {})}))
        (.then (fn [response]
                 (js/console.log "📡 Response status:" (.-status response) (.-ok response))
                 (if (.-ok response)

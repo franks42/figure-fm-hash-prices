@@ -23,10 +23,10 @@
        [:div {:class "flex items-center justify-between"}
         [:div {:class "flex items-center"}
          [:span {:class "text-neon-red text-xs font-bold mr-2"} "⚠️ DATA FEED ISSUE"]
-         [:span {:class "text-neon-red/90 text-xs"} 
+         [:span {:class "text-neon-red/90 text-xs"}
           (case error-reason
             "invalid_price" "API returned invalid price"
-            "missing_data" "API data unavailable" 
+            "missing_data" "API data unavailable"
             "Data feed issue")]]
         [:div {:class "text-neon-red/70 text-xs font-medium"} "USING FALLBACK"]]])))
 
@@ -343,14 +343,14 @@
         ;; Global data sources
         data-sources @(rf/subscribe [:data-sources])
         historical-data @(rf/subscribe [:historical-data crypto-id])]
-        
+
         ;; Fetch historical data for HASH on component mount
-        (when (= crypto-id "hash")
-          (js/console.log "🔎 HASH card - historical-data value:" historical-data "nil?" (nil? historical-data) "empty?" (empty? historical-data))
-          (when (or (nil? historical-data) (empty? historical-data))
-            (js/console.log "🚀 Triggering fetch for HASH")
-            (rf/dispatch [:fetch-historical-data crypto-id])))
-    
+    (when (= crypto-id "hash")
+      (js/console.log "🔎 HASH card - historical-data value:" historical-data "nil?" (nil? historical-data) "empty?" (empty? historical-data))
+      (when (or (nil? historical-data) (empty? historical-data))
+        (js/console.log "🚀 Triggering fetch for HASH")
+        (rf/dispatch [:fetch-historical-data crypto-id])))
+
     [:div {:class (stale-data-card-styling data "relative bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1 hover:bg-white/[0.06] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-500/10 scan-line overflow-hidden animate-fade-in")}
      ;; Background chart for HASH only
      (when (= crypto-id "hash")
@@ -555,7 +555,7 @@
   "Check if we're in widget mode based on URL parameters"
   (let [url (.-href js/window.location)
         is-widget (or (.includes url "widget=")
-                     (.includes url "#widget"))]
+                      (.includes url "#widget"))]
     (js/console.log "🎯 Widget mode check - URL:" url "Is widget:" is-widget)
     is-widget))
 
@@ -576,15 +576,15 @@
         current-currency @(rf/subscribe [:currency/current])
         exchange-rates @(rf/subscribe [:currency/exchange-rates])
         is-stale? (is-stale-data? data)]
-    [:div {:class (str "bg-white/[0.08] rounded-xl p-3 text-center border border-white/10 " 
-                      (when is-stale? "border-neon-red/40 bg-neon-red/10"))}
+    [:div {:class (str "bg-white/[0.08] rounded-xl p-3 text-center border border-white/10 "
+                       (when is-stale? "border-neon-red/40 bg-neon-red/10"))}
      [:div {:class "text-lg mb-1"} icon]
      [:div {:class "text-xs font-semibold mb-1 text-gray-300"} display-name]
-     [:div {:class (str "text-sm font-bold mb-1 " 
-                       (if is-stale? "text-neon-red" "text-white"))}
+     [:div {:class (str "text-sm font-bold mb-1 "
+                        (if is-stale? "text-neon-red" "text-white"))}
       (format-price price crypto-id current-currency exchange-rates)]
      [:div {:class (str "text-xs font-semibold "
-                       (change-classes (price-positive? change)))}
+                        (change-classes (price-positive? change)))}
       (str (if (>= change 0) "+" "") (format-number change 2) "%")]
      (when is-stale?
        [:div {:class "text-xs text-neon-red mt-1"} "⚠ STALE"])]))
@@ -594,21 +594,21 @@
   (let [widget-size (get-widget-size)
         sorted-keys @(rf/subscribe [:sorted-price-keys])
         top-assets (take (case widget-size
-                          "small" 2   ; Show top 2 assets
-                          "medium" 4  ; Show top 4 assets  
-                          "large" 6   ; Show top 6 assets
-                          4) sorted-keys)]
+                           "small" 2   ; Show top 2 assets
+                           "medium" 4  ; Show top 4 assets  
+                           "large" 6   ; Show top 6 assets
+                           4) sorted-keys)]
     (js/console.log "🎯 Widget layout - Size:" widget-size "Assets:" (count top-assets) "Keys:" (clj->js sorted-keys))
     [:div {:class "widget-container bg-black text-white p-3 font-inter"
            :id "widget-ready"
            :style {:min-height "400px"}}  ; Fixed height, signal for Playwright
      [:div {:class "grid gap-2"
-            :style {:grid-template-columns 
-                   (case widget-size
-                     "small" "1fr"
-                     "medium" "1fr 1fr"
-                     "large" "1fr 1fr 1fr"
-                     "1fr 1fr")}}
+            :style {:grid-template-columns
+                    (case widget-size
+                      "small" "1fr"
+                      "medium" "1fr 1fr"
+                      "large" "1fr 1fr 1fr"
+                      "1fr 1fr")}}
       (if (empty? top-assets)
         [:div {:class "text-center text-gray-400 p-4"} "Loading widget data..."]
         (doall (for [crypto-id top-assets]
@@ -628,7 +628,7 @@
                      :id "widget-ready"}
                [:div {:class "text-red-400 text-sm"} "Data Error"]]
         loading? [:div {:class "widget-container bg-black text-white p-4 text-center min-h-screen flex items-center justify-center"
-                       :id "widget-ready"} 
+                        :id "widget-ready"}
                   [:div {:class "text-gray-400 text-sm"} "Loading..."]]
         :else [widget-layout])
       ;; Normal mode - full layout  

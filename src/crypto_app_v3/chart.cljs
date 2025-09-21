@@ -6,14 +6,14 @@
 (defn hash-background-chart []
   (let [container-ref (r/atom nil)
         chart-instance (r/atom nil)]
-    
+
     (r/create-class
      {:display-name "hash-chart"
-      
+
       :component-did-mount
       (fn [_]
         (js/console.log "🎯 Chart component mounted"))
-      
+
       :component-did-update
       (fn [_ _]
         (let [current-data @(rf/subscribe [:historical-data "hash"])]
@@ -24,20 +24,20 @@
                 (js/console.log "📊 Creating chart in UPDATE with" (count times) "points")
                 (let [instance (js/uPlot.
                                 (clj->js {:width (.-offsetWidth @container-ref)
-                                         :height 120
-                                         :series [{}
-                                                  {:stroke "#00ff88"
-                                                   :fill "rgba(0,255,136,0.4)"
-                                                   :width 4
-                                                   :points {:show false}}]
-                                         :axes [{:show false} {:show false}]
-                                         :legend {:show false}
-                                         :cursor {:show false}})
+                                          :height 120
+                                          :series [{}
+                                                   {:stroke "#00ff88"
+                                                    :fill "rgba(0,255,136,0.4)"
+                                                    :width 4
+                                                    :points {:show false}}]
+                                          :axes [{:show false} {:show false}]
+                                          :legend {:show false}
+                                          :cursor {:show false}})
                                 (clj->js [times prices])
                                 @container-ref)]
                   (reset! chart-instance instance)
                   (js/console.log "✅ Chart created successfully!")))))))
-      
+
       :reagent-render
       (fn []
         (let [current-data @(rf/subscribe [:historical-data "hash"])
