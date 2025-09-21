@@ -2,14 +2,13 @@
 
 A real-time cryptocurrency and digital asset price tracking system with multi-currency support and portfolio management. Features modern, reactive UI for tracking Figure Markets assets (HASH, FIGR) alongside major cryptocurrencies.
 
-## Current Versions
+## Current Version
 
-- **V2 (Stable)**: Direct Reagent atoms - `index-v2.html` 
-- **V3 (Re-frame)**: Event-driven architecture - `index-v3.html` - **IN DEVELOPMENT**
+- **V3 (Production)**: Re-frame event-driven architecture - `index.html`
 
-## V3 Re-frame Migration (In Progress)
+## Architecture Overview
 
-V3 is a complete rewrite using re-frame architecture for better state management and scalability.
+The application uses re-frame architecture for better state management and scalability.
 
 ### Architecture Changes
 - **Event-driven State**: Single app-db with immutable updates via events
@@ -17,21 +16,14 @@ V3 is a complete rewrite using re-frame architecture for better state management
 - **Effect Handlers**: Isolated side effects for HTTP requests and localStorage
 - **Hybrid Portfolio**: Plain Reagent atoms for portfolio data (avoids persistence issues)
 
-### Current Status
+### Features
 - ✅ **Core Architecture**: Complete re-frame setup with events/subs/effects
 - ✅ **Currency System**: 10-currency support with exchange rate conversion
-- ✅ **Portfolio Management**: Persistent holdings with localStorage (hybrid approach)
+- ✅ **Portfolio Management**: Persistent holdings with localStorage
 - ✅ **Market Feed Indicators**: Data source display, scan line animations
-- ✅ **UI Components**: All V2 components migrated to re-frame patterns
-- 🔄 **Feature Parity**: Working towards 100% V2 compatibility
-- 🔄 **Testing & Polish**: Debugging display issues and data field mappings
+- ✅ **UI Components**: Modern reactive components with re-frame patterns
 
-### Known Issues (V3)
-- Deployment delays on GitHub Pages affecting testing
-- Some UI components may have incorrect data field mappings
-- Volume/High-Low displays being debugged
-
-## Interface Features (V2 & V3)
+## Interface Features
 
 ### Multi-Currency Support
 - **10 Global Currencies**: USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY, KRW, SEK
@@ -95,27 +87,20 @@ V3 is a complete rewrite using re-frame architecture for better state management
 
 ## Deployment
 
-### Live Interfaces
-- **V2 (Stable)**: https://franks42.github.io/figure-fm-hash-prices/index-v2.html
-- **V3 (Development)**: https://franks42.github.io/figure-fm-hash-prices/index-v3.html
+### Live Interface
+- **Production**: https://franks42.github.io/figure-fm-hash-prices/
 - **Local Development**: `python3 -m http.server 8000`
 - **Data Updates**: Automatic via GitHub Actions every 10 minutes
 
 ### Key Files
 
-**V2 Implementation (Stable):**
-- `index-v2.html`: V2 interface entry point
-- `src/crypto_app_v2/`: ClojureScript modules
-  - `state.cljs`: Application state and persistence
-  - `views.cljs`: UI components and rendering
-  - `effects.cljs`: Data fetching and side effects
-
-**V3 Implementation (In Development):**
-- `index-v3.html`: V3 re-frame interface entry point
+**Current Implementation:**
+- `index.html`: Application entry point
 - `src/crypto_app_v3/`: Re-frame architecture modules
   - `core.cljs`: Application initialization and mounting
   - `events.cljs`: Event handlers and business logic
   - `subs.cljs`: Subscriptions for reactive data access
   - `views.cljs`: UI components and rendering
   - `effects.cljs`: HTTP requests and side effects
-  - `portfolio_atoms.cljs`: Hybrid portfolio state (plain atoms)
+  - `portfolio.cljs`: Portfolio management
+  - `portfolio_atoms.cljs`: Portfolio state management

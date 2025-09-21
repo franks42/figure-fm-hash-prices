@@ -1,25 +1,23 @@
 # AGENTS.md - Developer Guide
 
 ## Build/Lint/Test Commands
-- **Format code**: `cljfmt fix src/crypto_app.cljs`
-- **Lint code**: `clj-kondo --lint src/crypto_app.cljs`
+- **Format code**: `cljfmt fix src/crypto_app_v3/`
+- **Lint code**: `clj-kondo --lint src/crypto_app_v3/`
 - **Local development**: `python3 -m http.server 8000`
 - **Deploy**: Push to GitHub (GitHub Pages auto-deploys, Actions fetch data every 10 minutes)
 
 ## Workflows
 - **Primary**: `fetch-crypto-data-nbb.yml` - Active data fetching with multi-source fallback
-- **Deprecated**: `fetch-crypto-data.yml` - Legacy jq-based workflow (emergency use only)
 
 ## Architecture & Structure
 - **Frontend**: ClojureScript + Scittle (browser-based, no build step) + Reagent + Tailwind CSS
 - **Data Pipeline**: GitHub Actions → Figure Markets API + Yahoo Finance → JSON files  
 - **Hosting**: GitHub Pages (serverless, static site)
 - **Core Files**: 
-  - V2 (Current): `index.html`, `src/crypto_app.cljs` (6 atoms architecture)
-  - V3 (In Development): `index-v3.html`, `src/crypto_app_v3/` (re-frame architecture)
+  - Current: `index.html`, `src/crypto_app_v3/` (re-frame architecture)
 - **State Management**:
-  - V2: Fine-grained atoms for selective updates (prices, loading, errors)
-  - V3: Single re-frame app-db with event-driven architecture
+  - Single re-frame app-db with event-driven architecture
+  - Hybrid portfolio state using plain atoms for persistence
 
 ## Code Style & Conventions
 - **Language**: ClojureScript with Reagent components
