@@ -66,8 +66,10 @@
       
       :reagent-render
       (fn []
-        ;; Dereferencing chart-data here forces re-renders when data changes
-        (let [has-data? (and chart-data (vector? chart-data))]
+        ;; Force re-render by dereferencing current data  
+        (let [current-data @(rf/subscribe [:historical-data "hash"])
+              has-data? (and current-data (vector? current-data) (not-empty (first current-data)))]
+          (js/console.log "🔄 Chart render - current data:" (pr-str current-data) "has-data?" has-data?)
           [:div {:class "absolute top-0 left-0 right-0 opacity-50 pointer-events-none"
                  :style {:height "120px"}
                  :ref (fn [el] (when el (reset! container-ref el)))}
