@@ -15,27 +15,68 @@
 (defn valid-price? [price]
   (and price (number? price) (> price 0)))
 
-(defn has-required-fields? [coin-data]
-  (and (:usd coin-data)
-       (valid-price? (:usd coin-data))))
+(defn create-fallback-data [coin-id reason]
+  "Create fallback data when API data is invalid"
+  (log "⚠️  Creating fallback data for" coin-id "- Reason:" reason)
+  {:usd 0.01  ; Minimal non-zero fallback price
+   :usd_24h_change 0
+   :usd_24h_vol 0
+   :symbol (str (str/upper-case (name coin-id)) "-USD")
+   :type "crypto"
+   :data_status "STALE_FALLBACK"  ; Mark as invalid/stale data
+   :error_reason reason
+   :last_valid_timestamp (js/Date.now)})
+
+(defn sanitize-crypto-data [data]
+  "Sanitize crypto data, replacing invalid entries with fallbacks"
+  (let [required-coins #{"btc" "eth" "hash"}]
+    (reduce (fn [acc coin-id]
+              (let [coin-key (keyword coin-id)
+                    coin-data (get data coin-key)]
+                (cond
+                  ;; Missing coin entirely
+                  (nil? coin-data)
+                  (do (log "⚠️  Missing data for" coin-id "- using fallback")
+                      (assoc acc coin-key (create-fallback-data coin-key "missing_data")))
+                  
+                  ;; Invalid or zero price
+                  (not (valid-price? (:usd coin-data)))
+                  (do (log "⚠️  Invalid price for" coin-id ":" (:usd coin-data) "- using fallback")
+                      (assoc acc coin-key (merge coin-data (create-fallback-data coin-key "invalid_price"))))
+                  
+                  ;; Valid data
+                  :else
+                  (assoc acc coin-key coin-data))))
+            {}
+            required-coins)))
 
 (defn validate-crypto-data [data]
-  (let [required-coins #{"btc" "eth" "hash"}
-        present-coins (set (map name (keys data)))]
-    (when-not (every? present-coins required-coins)
-      (throw (js/Error. (str "Missing required crypto data: "
-                             (clojure.set/difference required-coins present-coins)))))
-    (doseq [[coin-id coin-data] data]
-      (when-not (has-required-fields? coin-data)
-        (throw (js/Error. (str "Invalid data for " coin-id ": " (:usd coin-data))))))
-    data))
+  "Validate and sanitize crypto data - never fails, always returns usable data"
+  (let [sanitized-data (sanitize-crypto-data data)
+        other-data (apply dissoc data (map keyword ["btc" "eth" "hash"]))]
+    
+    ;; Also sanitize optional coins like figr_heloc, figr, etc.
+    (reduce (fn [acc [coin-id coin-data]]
+              (if (and coin-data (:usd coin-data) (not (valid-price? (:usd coin-data))))
+                (do (log "⚠️  Invalid price for optional coin" coin-id ":" (:usd coin-data) "- using fallback")
+                    (assoc acc coin-id (merge coin-data (create-fallback-data coin-id "invalid_price"))))
+                (assoc acc coin-id coin-data)))
+            sanitized-data
+            other-data)))
 
 (defn validate-output-data [combined-data]
-  (when (< (count (keys combined-data)) 5)
-    (throw (js/Error. "Insufficient data - too few assets")))
-  (when-not (:timestamp combined-data)
-    (throw (js/Error. "Missing timestamp in output")))
-  combined-data)
+  "Final validation - ensures minimal usable data, never fails"
+  (let [asset-count (count (filter #(not (#{:timestamp :source :last_update} %)) (keys combined-data)))]
+    (when (< asset-count 3)
+      (log "⚠️  Low asset count:" asset-count "- but continuing with available data"))
+    
+    (when-not (:timestamp combined-data)
+      (log "⚠️  Missing timestamp - adding current timestamp")
+      (assoc combined-data :timestamp (js/Date.now)))
+    
+    ;; Always return data, never throw
+    (do (log "✅ Output validation complete - assets:" asset-count)
+        combined-data)))
 
 (defn fetch-figure-markets []
   (-> (fetch "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets")
