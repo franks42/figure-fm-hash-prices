@@ -109,7 +109,8 @@
   [:div {:class "absolute left-2 top-1/2 -translate-y-1/2 flex items-center overlay-tier1"}
    [:span {:class "text-lg font-bold text-white mr-2"}
     (str currency-symbol (format-number price 3))]
-   [:button {:class "text-xs bg-white/10 border border-white/20 rounded px-1 py-0.5 text-white/80"}
+   [:button {:class "text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded px-1 py-0.5 text-white/80 cursor-pointer transition-colors"
+             :on-click #(do (.stopPropagation %) (rf/dispatch [:currency/show-selector]))}
     currency-code]])
 
 (defn chart-overlay-change
