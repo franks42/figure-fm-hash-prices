@@ -6,7 +6,7 @@
 
 (rf/reg-fx
  :fetch
- (fn [{:keys [url method headers body on-success on-failure]}]
+ (fn [{:keys [url method headers _body on-success on-failure]}]
    (js/console.log "🌐 Fetch effect triggered:" url)
    (-> (js/fetch url
                  (clj->js {:method  (or method "GET")
@@ -144,7 +144,7 @@
 ;; Exchange rate effects (copy V2)
 (rf/reg-fx
  :http-exchange-rates
- (fn [{:keys [url on-success on-failure]}]
+ (fn [{:keys [url on-success _on-failure]}]
    (-> (js/fetch (cache-bust-url url))
        (.then (fn [response]
                 (if (.-ok response)

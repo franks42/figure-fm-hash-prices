@@ -1,6 +1,5 @@
 (ns crypto-app-v3.views
   (:require [re-frame.core :as rf]
-            [reagent.core :as r]
             [clojure.string :as str]
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]
             [crypto-app-v3.chart :as chart]))
@@ -11,12 +10,14 @@
 ;; Old background-chart removed - using chart.cljs instead to avoid conflicts
 
 ;; Stale data detection and warning functions
-(defn is-stale-data? [data]
+(defn is-stale-data?
   "Check if this data is stale/fallback data"
+  [data]
   (= (get data "data_status") "STALE_FALLBACK"))
 
-(defn stale-data-warning [crypto-id data]
+(defn stale-data-warning
   "Show warning banner for stale data"
+  [_crypto-id data]
   (when (is-stale-data? data)
     (let [error-reason (get data "error_reason" "unknown")]
       [:div {:class "bg-neon-red/15 border border-neon-red/30 rounded-lg p-3 mb-4"}
@@ -30,8 +31,9 @@
             "Data feed issue")]]
         [:div {:class "text-neon-red/70 text-xs font-medium"} "USING FALLBACK"]]])))
 
-(defn stale-data-card-styling [data base-classes]
+(defn stale-data-card-styling
   "Add visual styling for stale data cards"
+  [data base-classes]
   (if (is-stale-data? data)
     (str base-classes " border-neon-red/40 bg-neon-red/5")
     base-classes))
@@ -51,8 +53,9 @@
                    #js{:minimumFractionDigits decimals
                        :maximumFractionDigits decimals}))
 
-(defn convert-currency [usd-amount target-currency exchange-rates]
+(defn convert-currency
   "Convert USD amount to target currency using current exchange rates"
+  [usd-amount target-currency exchange-rates]
   (if (= target-currency "USD")
     usd-amount
     (let [currency-key (keyword target-currency)
@@ -61,8 +64,9 @@
         (* usd-amount rate)
         usd-amount))))  ; Fallback to USD if rate not available
 
-(defn get-currency-symbol [currency-code]
+(defn get-currency-symbol
   "Get currency symbol for display"
+  [currency-code]
   (case currency-code
     "USD" "$"
     "EUR" "€"
@@ -316,24 +320,24 @@
   (let [prices @(rf/subscribe [:prices])
         data (get prices crypto-id)
         _ (js/console.log "🔍 CRYPTO CARD DATA for" crypto-id ":" data)
-        name (get-crypto-name crypto-id)
+        _name (get-crypto-name crypto-id)
         price (get data "usd")
         change (get data "usd_24h_change")
         volume (get data "usd_24h_vol")
         high (get data "day_high")
         low (get data "day_low")
         trades-24h (get data "trades_24h")
-        data-source (get data "dataSource")  ; Market feed indicator data
+        _data-source (get data "dataSource")  ; Market feed indicator data
         ;; Enhanced FIGR stock data (copy V2)
         is-stock? (= (get data "type") "stock")
         company-name (get data "company_name")
         exchange (get data "exchange")
         open-price (get data "open")
-        day-high (get data "day_high")
-        day-low (get data "day_low")
+        _day-high (get data "day_high")
+        _day-low (get data "day_low")
         fifty-two-week-high (get data "fifty_two_week_high")
         fifty-two-week-low (get data "fifty_two_week_low")
-        previous-close (get data "previous_close")
+        _previous-close (get data "previous_close")
         ;; Portfolio data (hybrid - use atoms)
         portfolio-quantity (get @portfolio-atoms/portfolio-atom crypto-id 0)
         holding-value (portfolio-atoms/calculate-holding-value portfolio-quantity price)
@@ -345,9 +349,9 @@
         historical-data @(rf/subscribe [:historical-data crypto-id])]
 
         ;; Fetch historical data for all crypto assets (not stocks)
-        (when (not= (get data "type") "stock")
-        (js/console.log "🔎" (str/upper-case crypto-id) "card - historical-data value:" historical-data "nil?" (nil? historical-data) "empty?" (empty? historical-data))
-        (when (or (nil? historical-data) (empty? historical-data))
+    (when (not= (get data "type") "stock")
+      (js/console.log "🔎" (str/upper-case crypto-id) "card - historical-data value:" historical-data "nil?" (nil? historical-data) "empty?" (empty? historical-data))
+      (when (or (nil? historical-data) (empty? historical-data))
         (js/console.log "🚀 Triggering fetch for" crypto-id)
         (rf/dispatch [:fetch-historical-data crypto-id])))
 
@@ -550,8 +554,9 @@
    [:span VERSION]])
 
 ;; Widget mode detection
-(defn is-widget-mode? []
+(defn is-widget-mode?
   "Check if we're in widget mode based on URL parameters"
+  []
   (let [url (.-href js/window.location)
         is-widget (or (.includes url "widget=")
                       (.includes url "#widget"))]

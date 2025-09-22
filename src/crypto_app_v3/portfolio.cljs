@@ -3,8 +3,9 @@
 
 ;; Copy V2 portfolio persistence (small functions)
 
-(defn save-portfolio-to-storage [portfolio-data]
+(defn save-portfolio-to-storage
   "Save portfolio data to localStorage"
+  [portfolio-data]
   (try
     (js/console.log "💾 V3 Saving portfolio to localStorage:" portfolio-data)
     (.setItem js/localStorage "crypto-portfolio-v3" (.stringify js/JSON (clj->js portfolio-data)))
@@ -14,8 +15,9 @@
       (js/console.warn "❌ V3 Failed to save portfolio to localStorage:" e)
       false)))
 
-(defn load-portfolio-from-storage []
+(defn load-portfolio-from-storage
   "Load portfolio data from localStorage"
+  []
   (try
     (js/console.log "📖 V3 Loading portfolio from localStorage...")
     (let [stored-data (.getItem js/localStorage "crypto-portfolio-v3")]

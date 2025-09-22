@@ -1,6 +1,5 @@
 (ns crypto-app-v3.events
   (:require [re-frame.core :as rf]
-            [ajax.core :as ajax]
             [clojure.string :as str]))
 
 ;; Copy V2 constants (small, focused)
@@ -48,8 +47,9 @@
 (defn extract-prices-from-response [js-data]
   (dissoc js-data "timestamp" "source" "last_update"))
 
-(defn extract-data-sources [js-data]
+(defn extract-data-sources
   "Extract and parse the data sources from the top-level source field"
+  [js-data]
   (when-let [source-str (get js-data "source")]
     (if (clojure.string/includes? source-str "+")
       (clojure.string/split source-str #"\+")
@@ -198,8 +198,9 @@
    {:fx [[:local-storage/load-portfolio]]}))
 
 ;; Currency conversion functions (copy V2)
-(defn convert-currency [usd-amount target-currency exchange-rates]
+(defn convert-currency
   "Convert USD amount to target currency using current exchange rates"
+  [usd-amount target-currency exchange-rates]
   (if (= target-currency "USD")
     usd-amount
     (let [currency-key (keyword target-currency)
@@ -208,8 +209,9 @@
         (* usd-amount rate)
         usd-amount))))  ; Fallback to USD if rate not available
 
-(defn get-currency-symbol [currency-code]
+(defn get-currency-symbol
   "Get currency symbol for display"
+  [currency-code]
   (case currency-code
     "USD" "$"
     "EUR" "€"
@@ -275,7 +277,7 @@
          old-keys (:price-keys db)
          new-keys (keys new-prices)
          changes (collect-price-changes old-prices new-prices)
-         timestamp (format-timestamp (current-iso-timestamp))
+         _timestamp (format-timestamp (current-iso-timestamp))
          has-changes? (seq changes)
          keys-changed? (price-keys-changed? old-keys new-keys)]
 
