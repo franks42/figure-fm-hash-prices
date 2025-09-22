@@ -131,7 +131,7 @@
 ;; Consolidated portfolio component (merged value display + button)
 (defn portfolio-section
   "Consolidated portfolio component showing value and portfolio access button"
-  [holding-value crypto-id current-currency exchange-rates]
+  [holding-value portfolio-quantity crypto-id current-currency exchange-rates]
   (if holding-value
 ;; Show value + edit button when there's a holding
     [:div {:class "bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mt-4"}
@@ -140,10 +140,12 @@
       [:button {:class "text-xs bg-white/[0.05] hover:bg-white/[0.10] border border-white/20 rounded px-2 py-1 font-semibold transition-colors"
                 :on-click #(reset! portfolio-atoms/show-portfolio-panel crypto-id)}
        "✏️"]]
-     [:div {:class "text-lg font-bold text-blue-300 tabular-nums flex items-center"}
+     [:div {:class "text-lg font-bold text-blue-300 tabular-nums flex items-center mb-1"}
       (format-price holding-value crypto-id current-currency exchange-rates)
-      [currency-button current-currency]]]
-    ;; Show add button when no holding
+      [currency-button current-currency]]
+     [:div {:class "text-xs text-blue-400/70 tabular-nums"}
+      (str (format-number portfolio-quantity (if (< portfolio-quantity 1) 6 2)) " " (clojure.string/upper-case (name crypto-id)))]]
+;; Show add button when no holding
     [:div {:class "mt-4"}
      [:button {:class "w-full bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 hover:border-blue-500/40 rounded-lg px-4 py-3 text-sm font-semibold text-blue-300 transition-colors flex items-center justify-center"
                :on-click #(reset! portfolio-atoms/show-portfolio-panel crypto-id)}
@@ -386,7 +388,7 @@
        [stock-52w-range fifty-two-week-high fifty-two-week-low crypto-id current-currency exchange-rates]
        [crypto-card-high-low high low crypto-id current-currency exchange-rates])
      ;; Portfolio value display
-     [portfolio-section holding-value crypto-id current-currency exchange-rates]]))
+     [portfolio-section holding-value portfolio-quantity crypto-id current-currency exchange-rates]]))
 
 ;; Main grid (copy V2)
 (defn crypto-grid []
