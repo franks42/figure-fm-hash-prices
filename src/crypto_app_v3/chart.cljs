@@ -36,14 +36,14 @@
               (when (and (seq times) (seq prices))
                 (js/console.log "📊 Creating chart for" crypto-id "with" (count times) "points")
                 (let [colors (calculate-chart-colors prices)
-                      ;; Create trend line data - same length as times but only start/end values
+                      ;; Create trend line data - linear interpolation from start to end
                       start-price (first prices)
                       end-price (last prices)
+                      num-points (count times)
+                      price-diff (- end-price start-price)
                       trend-data (map-indexed (fn [idx _]
-                                                (cond
-                                                  (= idx 0) start-price
-                                                  (= idx (dec (count times))) end-price
-                                                  :else nil)) times)
+                                                (+ start-price
+                                                   (* price-diff (/ idx (dec num-points))))) times)
                       instance (js/uPlot.
                                 (clj->js {:width (.-offsetWidth @container-ref)
                                           :height 120
