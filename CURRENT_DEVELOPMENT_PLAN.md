@@ -43,22 +43,36 @@ Create a **quick, subliminal view** of market and portfolio performance. Users s
 
 ### 🔥 **HIGH PRIORITY** (Core UX Issues)
 
-#### 1. Market Feed Selector Button
-**Goal**: Choose data source per asset (Figure Markets / CoinGecko / Major exchanges)  
-**Why**: Figure Markets has low liquidity for major cryptos vs established exchanges  
-**UI**: Button like currency selector `[FM] → [FM] [CG] [Binance] [Coinbase]`  
+#### 1. Portfolio Performance Card  
+**Goal**: Dedicated portfolio card showing aggregated performance like individual assets  
+**Why**: Users need subliminal awareness of overall portfolio health and trends  
+**Features**: 
+- 24h high/low/change% for entire portfolio
+- Background chart with green/red sentiment and trend line
+- Same visual treatment as asset cards for consistency
+- Real-time portfolio value tracking over time
+**Dependencies**: Requires historical data subscriptions and metrics calculations
 **Implementation**: 
-- Add feed selection state to re-frame
-- Multiple API endpoints per asset
-- Fallback logic when Figure Markets volume too low
-- Visual indication of current feed source
+- Create `:portfolio-historical` subscription aggregating asset histories
+- Calculate portfolio metrics (sum quantity × price at each time point)
+- Reuse existing background-chart component with `:portfolio` pseudo-ID
+- Portfolio card component with familiar asset card UX
 
-#### 2. Portfolio Value Consolidation  
+#### 2. Auto-feed Selection (was #1)
+**Goal**: Automatically choose best data source per asset based on liquidity  
+**Why**: Figure Markets has low liquidity for major cryptos vs established exchanges  
+**Implementation**: 
+- Auto-rank feeds by liquidity thresholds and freshness
+- Fallback logic when Figure Markets volume < threshold → CoinGecko
+- Show feed source as small indicator pill ("FM" / "CG")
+- No manual selection required - smart defaults
+
+#### 3. Portfolio Value Consolidation (was #2) 
 **Goal**: Single clean portfolio component (value + button combined)  
 **Why**: Currently scattered display, hard to quickly assess portfolio status  
 **Implementation**: Merge portfolio-value-display + portfolio-button into one component
 
-#### 3. Fix FIGR Feed Indicator
+#### 4. Fix FIGR Feed Indicator (was #3)
 **Goal**: Show correct data source for FIGR (Yahoo Finance, not Figure Markets)  
 **Why**: Currently shows wrong/confusing feed indicator  
 **Implementation**: Conditional data source display based on asset type
