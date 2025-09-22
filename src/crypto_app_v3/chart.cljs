@@ -10,12 +10,12 @@
     (let [start-price (first prices)
           end-price (last prices)
           is-positive? (> end-price start-price)]
-      (js/console.log "🎨 Chart colors - Start:" start-price "End:" end-price "Positive?" is-positive?)
+      (js/console.log "🔴🟢 CHART COLOR DECISION - Start:" start-price "End:" end-price "Positive?" is-positive?)
       (if is-positive?
         {:stroke "#00ff88" :fill "rgba(0,255,136,0.4)"}  ; Green for positive
         {:stroke "#ff4d5a" :fill "rgba(255,77,90,0.4)"})) ; Red for negative
     (do
-      (js/console.log "🎨 Chart colors - Using default green, prices:" (pr-str prices))
+      (js/console.log "🔴🟢 CHART COLOR DEFAULT - Using default green, prices:" (pr-str prices))
       {:stroke "#00ff88" :fill "rgba(0,255,136,0.4)"})))  ; Default green
 
 ;; Generic background chart for any crypto asset
@@ -37,7 +37,7 @@
           (when (and current-data @container-ref js/uPlot (not @chart-instance) (vector? current-data) (= (count current-data) 2))
             (let [[times prices] current-data]
               (when (and (seq times) (seq prices))
-                (js/console.log "📊 Creating chart in UPDATE with" (count times) "points")
+                (js/console.log "🔴🟢 CREATING CHART for" crypto-id "with" (count times) "points")
                 (let [colors (calculate-chart-colors prices)
                       instance (js/uPlot.
                                 (clj->js {:width (.-offsetWidth @container-ref)
