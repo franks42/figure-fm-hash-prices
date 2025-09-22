@@ -13,16 +13,19 @@ Create a **quick, subliminal view** of market and portfolio performance. Users s
 
 ---
 
-## 📊 **Current State (V4.0.0)**
+## 📊 **Current State (V4.1+)**
 
 ### ✅ **Completed Features**
 - **V1/V2 Legacy Cleanup**: Removed 5,000+ lines of legacy code, unified to single V4 architecture
+- **Chart Color Sentiment**: Green/red chart backgrounds based on price trend direction for instant visual feedback
+- **Trend Line Visualization**: Dotted grey trend lines from start to end price showing overall direction
 - **Background Price Charts**: 24h historical charts behind crypto card prices (uPlot library)
 - **Robust Data Pipeline**: Fault-tolerant GitHub Actions, never fails on bad API data
 - **Clear Stale Data Warnings**: Red borders/banners when API data is invalid
 - **Multi-Currency System**: 10 global currencies with live conversion
 - **Portfolio Management**: Persistent holdings with real-time valuations
 - **iOS Widget Support**: Widget-optimized layouts ready for Playwright screenshots
+- **Clean Codebase**: Zero clj-kondo warnings, consistent formatting, enhanced coding practices
 
 ### 🏗️ **Technical Architecture**
 - **Frontend**: ClojureScript + Scittle (no-build) + Re-frame + uPlot  
