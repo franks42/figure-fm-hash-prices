@@ -2,8 +2,7 @@
   (:require [re-frame.core :as rf]
             [clojure.string :as str]
             [crypto-app-v3.portfolio-atoms :as portfolio-atoms]
-            [crypto-app-v3.chart :as chart]
-            [crypto-app-v3.card-v5 :as card-v5]))
+            [crypto-app-v3.chart :as chart]))
 
 ;; Import version from core
 (def VERSION "v4.2.1-feature-flag")
@@ -669,7 +668,7 @@
          loading? [loading-view]
          :else [:div
                 [crypto-grid]
-                [card-v5/hash-prototype-test]  ; V5 prototype when feature flag enabled
+                ;; V5 prototype removed to break circular dependency
                 [last-update-footer]])
        [portfolio-panel]
        [currency-selector-panel]])))

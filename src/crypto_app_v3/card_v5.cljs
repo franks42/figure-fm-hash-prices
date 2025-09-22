@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [clojure.string :as str]
             [crypto-app-v3.chart-v5 :as chart-v5]
-            [crypto-app-v3.views :as v]))
+            [crypto-app-v3.currency :as curr]))
 
 ;; V5 Card Component - Professional Terminal Style
 ;; Single asset prototype (HASH first)
@@ -46,7 +46,7 @@
         feed-indicator (if (= asset-type "stock") "YF" "FM")
         current-currency @(rf/subscribe [:currency/current])
         exchange-rates @(rf/subscribe [:currency/exchange-rates])
-        currency-symbol (v/get-currency-symbol current-currency)
+        currency-symbol (curr/get-currency-symbol current-currency)
         current-period @(rf/subscribe [:chart/current-period crypto-id])
         historical-data @(rf/subscribe [:historical-data crypto-id])
         ;; Calculate metrics from chart data for consistency
@@ -67,9 +67,9 @@
         chart-high (:high chart-metrics)
         chart-low (:low chart-metrics)
         ;; Currency conversion for all overlay prices
-        converted-price (v/convert-currency price current-currency exchange-rates)
-        converted-high (v/convert-currency chart-high current-currency exchange-rates)
-        converted-low (v/convert-currency chart-low current-currency exchange-rates)]
+        converted-price (curr/convert-currency price current-currency exchange-rates)
+        converted-high (curr/convert-currency chart-high current-currency exchange-rates)
+        converted-low (curr/convert-currency chart-low current-currency exchange-rates)]
 
 ;; Trigger historical data fetch if missing (same as V4)
     (when (or (nil? historical-data) (empty? historical-data))
@@ -93,8 +93,10 @@
      ;; Stats row  
      [stats-row volume trades feed-indicator]]))
 
-;; Test component - shows HASH only when feature flag is enabled
-(defn hash-prototype-test []
+;; V5 prototype component - can be called from anywhere
+(defn v5-prototype-section
+  "V5 prototype section - shows HASH card when feature flag enabled"
+  []
   (let [new-layout? @(rf/subscribe [:ui/new-layout?])]
     (when new-layout?
       [:div {:class "max-w-xs mx-auto mt-8"}
