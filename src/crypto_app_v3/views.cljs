@@ -5,7 +5,7 @@
             [crypto-app-v3.chart :as chart]))
 
 ;; Import version from core
-(def VERSION "v4.2.0-ui-improvements")
+(def VERSION "v4.2.1-feature-flag")
 
 ;; Old background-chart removed - using chart.cljs instead to avoid conflicts
 
@@ -412,6 +412,12 @@
            (when (< idx (dec (count data-sources)))
              [:span {:class "text-gray-500 mx-1"} "•"])])]])))
 
+;; Feature flag debug indicator
+(defn layout-version-indicator []
+  (let [new-layout? @(rf/subscribe [:ui/new-layout?])]
+    [:div {:class "fixed top-16 left-5 z-20 bg-purple-500/20 border border-purple-500/40 rounded px-2 py-1 text-xs"}
+     (str "UI: " (if new-layout? "V5 (New)" "V4 (Current)"))]))
+
 ;; Last update footer (copy V2)
 (defn last-update-footer []
   (let [last-update @(rf/subscribe [:last-update])
@@ -653,6 +659,7 @@
       ;; Normal mode - full layout  
       [:div
        [version-display]           ; Version indicator in top-left!
+       [layout-version-indicator]  ; Feature flag debug indicator!
        [portfolio-summary-header]  ; V2 feature!
        [exchange-rate-indicator]   ; V2 market feed indicator!
        [currency-toggle]           ; V2 feature!

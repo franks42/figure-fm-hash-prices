@@ -76,6 +76,17 @@
  (fn [db]
    (get-in db [:ui :display-currency] "USD")))
 
+;; UI feature flag subscriptions
+(rf/reg-sub
+ :ui/new-layout?
+ (fn [db]
+   (let [url-param (when js/window.location.search
+                     (.includes js/window.location.search "ui=v5"))
+         local-storage (when-let [stored (.getItem js/localStorage "crypto-tracker-ui")]
+                         (= stored "v5"))
+         db-setting (get-in db [:ui :layout-version] false)]
+     (or url-param local-storage db-setting))))
+
 ;; Currency subscriptions (copy V2)
 (rf/reg-sub
  :currency/current

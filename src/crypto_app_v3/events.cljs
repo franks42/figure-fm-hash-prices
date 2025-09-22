@@ -126,6 +126,14 @@
  (fn [db [_ error]]
    (assoc-in db [:ui :error] error)))
 
+;; UI layout version toggle
+(rf/reg-event-fx
+ :ui/toggle-layout-version
+ (fn [{:keys [db]} [_ version]]
+   (js/console.log "🎨 Switching UI layout to:" version)
+   (.setItem js/localStorage "crypto-tracker-ui" version)
+   {:db (assoc-in db [:ui :layout-version] (= version "v5"))}))
+
 (rf/reg-event-db
  :clear-error
  (fn [db _]
