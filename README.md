@@ -4,24 +4,25 @@ A real-time cryptocurrency and digital asset price tracking system with multi-cu
 
 ## Current Version
 
-- **V3 (Production)**: Re-frame event-driven architecture - `index.html`
+- **V4.0.0 (Production)**: Re-frame architecture with background price charts - `index.html`
 
 ## Architecture Overview
 
-The application uses re-frame architecture for better state management and scalability.
+Modern reactive crypto tracker with real-time background price charts and multi-currency portfolio management.
 
-### Architecture Changes
-- **Event-driven State**: Single app-db with immutable updates via events
-- **Reactive Subscriptions**: Declarative data flow with automatic UI updates  
-- **Effect Handlers**: Isolated side effects for HTTP requests and localStorage
-- **Hybrid Portfolio**: Plain Reagent atoms for portfolio data (avoids persistence issues)
+### Core Features  
+- ✅ **Background Price Charts**: 24h historical data from Figure Markets API (browser-direct, CORS enabled)
+- ✅ **Multi-Currency Support**: 10 global currencies with live exchange rate conversion
+- ✅ **Portfolio Management**: Persistent holdings with real-time value calculations
+- ✅ **Robust Data Pipeline**: Fault-tolerant GitHub Actions with fallback handling
+- ✅ **Visual Feedback**: Stale data warnings, loading indicators, update animations
+- ✅ **iOS Widget Ready**: Widget-optimized layouts for screenshot automation
 
-### Features
-- ✅ **Core Architecture**: Complete re-frame setup with events/subs/effects
-- ✅ **Currency System**: 10-currency support with exchange rate conversion
-- ✅ **Portfolio Management**: Persistent holdings with localStorage
-- ✅ **Market Feed Indicators**: Data source display, scan line animations
-- ✅ **UI Components**: Modern reactive components with re-frame patterns
+### Technical Stack
+- **Frontend**: ClojureScript + Scittle (no-build) + Re-frame + uPlot charts
+- **Data**: Figure Markets API + Yahoo Finance with 10-minute updates  
+- **Charts**: Real-time background charts with 24h historical price trends
+- **Hosting**: GitHub Pages with automated data pipeline
 
 ## Interface Features
 
