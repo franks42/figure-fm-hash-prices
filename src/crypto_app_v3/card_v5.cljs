@@ -38,13 +38,21 @@
         price (get data "usd" 0)
         high (get data "day_high" 0)
         low (get data "day_low" 0)
-        change (get data "usd_24h_change" 0)
+        live-change (get data "usd_24h_change" 0)
         volume (/ (get data "usd_24h_vol" 0) 1000000)  ; Convert to millions
         trades (get data "trades_24h" 0)
         asset-type (get data "type" "crypto")
         feed-indicator (if (= asset-type "stock") "YF" "FM")
         current-currency @(rf/subscribe [:currency/current])
-        historical-data @(rf/subscribe [:historical-data crypto-id])]
+        historical-data @(rf/subscribe [:historical-data crypto-id])
+        ;; Calculate change from chart data for consistency with background color
+        chart-change (if (and historical-data (vector? historical-data) (= (count historical-data) 2))
+                       (let [[_ prices] historical-data]
+                         (when (and (seq prices) (>= (count prices) 2))
+                           (let [start-price (first prices)
+                                 end-price (last prices)]
+                             (* 100 (/ (- end-price start-price) start-price)))))
+                       live-change)]  ; Fallback to live data if no chart data
 
 ;; Trigger historical data fetch if missing (same as V4)
     (when (or (nil? historical-data) (empty? historical-data))
@@ -58,7 +66,7 @@
       [chart-v5/chart-overlay-symbol crypto-id]
       [chart-v5/chart-overlay-high high "$"]
       [chart-v5/chart-overlay-current-price price current-currency]
-      [chart-v5/chart-overlay-change change]
+      [chart-v5/chart-overlay-change chart-change]
       [chart-v5/chart-overlay-period "24H"]
       [chart-v5/chart-overlay-low low "$"]]
 
