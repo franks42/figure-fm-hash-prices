@@ -47,7 +47,7 @@
   "High price in upper-right corner"
   [high-price currency-symbol]
   [:div {:class "absolute top-2 right-2 text-xs text-white/70 overlay-tier2"}
-   (str currency-symbol (format-number high-price 2))])
+   (str currency-symbol (format-number high-price 3))])
 
 (defn chart-overlay-current-price
   "Current price + currency button in left-middle"
@@ -78,6 +78,6 @@
   "Low price in bottom-right corner"
   [low-price currency-symbol]
   [:div {:class "absolute bottom-2 right-2 text-xs text-white/70 overlay-tier2"}
-   (str currency-symbol (format-number low-price 2))])
+   (str currency-symbol (format-number low-price 3))])
 
 ;; Individual overlay components - used by card_v5.cljs
