@@ -93,13 +93,48 @@ Volume: $1.2M    Trades: 45    [FM]        ← Volume, Trades, Feed indicator (s
 - State management: Memoize derived series by [asset-id, period, fx-rates-hash]
 - Mobile: Ensure 44×44px tap targets for period/currency selectors
 
-**Action Checklist**:
-- [ ] Prototype HTML overlay system with ResizeObserver
-- [ ] Define CSS utility classes (.overlay-tier1, .overlay-tier2, .overlay-tier3)
-- [ ] Extend GitHub Actions for multi-period JSON generation
-- [ ] Build re-frame subscription chain: :series-by-asset-period
-- [ ] Add accessibility support (prefers-color-scheme detection)
-- [ ] Implement visual regression testing with Playwright
+**Oracle Implementation Strategy - Safe Step-by-Step Approach**:
+
+**Phase 1: Foundation & Feature Flag**
+- [ ] Add feature flag subscription `[:ui/new-layout?]` (URL param `?ui=v5` or localStorage)
+- [ ] Create new namespaces (`crypto_app_v3.chart_v5.cljs`, `card_v5.cljs`, `layout_v5.cljs`) 
+- [ ] No mutations to existing V4 files - parallel development only
+
+**Phase 2: HASH Prototype (Single Asset)**
+- [ ] Static HTML overlay layout with CSS tier classes (.overlay-tier1/2/3)
+- [ ] ResizeObserver hook for square enforcement `min(width, height)`
+- [ ] Port existing uPlot integration (24h data only initially)
+- [ ] Connect to current re-frame subscriptions (`:prices`, `:historical-data`)
+- [ ] Overlay tiers with live data binding (symbol, price, high/low, change%)
+
+**Phase 3: Data Pipeline & Period Selection**
+- [ ] Extend GitHub Actions for multi-period JSON generation (`asset-id_period.json`)
+- [ ] Memoized re-frame subscription `:series-by-asset-period` by `[asset-id, period, fx-rates-hash]`
+- [ ] Period selector button functionality (24H → 1W → 1M → 3M → 6M → 1Y)
+- [ ] Currency conversion for historical high/low values
+
+**Phase 4: Quality Assurance**
+- [ ] Playwright visual regression testing (`ui_v5.spec.ts`)  
+- [ ] Screenshot baseline for HASH card comparisons
+- [ ] Performance tuning with larger datasets (1M period, 100+ points)
+- [ ] Mobile Safari testing (tap targets, ResizeObserver performance)
+
+**Phase 5: Mass Rollout**
+- [ ] Extend to BTC & ETH assets with proven HASH template
+- [ ] Professional terminal grid layout (`layout_v5.cljs`)
+- [ ] Staging deployment with feature flag default flip
+- [ ] User feedback collection and refinement
+
+**Phase 6: Legacy Cleanup**
+- [ ] Remove V4 components after two stable deployments
+- [ ] Delete feature flag once fully migrated
+- [ ] Code cleanup and optimization
+
+**Risk Mitigation**:
+- Zero edits to current working files until replacement is proven
+- Feature flag enables instant rollback capability  
+- Visual regression tests prevent silent UI drift
+- Each phase has clear success criteria and safe commit boundaries
 
 #### 2. Portfolio Performance Card  
 **Goal**: Dedicated portfolio card showing aggregated performance like individual assets  
