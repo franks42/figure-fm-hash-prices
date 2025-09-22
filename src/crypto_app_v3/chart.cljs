@@ -15,6 +15,17 @@
         {:stroke "#ff4d5a" :fill "rgba(255,77,90,0.4)"})) ; Red for negative
     {:stroke "#00ff88" :fill "rgba(0,255,136,0.4)"}))     ; Default green
 
+;; Build trend line data - straight line from start to end price
+(defn build-trend-series
+  "Create trend line data with only start/end values, null in between"
+  [prices]
+  (let [n (count prices)]
+    (mapv (fn [i]
+            (cond
+              (= i 0) (first prices)
+              (= i (dec n)) (last prices)
+              :else nil)) (range n))))
+
 ;; Generic background chart for any crypto asset
 (defn background-chart [crypto-id]
   (let [container-ref (r/atom nil)
@@ -36,10 +47,16 @@
               (when (and (seq times) (seq prices))
                 (js/console.log "📊 Creating chart for" crypto-id "with" (count times) "points")
                 (let [colors (calculate-chart-colors prices)
+                      trend (build-trend-series prices)
                       instance (js/uPlot.
                                 (clj->js {:width (.-offsetWidth @container-ref)
                                           :height 120
                                           :series [{}
+                                                   {:stroke "#888"
+                                                    :width 2
+                                                    :dash [4, 4]
+                                                    :spanGaps true
+                                                    :points {:show false}}
                                                    {:stroke (:stroke colors)
                                                     :fill (:fill colors)
                                                     :width 4
@@ -47,7 +64,7 @@
                                           :axes [{:show false} {:show false}]
                                           :legend {:show false}
                                           :cursor {:show false}})
-                                (clj->js [times prices])
+                                (clj->js [times trend prices])
                                 @container-ref)]
                   (reset! chart-instance instance)
                   (js/console.log "✅ Chart created successfully with sentiment colors!")))))))
