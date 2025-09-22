@@ -73,6 +73,32 @@ Volume: $1.2M    Trades: 45    [FM]        ← Volume, Trades, Feed indicator (s
 - Feed indicator moved to volume/trades row for consolidation
 - All price overlays update with currency conversion
 
+**Oracle Review - Implementation Guidance**:
+- **Visual Hierarchy Critical**: Apply 3-tier system for <3s comprehension
+  - Tier-1 (current price, ±%): Largest font, bold weight
+  - Tier-2 (high/low): Small-caps, light grey
+  - Tier-3 (volume/trades/feed): Micro-copy 11px
+- **Technical Approach**: HTML overlay divs (not canvas) for responsive fonts
+- **Square Enforcement**: Use ResizeObserver for min(width,height) since no CSS container queries in Scittle
+- **Performance**: Avoid CSS transitions on numeric updates for mobile Safari
+- **Typography**: Mono-font (JetBrains Mono) for financial terminal aesthetic
+- **Accessibility**: Add luminosity shift for color-blind users (lighter=up, darker=down)
+- **Data Pipeline**: GitHub Actions pre-aggregation needed for multi-period support
+
+**Implementation Challenges**:
+- Multi-period data requires extending GitHub Actions to generate 1W/1M/3M aggregations
+- Currency conversion must apply to historical high/low values, not just current price
+- State management: Memoize derived series by [asset-id, period, fx-rates-hash]
+- Mobile: Ensure 44×44px tap targets for period/currency selectors
+
+**Action Checklist**:
+- [ ] Prototype HTML overlay system with ResizeObserver
+- [ ] Define CSS utility classes (.overlay-tier1, .overlay-tier2, .overlay-tier3)
+- [ ] Extend GitHub Actions for multi-period JSON generation
+- [ ] Build re-frame subscription chain: :series-by-asset-period
+- [ ] Add accessibility support (prefers-color-scheme detection)
+- [ ] Implement visual regression testing with Playwright
+
 #### 2. Portfolio Performance Card  
 **Goal**: Dedicated portfolio card showing aggregated performance like individual assets  
 **Why**: Users need subliminal awareness of overall portfolio health and trends  
