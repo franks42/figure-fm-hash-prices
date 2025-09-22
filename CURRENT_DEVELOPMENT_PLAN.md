@@ -1,8 +1,8 @@
 # Current Development Plan - V4.0.0+
 
 **Project**: Figure Markets Hash Prices Tracker  
-**Current Version**: V4.0.0-production  
-**Status**: Background charts implemented, planning next enhancements  
+**Current Version**: V5.0.0-prototype  
+**Status**: V5 portfolio prototype complete, ready for expansion  
 **Goal**: Subliminal market awareness tool (not professional trading platform)
 
 ## 🎯 **Project Vision**
@@ -26,6 +26,15 @@ Create a **quick, subliminal view** of market and portfolio performance. Users s
 - **Portfolio Management**: Persistent holdings with real-time valuations
 - **iOS Widget Support**: Widget-optimized layouts ready for Playwright screenshots
 - **Clean Codebase**: Zero clj-kondo warnings, consistent formatting, enhanced coding practices
+
+### 🚀 **V5 Prototype (NEW)**
+- **Square Chart Layout**: Professional terminal-style cards with square aspect ratio charts
+- **Dynamic Period Selection**: 24H/1W/1M chart periods with proper data fetching
+- **Portfolio Integration**: Complete V5 portfolio data layer with re-frame events/subscriptions
+- **Currency Conversion**: Full currency conversion throughout V5 UI (prices, volume, portfolio)
+- **Enhanced UX**: Optimized portfolio display (PV: $123.45 USD (quantity token) ✏️)
+- **Correct Asset Descriptions**: "Provenance Blockchain HASH Token" and other accurate labels
+- **Feature Flag System**: `?ui=v5` enables new prototype alongside existing V4
 
 ### 🏗️ **Technical Architecture**
 - **Frontend**: ClojureScript + Scittle (no-build) + Re-frame + uPlot  

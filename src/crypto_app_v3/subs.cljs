@@ -157,3 +157,16 @@
                     total)))
               0
               holdings)))
+
+;; V5 Portfolio data layer subscriptions
+(rf/reg-sub
+ :portfolio/qty
+ (fn [db [_ crypto-id]]
+   (get-in db [:portfolio :holdings crypto-id] 0)))
+
+(rf/reg-sub
+ :portfolio/value
+ (fn [db [_ crypto-id]]
+   (let [quantity (get-in db [:portfolio :holdings crypto-id] 0)
+         price (get-in db [:prices crypto-id "usd"])]
+     (calculate-holding-value quantity price))))

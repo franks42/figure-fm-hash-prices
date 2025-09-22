@@ -316,6 +316,19 @@
        (assoc-in [:ui :display-currency] currency)
        (assoc-in [:currency :current] currency))))
 
+;; V5 Portfolio data layer events
+(rf/reg-event-db
+ :portfolio/set-qty
+ (fn [db [_ crypto-id quantity]]
+   (if (and quantity (> quantity 0))
+     (assoc-in db [:portfolio :holdings crypto-id] quantity)
+     (update-in db [:portfolio :holdings] dissoc crypto-id))))
+
+(rf/reg-event-db
+ :portfolio/remove
+ (fn [db [_ crypto-id]]
+   (update-in db [:portfolio :holdings] dissoc crypto-id)))
+
 ;; Main price update event (uses helper functions defined above)
 (rf/reg-event-fx
  :smart-price-update

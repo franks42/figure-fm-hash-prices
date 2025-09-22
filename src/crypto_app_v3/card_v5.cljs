@@ -8,9 +8,9 @@
 ;; Single asset prototype (HASH first)
 
 (defn asset-description
-  "Asset description below chart, left-aligned"
-  [crypto-id]
-  (let [descriptions {"hash" "Figure Markets Hash Token"
+  "Asset description below chart with feed indicator on right"
+  [crypto-id feed-indicator]
+  (let [descriptions {"hash" "Provenance Blockchain HASH Token"
                       "figr" "Figure Technologies Inc."
                       "btc" "Bitcoin"
                       "eth" "Ethereum"
@@ -18,18 +18,57 @@
                       "link" "Chainlink"
                       "uni" "Uniswap"
                       "xrp" "XRP"}]
-    [:div {:class "text-sm text-gray-400 mb-3 font-medium"}
-     (get descriptions crypto-id (str/capitalize (name crypto-id)))]))
+    [:div {:class "flex items-center justify-between mb-3"}
+     [:div {:class "text-sm text-gray-400 font-medium"}
+      (get descriptions crypto-id (str/capitalize (name crypto-id)))]
+     [:div {:class "bg-neon-cyan/10 border border-neon-cyan/40 text-neon-cyan rounded px-2 py-0.5 font-semibold text-xs"}
+      feed-indicator]]))
 
 (defn stats-row
-  "Volume, trades, and feed indicator in consolidated row"
-  [volume trades feed-indicator]
-  [:div {:class "flex items-center justify-between text-xs text-gray-400 overlay-tier3"}
-   [:div {:class "flex items-center space-x-4"}
-    [:span (str "Volume: $" (chart-v5/format-number volume 1) "M")]
-    [:span (str "Trades: " trades)]]
-   [:div {:class "bg-neon-cyan/10 border border-neon-cyan/40 text-neon-cyan rounded px-2 py-0.5 font-semibold"}
-    feed-indicator]])
+  "Volume and trades row with currency conversion"
+  [volume trades current-currency currency-symbol exchange-rates]
+  (let [converted-volume (curr/convert-currency volume current-currency exchange-rates)]
+    [:div {:class "flex items-center justify-between text-xs text-gray-400 overlay-tier3"}
+     [:div {:class "flex items-center"}
+      [:span "Volume: "]
+      [:span {:class "text-white"} (str currency-symbol (chart-v5/format-number converted-volume 0))]
+      [:button {:class "text-neon-green hover:text-neon-green/80 ml-2 font-medium"
+                :on-click #(rf/dispatch [:currency/show-selector])}
+       current-currency]]
+     [:span (str "Trades: " trades)]]))
+
+(defn portfolio-section
+  "Portfolio management section - add/edit holdings with quantity display"
+  [crypto-id]
+  (let [quantity @(rf/subscribe [:portfolio/qty crypto-id])
+        value @(rf/subscribe [:portfolio/value crypto-id])
+        current-currency @(rf/subscribe [:currency/current])
+        exchange-rates @(rf/subscribe [:currency/exchange-rates])
+        currency-symbol (curr/get-currency-symbol current-currency)
+        ;; Convert value to current currency
+        converted-value (when value (curr/convert-currency value current-currency exchange-rates))]
+    [:div {:class "mt-3 pt-3 border-t border-white/10"}
+     (if (> quantity 0)
+       ;; Edit state - PV: $123.45 USD (quantity token) edit
+       [:div {:class "flex items-center justify-between text-xs"}
+        [:div {:class "flex items-center text-gray-300"}
+         [:span {:class "text-gray-400"} "PV:"]
+         (when converted-value
+           [:span {:class "text-white ml-2"}
+            (str currency-symbol (chart-v5/format-number converted-value 2))])
+         [:button {:class "text-neon-green hover:text-neon-green/80 ml-2 font-medium"
+                   :on-click #(rf/dispatch [:currency/show-selector])}
+          current-currency]
+         [:span {:class "text-gray-400 ml-2"}
+          (str "(" quantity " " (str/lower-case crypto-id) ")")]]
+        [:button {:class "text-neon-green hover:text-neon-green/80"
+                  :on-click #(rf/dispatch [:portfolio/show-panel crypto-id])}
+         "✏️"]]
+       ;; Add state - show add button
+       [:div {:class "text-center"}
+        [:button {:class "text-neon-green hover:text-neon-green/80 text-sm font-medium"
+                  :on-click #(rf/dispatch [:portfolio/show-panel crypto-id])}
+         "Add to Portfolio"]])]))
 
 (defn crypto-card-v5
   "V5 crypto card - professional terminal style with square chart"
@@ -40,7 +79,7 @@
         high (get data "day_high" 0)
         low (get data "day_low" 0)
         live-change (get data "usd_24h_change" 0)
-        volume (/ (get data "usd_24h_vol" 0) 1000000)  ; Convert to millions
+        volume (get data "usd_24h_vol" 0)  ; Keep full volume amount
         trades (get data "trades_24h" 0)
         asset-type (get data "type" "crypto")
         feed-indicator (if (= asset-type "stock") "YF" "FM")
@@ -87,11 +126,14 @@
       [chart-v5/chart-overlay-period crypto-id current-period]
       [chart-v5/chart-overlay-low converted-low currency-symbol]]
 
-     ;; Asset description
-     [asset-description crypto-id]
+     ;; Asset description with feed indicator
+     [asset-description crypto-id feed-indicator]
 
-     ;; Stats row  
-     [stats-row volume trades feed-indicator]]))
+     ;; Stats row with currency button
+     [stats-row volume trades current-currency currency-symbol exchange-rates]
+
+      ;; Portfolio section
+     [portfolio-section crypto-id]]))
 
 ;; V5 prototype component - can be called from anywhere
 (defn v5-prototype-section
