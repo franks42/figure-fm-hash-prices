@@ -29,8 +29,13 @@
       (fn [_ _]
         (let [current-data @(rf/subscribe [:historical-data crypto-id])]
           (js/console.log "🔄 V5 Chart update for" crypto-id)
-     ;; Create chart when we have data and container
-          (when (and current-data @container-ref js/uPlot (not @chart-instance)
+          ;; Destroy existing chart to force recreation with new period data
+          (when @chart-instance
+            (js/console.log "🗑️ Destroying existing chart for period update")
+            (.destroy @chart-instance)
+            (reset! chart-instance nil))
+          ;; Create chart when we have data and container
+          (when (and current-data @container-ref js/uPlot
                      (vector? current-data) (= (count current-data) 2))
             (let [[times prices] current-data]
               (when (and (seq times) (seq prices))
