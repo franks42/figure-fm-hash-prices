@@ -44,6 +44,7 @@
         asset-type (get data "type" "crypto")
         feed-indicator (if (= asset-type "stock") "YF" "FM")
         current-currency @(rf/subscribe [:currency/current])
+        current-period @(rf/subscribe [:chart/current-period crypto-id])
         historical-data @(rf/subscribe [:historical-data crypto-id])
         ;; Calculate metrics from chart data for consistency
         chart-metrics (if (and historical-data (vector? historical-data) (= (count historical-data) 2))
@@ -76,7 +77,7 @@
       [chart-v5/chart-overlay-high chart-high "$"]
       [chart-v5/chart-overlay-current-price price current-currency]
       [chart-v5/chart-overlay-change chart-change]
-      [chart-v5/chart-overlay-period "1W"]
+      [chart-v5/chart-overlay-period crypto-id current-period]
       [chart-v5/chart-overlay-low chart-low "$"]]
 
      ;; Asset description

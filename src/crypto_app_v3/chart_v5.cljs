@@ -118,9 +118,10 @@
 
 (defn chart-overlay-period
   "Period selector in bottom-left corner"
-  [current-period]
+  [crypto-id current-period]
   [:div {:class "absolute bottom-2 left-2"}
-   [:button {:class "text-xs bg-white/10 border border-white/20 rounded px-2 py-1 text-white/80 overlay-tier3"}
+   [:button {:class "text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-1 text-white/80 overlay-tier3 cursor-pointer transition-colors"
+             :on-click #(rf/dispatch [:chart/cycle-period crypto-id])}
     current-period]])
 
 (defn chart-overlay-low
