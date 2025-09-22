@@ -1,6 +1,5 @@
 (ns crypto-app-v3.chart-v5
   (:require [reagent.core :as r]
-            [re-frame.core :as rf]
             [clojure.string :as str]))
 
 ;; V5 Chart Component - Square Layout with HTML Overlays
@@ -17,31 +16,25 @@
     "0"))
 
 (defn square-chart-container
-  "Square chart container with ResizeObserver for width = height enforcement"
   [crypto-id]
   (let [container-ref (r/atom nil)
         _chart-instance (r/atom nil)]
-
     (r/create-class
      {:display-name "square-chart-v5"
-
       :component-did-mount
       (fn [_]
         (js/console.log "🎯 V5 Chart component mounted for" crypto-id))
-
       :component-did-update
       (fn [_ _]
         (js/console.log "🔄 V5 Chart update for" crypto-id))
-
       :reagent-render
       (fn []
         [:div {:class "relative w-full bg-gray-900/20 rounded-lg border border-white/10"
-               :style {:aspect-ratio "1"}  ; CSS aspect-ratio for square
+               :style {:aspect-ratio "1"}
                :ref (fn [el] (when el (reset! container-ref el)))}
          [:div {:class "absolute inset-2"}
-          ;; Placeholder for uPlot chart
-          [:div {:class "w-full h-full bg-gradient-to-br from-neon-green/10 to-neon-pink/10 rounded flex items-center justify-center"}
-           [:div {:class "text-white/40 text-sm"} "V5 Chart Placeholder"]]]])})))
+          [:div {:class "w-full h-full bg-gradient-to-br from-gray-800/20 to-gray-600/20 rounded flex items-center justify-center"}
+           [:div {:class "text-white/40 text-sm"} "V5 Square Chart"]]]])})))
 
 ;; Chart overlays - positioned absolutely over the chart
 (defn chart-overlay-symbol
@@ -87,23 +80,4 @@
   [:div {:class "absolute bottom-2 right-2 text-xs text-white/70 overlay-tier2"}
    (str currency-symbol (format-number low-price 2))])
 
-;; Main V5 chart component combining container + overlays
-(defn chart-v5
-  "Complete V5 chart with square container and overlay elements"
-  [crypto-id]
-  (let [prices @(rf/subscribe [:prices])
-        data (get prices crypto-id)
-        price (get data "usd" 0)
-        high (get data "day_high" 0)
-        low (get data "day_low" 0)
-        change (get data "usd_24h_change" 0)]
-    [:div {:class "relative"}
-     [square-chart-container crypto-id]
-     [chart-overlay-symbol crypto-id]
-     [chart-overlay-high high "$"]
-     [chart-overlay-current-price price "USD"]
-     [chart-overlay-change change]
-     [chart-overlay-period "24H"]
-     [chart-overlay-low low "$"]]))
-
-;; Utility functions moved to top of file
+;; Individual overlay components - used by card_v5.cljs

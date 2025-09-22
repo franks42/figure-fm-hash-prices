@@ -35,13 +35,32 @@
   [crypto-id]
   (let [prices @(rf/subscribe [:prices])
         data (get prices crypto-id)
+        price (get data "usd" 0)
+        high (get data "day_high" 0)
+        low (get data "day_low" 0)
+        change (get data "usd_24h_change" 0)
         volume (/ (get data "usd_24h_vol" 0) 1000000)  ; Convert to millions
         trades (get data "trades_24h" 0)
         asset-type (get data "type" "crypto")
-        feed-indicator (if (= asset-type "stock") "YF" "FM")]
+        feed-indicator (if (= asset-type "stock") "YF" "FM")
+        current-currency @(rf/subscribe [:currency/current])
+        historical-data @(rf/subscribe [:historical-data crypto-id])]
+
+;; Trigger historical data fetch if missing (same as V4)
+    (when (or (nil? historical-data) (empty? historical-data))
+      (js/console.log "🚀 V5 Triggering historical fetch for" crypto-id)
+      (rf/dispatch [:fetch-historical-data crypto-id]))
+
     [:div {:class "bg-white/[0.03] border border-white/10 rounded-2xl p-4 backdrop-blur-lg hover:bg-white/[0.06] transition-all duration-300"}
      ;; Square chart with overlays
-     [chart-v5/chart-v5 crypto-id]
+     [:div {:class "relative"}
+      [chart-v5/square-chart-container crypto-id]
+      [chart-v5/chart-overlay-symbol crypto-id]
+      [chart-v5/chart-overlay-high high "$"]
+      [chart-v5/chart-overlay-current-price price current-currency]
+      [chart-v5/chart-overlay-change change]
+      [chart-v5/chart-overlay-period "24H"]
+      [chart-v5/chart-overlay-low low "$"]]
 
      ;; Asset description
      [asset-description crypto-id]
