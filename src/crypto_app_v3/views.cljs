@@ -5,7 +5,7 @@
             [crypto-app-v3.chart :as chart]))
 
 ;; Import version from core
-(def VERSION "v4.1.2-chart-colors-working")
+(def VERSION "v4.2.0-ui-improvements")
 
 ;; Old background-chart removed - using chart.cljs instead to avoid conflicts
 
@@ -110,21 +110,35 @@
             :on-click #(do (.stopPropagation %) (rf/dispatch [:currency/show-selector]))}
    currency-code])
 
-;; Data source chip component - reusable
-(defn data-source-chip [data-source]
-  (when data-source
-    (let [is-mock? (= data-source "MOCK-DATA")]
-      [:span {:class (str "ml-3 text-xs font-semibold px-2 py-0.5 rounded border "
-                          (if is-mock?
-                            "border-red-400 text-red-400 bg-red-500/10"
-                            "border-neon-cyan/40 text-neon-cyan bg-neon-cyan/10"))}
-       data-source])))
+;; Data source mapping and chip component  
+(defn get-feed-indicator
+  "Get short feed indicator based on asset type and data source"
+  [asset-type data-source]
+  (cond
+    (= data-source "MOCK-DATA") "MOCK"
+    (= asset-type "stock") "YF"      ; Yahoo Finance for stocks (FIGR)
+    :else "FM"))                     ; Figure Markets for crypto
 
-;; Portfolio display components (copy V2)
-(defn portfolio-value-display [holding-value crypto-id current-currency exchange-rates]
+(defn data-source-chip [asset-type data-source]
+  (let [indicator (get-feed-indicator asset-type data-source)
+        is-mock? (= indicator "MOCK")]
+    [:span {:class (str "ml-3 text-xs font-semibold px-2 py-0.5 rounded border "
+                        (if is-mock?
+                          "border-red-400 text-red-400 bg-red-500/10"
+                          "border-neon-cyan/40 text-neon-cyan bg-neon-cyan/10"))}
+     indicator]))
+
+;; Consolidated portfolio component (merged value display + button)
+(defn portfolio-section
+  "Consolidated portfolio component showing value and portfolio access button"
+  [holding-value crypto-id current-currency exchange-rates]
   (when holding-value
     [:div {:class "bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mt-4"}
-     [:div {:class "text-xs text-blue-400 uppercase mb-1 tracking-widest"} "Portfolio Value"]
+     [:div {:class "flex items-center justify-between mb-2"}
+      [:div {:class "text-xs text-blue-400 uppercase tracking-widest"} "Portfolio Value"]
+      [:button {:class "text-xs bg-white/[0.05] hover:bg-white/[0.10] border border-white/20 rounded px-2 py-1 font-semibold transition-colors"
+                :on-click #(reset! portfolio-atoms/show-portfolio-panel crypto-id)}
+       "📊"]]
      [:div {:class "text-lg font-bold text-blue-300 tabular-nums flex items-center"}
       (format-price holding-value crypto-id current-currency exchange-rates)
       [currency-button current-currency]]]))
@@ -234,7 +248,7 @@
      ;; Show first data source as chip
      (when (and data-sources (> (count data-sources) 0))
        [:span {:class "ml-1 text-xs font-semibold px-2 py-0.5 rounded border border-neon-cyan/40 text-neon-cyan bg-neon-cyan/10"}
-        (clojure.string/upper-case (first data-sources))])]))
+        (get-feed-indicator (get data "type") (first data-sources))])]))
 
 (defn crypto-card-change [change]
   (let [positive? (price-positive? change)
@@ -308,12 +322,7 @@
        (format-price fifty-two-week-low crypto-id current-currency exchange-rates)
        [currency-button current-currency]]]]))
 
-;; Portfolio button (hybrid - use portfolio atoms)
-(defn portfolio-button [crypto-id]
-  [:div {:class "flex mt-4"}
-   [:button {:class "flex-1 bg-white/[0.05] hover:bg-white/[0.10] border border-white/20 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-             :on-click #(reset! portfolio-atoms/show-portfolio-panel crypto-id)}
-    "📊 Portfolio"]])
+;; Old portfolio-button function removed - consolidated into portfolio-section above
 
 ;; Main crypto card (copy V2 exactly but use subscriptions)
 (defn crypto-card [crypto-id]
@@ -371,9 +380,7 @@
        [stock-52w-range fifty-two-week-high fifty-two-week-low crypto-id current-currency exchange-rates]
        [crypto-card-high-low high low crypto-id current-currency exchange-rates])
      ;; Portfolio value display
-     [portfolio-value-display holding-value crypto-id current-currency exchange-rates]
-     ;; Portfolio button (V2 feature!)
-     [portfolio-button crypto-id]]))
+     [portfolio-section holding-value crypto-id current-currency exchange-rates]]))
 
 ;; Main grid (copy V2)
 (defn crypto-grid []
@@ -393,7 +400,7 @@
           ^{:key idx}
           [:span {:class "inline-flex items-center"}
            [:span {:class "ml-1 text-xs font-semibold px-2 py-0.5 rounded border border-neon-cyan/40 text-neon-cyan bg-neon-cyan/10"}
-            (clojure.string/upper-case source)]
+            (get-feed-indicator "crypto" source)]
            (when (< idx (dec (count data-sources)))
              [:span {:class "text-gray-500 mx-1"} "•"])])]])))
 
