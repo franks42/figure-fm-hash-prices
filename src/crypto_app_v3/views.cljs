@@ -5,7 +5,7 @@
             [crypto-app-v3.chart :as chart]))
 
 ;; Import version from core
-(def VERSION "v4.0.0-production")
+(def VERSION "v4.1.0-chart-colors-debug")
 
 ;; Old background-chart removed - using chart.cljs instead to avoid conflicts
 
