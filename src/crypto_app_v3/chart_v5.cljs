@@ -29,26 +29,28 @@
       (fn [_ _]
         (let [current-data @(rf/subscribe [:historical-data crypto-id])]
           (js/console.log "🔄 V5 Chart update for" crypto-id)
-    ;; Create chart when we have data and container
+     ;; Create chart when we have data and container
           (when (and current-data @container-ref js/uPlot (not @chart-instance)
                      (vector? current-data) (= (count current-data) 2))
             (let [[times prices] current-data]
               (when (and (seq times) (seq prices))
                 (js/console.log "📊 Creating V5 square chart for" crypto-id "with" (count times) "points")
-     ;; Calculate sentiment colors
+           ;; Calculate sentiment colors
                 (let [start-price (first prices)
                       end-price (last prices)
+                      pct-change (* 100 (/ (- end-price start-price) start-price))
+                      _ (js/console.log "🔴🟢 CHART-SENTIMENT" crypto-id "Start:" start-price "End:" end-price "Pct:" pct-change)
                       is-positive? (> end-price start-price)
                       stroke-color (if is-positive? "#00ff88" "#ff4d5a")
                       fill-color (if is-positive? "rgba(0,255,136,0.4)" "rgba(255,77,90,0.4)")
-                      ;; Build trend line data
+;; Build trend line data
                       trend-data (let [n (count times)]
                                    (mapv (fn [i]
                                            (cond
                                              (= i 0) start-price
                                              (= i (dec n)) end-price
                                              :else nil)) (range n)))
-                      ;; Make container square
+;; Make container square
                       size (min (.-offsetWidth @container-ref) (.-offsetHeight @container-ref))
                       instance (js/uPlot.
                                 (clj->js {:width size

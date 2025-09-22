@@ -50,9 +50,13 @@
                        (let [[_ prices] historical-data]
                          (when (and (seq prices) (>= (count prices) 2))
                            (let [start-price (first prices)
-                                 end-price (last prices)]
-                             (* 100 (/ (- end-price start-price) start-price)))))
-                       live-change)]  ; Fallback to live data if no chart data
+                                 end-price (last prices)
+                                 pct-change (* 100 (/ (- end-price start-price) start-price))]
+                             (js/console.log "🔴🟢 OVERLAY-CHANGE" crypto-id "Start:" start-price "End:" end-price "Pct:" pct-change "Live:" live-change)
+                             pct-change)))
+                       (do
+                         (js/console.log "🔴🟢 OVERLAY-FALLBACK" crypto-id "Using live:" live-change "Historical:" historical-data)
+                         live-change))]  ; Fallback to live data if no chart data
 
 ;; Trigger historical data fetch if missing (same as V4)
     (when (or (nil? historical-data) (empty? historical-data))
