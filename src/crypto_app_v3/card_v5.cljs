@@ -76,7 +76,7 @@
       [chart-v5/chart-overlay-high chart-high "$"]
       [chart-v5/chart-overlay-current-price price current-currency]
       [chart-v5/chart-overlay-change chart-change]
-      [chart-v5/chart-overlay-period "24H"]
+      [chart-v5/chart-overlay-period "1W"]
       [chart-v5/chart-overlay-low chart-low "$"]]
 
      ;; Asset description

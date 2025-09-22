@@ -13,12 +13,12 @@
  :fetch-historical-data
  (fn [{:keys [db]} [_ crypto-id]]
    (let [end-time (js/Date.)
-         start-time (js/Date. (- (.getTime end-time) (* 24 60 60 1000)))  ; 24h ago
+         start-time (js/Date. (- (.getTime end-time) (* 7 24 60 60 1000)))  ; 1 week ago
          url (str "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets/"
                   (str/upper-case crypto-id) "-USD"
                   "/candles?start_date=" (.toISOString start-time)
                   "&end_date=" (.toISOString end-time)
-                  "&interval_in_minutes=60&size=48")]
+                  "&interval_in_minutes=240&size=84")]  ; 4h intervals for 1 week
      (js/console.log "📈 Dispatching fetch for" crypto-id)
      {:db db
       :fetch {:url url
