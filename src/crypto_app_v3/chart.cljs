@@ -10,13 +10,10 @@
     (let [start-price (first prices)
           end-price (last prices)
           is-positive? (> end-price start-price)]
-      (js/console.log "🔴🟢 CHART COLOR DECISION - Start:" start-price "End:" end-price "Positive?" is-positive?)
       (if is-positive?
         {:stroke "#00ff88" :fill "rgba(0,255,136,0.4)"}  ; Green for positive
         {:stroke "#ff4d5a" :fill "rgba(255,77,90,0.4)"})) ; Red for negative
-    (do
-      (js/console.log "🔴🟢 CHART COLOR DEFAULT - Using default green, prices:" (pr-str prices))
-      {:stroke "#00ff88" :fill "rgba(0,255,136,0.4)"})))  ; Default green
+    {:stroke "#00ff88" :fill "rgba(0,255,136,0.4)"}))     ; Default green
 
 ;; Generic background chart for any crypto asset
 (defn background-chart [crypto-id]
@@ -37,8 +34,11 @@
           (when (and current-data @container-ref js/uPlot (not @chart-instance) (vector? current-data) (= (count current-data) 2))
             (let [[times prices] current-data]
               (when (and (seq times) (seq prices))
-                (js/console.log "🔴🟢 CREATING CHART for" crypto-id "with" (count times) "points")
+                (js/console.log "📊 Creating chart for" crypto-id "with" (count times) "points")
                 (let [colors (calculate-chart-colors prices)
+                      ;; Create trend line data (start and end points only)
+                      _trend-times [(first times) (last times)]
+                      trend-prices [(first prices) (last prices)]
                       instance (js/uPlot.
                                 (clj->js {:width (.-offsetWidth @container-ref)
                                           :height 120
@@ -46,11 +46,16 @@
                                                    {:stroke (:stroke colors)
                                                     :fill (:fill colors)
                                                     :width 4
+                                                    :points {:show false}}
+                                                   {:stroke "rgba(128,128,128,0.6)"
+                                                    :width 2
+                                                    :dash [8, 4]
+                                                    :fill "rgba(0,0,0,0)"
                                                     :points {:show false}}]
                                           :axes [{:show false} {:show false}]
                                           :legend {:show false}
                                           :cursor {:show false}})
-                                (clj->js [times prices])
+                                (clj->js [times prices trend-prices])
                                 @container-ref)]
                   (reset! chart-instance instance)
                   (js/console.log "✅ Chart created successfully with sentiment colors!")))))))
