@@ -45,18 +45,23 @@
         feed-indicator (if (= asset-type "stock") "YF" "FM")
         current-currency @(rf/subscribe [:currency/current])
         historical-data @(rf/subscribe [:historical-data crypto-id])
-        ;; Calculate change from chart data for consistency with background color
-        chart-change (if (and historical-data (vector? historical-data) (= (count historical-data) 2))
-                       (let [[_ prices] historical-data]
-                         (when (and (seq prices) (>= (count prices) 2))
-                           (let [start-price (first prices)
-                                 end-price (last prices)
-                                 pct-change (* 100 (/ (- end-price start-price) start-price))]
-                             (js/console.log "🔴🟢 OVERLAY-CHANGE" crypto-id "Start:" start-price "End:" end-price "Pct:" pct-change "Live:" live-change)
-                             pct-change)))
-                       (do
-                         (js/console.log "🔴🟢 OVERLAY-FALLBACK" crypto-id "Using live:" live-change "Historical:" historical-data)
-                         live-change))]  ; Fallback to live data if no chart data
+        ;; Calculate metrics from chart data for consistency
+        chart-metrics (if (and historical-data (vector? historical-data) (= (count historical-data) 2))
+                        (let [[_ prices] historical-data]
+                          (when (and (seq prices) (>= (count prices) 2))
+                            (let [start-price (first prices)
+                                  end-price (last prices)
+                                  chart-high (apply max prices)
+                                  chart-low (apply min prices)
+                                  pct-change (* 100 (/ (- end-price start-price) start-price))]
+                              (js/console.log "🔴🟢 CHART-METRICS" crypto-id "Start:" start-price "End:" end-price "High:" chart-high "Low:" chart-low "Pct:" pct-change)
+                              {:change pct-change :high chart-high :low chart-low})))
+                        (do
+                          (js/console.log "🔴🟢 LIVE-FALLBACK" crypto-id "Using live data - High:" high "Low:" low "Change:" live-change)
+                          {:change live-change :high high :low low}))
+        chart-change (:change chart-metrics)
+        chart-high (:high chart-metrics)
+        chart-low (:low chart-metrics)]
 
 ;; Trigger historical data fetch if missing (same as V4)
     (when (or (nil? historical-data) (empty? historical-data))
@@ -68,11 +73,11 @@
      [:div {:class "relative"}
       [chart-v5/square-chart-container crypto-id]
       [chart-v5/chart-overlay-symbol crypto-id]
-      [chart-v5/chart-overlay-high high "$"]
+      [chart-v5/chart-overlay-high chart-high "$"]
       [chart-v5/chart-overlay-current-price price current-currency]
       [chart-v5/chart-overlay-change chart-change]
       [chart-v5/chart-overlay-period "24H"]
-      [chart-v5/chart-overlay-low low "$"]]
+      [chart-v5/chart-overlay-low chart-low "$"]]
 
      ;; Asset description
      [asset-description crypto-id]
