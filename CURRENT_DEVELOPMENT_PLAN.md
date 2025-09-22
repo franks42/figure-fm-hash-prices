@@ -46,7 +46,34 @@ Create a **quick, subliminal view** of market and portfolio performance. Users s
 
 ### 🔥 **HIGH PRIORITY** (Core UX Issues)
 
-#### 1. Portfolio Performance Card  
+#### 1. Chart & Card Layout Redesign  
+**Goal**: Comprehensive chart redesign for better information density and professional appearance  
+**Why**: Current layout is inefficient, missing key information positioning, lacks period selection  
+**Design Specification**:
+```
+┌─────────────────────────────────────────┐
+│ BTC                               €1,250 │ ← Symbol (upper-left) + High (right-upper)
+│                                         │
+│ $1,234.56 [USD]     📈📉 CHART    ▲2.34% │ ← Current price+currency (left-middle) + Change% (right-middle)
+│                                         │
+│[24H]                               €1,200 │ ← Period button (bottom-left) + Low (right-lower)  
+└─────────────────────────────────────────┘
+Bitcoin                                    ← Asset description (left-aligned)
+
+Volume: $1.2M    Trades: 45    [FM]        ← Volume, Trades, Feed indicator (same row)
+```
+**Key Changes**:
+- Square graph (width = height) for better visual balance
+- Asset symbol (BTC/ETH/HASH) in upper-left corner for immediate identification
+- Current price + currency button in left-middle for primary focus
+- High/Low prices in right corners with currency symbols (no "USD" suffix)
+- Change percentage in right-middle for visual balance  
+- Period selector [24H]/[1W]/[1M] button in bottom-left corner
+- Asset description (Bitcoin, Ethereum, etc.) under chart, left-aligned
+- Feed indicator moved to volume/trades row for consolidation
+- All price overlays update with currency conversion
+
+#### 2. Portfolio Performance Card  
 **Goal**: Dedicated portfolio card showing aggregated performance like individual assets  
 **Why**: Users need subliminal awareness of overall portfolio health and trends  
 **Features**: 
