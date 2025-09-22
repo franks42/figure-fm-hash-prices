@@ -136,22 +136,52 @@ Volume: $1.2M    Trades: 45    [FM]        ← Volume, Trades, Feed indicator (s
 - Visual regression tests prevent silent UI drift
 - Each phase has clear success criteria and safe commit boundaries
 
-#### 2. Portfolio Performance Card  
+#### 2. V5 Portfolio Integration
+**Goal**: Add portfolio management to V5 cards with professional terminal styling  
+**Why**: Complete V5 card functionality with portfolio tracking per asset  
+**Visual Specification**:
+```
+┌─────────────────────────────────────────┐
+│ HASH             [⚙️]        €0.052 │ ← Chart with overlays
+│ $0.049 [EUR]  📈📉 CHART  ▲2.34% │
+│[1W]                        €0.046 │  
+└─────────────────────────────────────────┘
+Figure Markets Hash Token                  ← Asset description
+Volume: $1.2M    Trades: 45    [FM]        ← Stats row
+────────────────────────────────────────── ← Separator
+PV: 123.45 HASH  =  €1,234.00 EUR    [✏️] ← Portfolio section
+```
+
+**Two States**:
+- **No holdings**: `[ + Add to portfolio ]` (dashed button, full width)
+- **With holdings**: `PV: 123.45 HASH = €1,234.00 EUR [✏️]` (quantity + value + edit)
+
+**Oracle Implementation Plan**:
+1. **Data Layer**: Thin re-frame wrappers over existing portfolio atoms
+   - `:portfolio/qty` subscription per asset
+   - `:portfolio/value` subscription with currency conversion
+   - `:portfolio/set-qty` and `:portfolio/remove` events
+2. **UI Component**: `portfolio-section` component with terminal styling
+   - Full-width bottom section with border separator
+   - Dashed add button for empty state
+   - Professional "tape" layout for holdings display
+   - Currency-aware value conversion using existing system
+3. **Modal Integration**: Reuse existing V4 portfolio panel system
+   - Same `show-portfolio-panel` atom for edit functionality
+   - Unified portfolio management across V4/V5
+4. **Styling Guidelines**: overlay-tier3 palette, 44px tap targets, no animations
+
+#### 3. Portfolio Performance Card (Future)
 **Goal**: Dedicated portfolio card showing aggregated performance like individual assets  
 **Why**: Users need subliminal awareness of overall portfolio health and trends  
-**Features**: 
-- 24h high/low/change% for entire portfolio
-- Background chart with green/red sentiment and trend line
-- Same visual treatment as asset cards for consistency
-- Real-time portfolio value tracking over time
-**Dependencies**: Requires historical data subscriptions and metrics calculations
+**Dependencies**: Complete after V5 portfolio integration
 **Implementation**: 
 - Create `:portfolio-historical` subscription aggregating asset histories
 - Calculate portfolio metrics (sum quantity × price at each time point)
 - Reuse existing background-chart component with `:portfolio` pseudo-ID
 - Portfolio card component with familiar asset card UX
 
-#### 2. Auto-feed Selection (was #1)
+#### 4. Auto-feed Selection (Future)
 **Goal**: Automatically choose best data source per asset based on liquidity  
 **Why**: Figure Markets has low liquidity for major cryptos vs established exchanges  
 **Implementation**: 
@@ -160,15 +190,14 @@ Volume: $1.2M    Trades: 45    [FM]        ← Volume, Trades, Feed indicator (s
 - Show feed source as small indicator pill ("FM" / "CG")
 - No manual selection required - smart defaults
 
-#### 3. Portfolio Value Consolidation (was #2) 
-**Goal**: Single clean portfolio component (value + button combined)  
-**Why**: Currently scattered display, hard to quickly assess portfolio status  
-**Implementation**: Merge portfolio-value-display + portfolio-button into one component
-
-#### 4. Fix FIGR Feed Indicator (was #3)
-**Goal**: Show correct data source for FIGR (Yahoo Finance, not Figure Markets)  
-**Why**: Currently shows wrong/confusing feed indicator  
-**Implementation**: Conditional data source display based on asset type
+#### 5. Extend V5 to All Assets
+**Goal**: Apply proven V5 template to BTC, ETH, SOL, XRP, and other assets
+**Why**: Scale the working HASH prototype to complete asset coverage
+**Implementation**: 
+- Modify v5-prototype-section to show multiple assets instead of just HASH
+- Test period selection and currency conversion across all assets
+- Ensure performance with multiple square charts and API calls
+- Maintain feature flag system for safe rollout
 
 ### 📊 **MEDIUM PRIORITY** (Enhanced Subliminal Features)
 
