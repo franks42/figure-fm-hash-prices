@@ -5,7 +5,7 @@
             [crypto-app-v3.chart :as chart]))
 
 ;; Import version from core
-(def VERSION "v4.1.1-trend-line")
+(def VERSION "v4.1.2-chart-colors-working")
 
 ;; Old background-chart removed - using chart.cljs instead to avoid conflicts
 

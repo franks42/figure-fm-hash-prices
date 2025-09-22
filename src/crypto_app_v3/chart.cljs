@@ -36,22 +36,10 @@
               (when (and (seq times) (seq prices))
                 (js/console.log "📊 Creating chart for" crypto-id "with" (count times) "points")
                 (let [colors (calculate-chart-colors prices)
-                      ;; Create trend line data - fill with just 2 values to force straight line
-                      start-price (first prices)
-                      end-price (last prices)
-                      trend-data (vec (concat [start-price]
-                                              (repeat (- (count times) 2) js/NaN)
-                                              [end-price]))
                       instance (js/uPlot.
                                 (clj->js {:width (.-offsetWidth @container-ref)
                                           :height 120
                                           :series [{}
-                                                   {:stroke "rgba(200,200,200,0.8)"
-                                                    :width 3
-                                                    :dash [6, 3]
-                                                    :fill "rgba(0,0,0,0)"
-                                                    :points {:show false}
-                                                    :paths (fn [] nil)}
                                                    {:stroke (:stroke colors)
                                                     :fill (:fill colors)
                                                     :width 4
@@ -59,7 +47,7 @@
                                           :axes [{:show false} {:show false}]
                                           :legend {:show false}
                                           :cursor {:show false}})
-                                (clj->js [times trend-data prices])
+                                (clj->js [times prices])
                                 @container-ref)]
                   (reset! chart-instance instance)
                   (js/console.log "✅ Chart created successfully with sentiment colors!")))))))
