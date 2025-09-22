@@ -10,10 +10,13 @@
     (let [start-price (first prices)
           end-price (last prices)
           is-positive? (> end-price start-price)]
+      (js/console.log "🎨 Chart colors - Start:" start-price "End:" end-price "Positive?" is-positive?)
       (if is-positive?
         {:stroke "#00ff88" :fill "rgba(0,255,136,0.4)"}  ; Green for positive
         {:stroke "#ff4d5a" :fill "rgba(255,77,90,0.4)"})) ; Red for negative
-    {:stroke "#00ff88" :fill "rgba(0,255,136,0.4)"}))     ; Default green
+    (do
+      (js/console.log "🎨 Chart colors - Using default green, prices:" (pr-str prices))
+      {:stroke "#00ff88" :fill "rgba(0,255,136,0.4)"})))  ; Default green
 
 ;; Generic background chart for any crypto asset
 (defn background-chart [crypto-id]
