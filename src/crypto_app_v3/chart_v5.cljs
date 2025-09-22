@@ -123,11 +123,11 @@
       (str (if positive? "▲" "▼") (format-number (js/Math.abs change-percent) 2) "%")]]))
 
 (defn chart-overlay-period
-  "Period selector in bottom-center"
-  [crypto-id current-period]
+  "Period selector in bottom-center - GLOBAL like currency"
+  [current-period]
   [:div {:class "absolute bottom-2 inset-x-0 flex justify-center z-30"}
    [:button {:class "text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-1 text-white/80 overlay-tier3 cursor-pointer transition-colors"
-             :on-click #(rf/dispatch [:chart/cycle-period crypto-id])}
+             :on-click #(rf/dispatch [:chart/cycle-period])}
     current-period]])
 
 (defn chart-overlay-low

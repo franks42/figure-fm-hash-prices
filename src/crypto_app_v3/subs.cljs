@@ -87,11 +87,11 @@
          db-setting (get-in db [:ui :layout-version] false)]
      (or url-param local-storage db-setting))))
 
-;; Chart period selection subscriptions
+;; Chart period selection subscriptions - GLOBAL like currency
 (rf/reg-sub
  :chart/current-period
- (fn [db [_ crypto-id]]
-   (get-in db [:chart :periods crypto-id] "1W")))
+ (fn [db]
+   (get-in db [:chart :current-period] "1W")))
 
 (rf/reg-sub
  :chart/available-periods

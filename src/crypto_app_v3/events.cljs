@@ -20,7 +20,7 @@
 (rf/reg-event-fx
  :fetch-historical-data
  (fn [{:keys [db]} [_ crypto-id]]
-   (let [period (get-in db [:chart :periods crypto-id] "1W")
+   (let [period (get-in db [:chart :current-period] "1W")
          config (get-period-config period)
          end-time (js/Date.)
          start-time (js/Date. (- (.getTime end-time) (* (:days config) 24 60 60 1000)))
@@ -136,7 +136,8 @@
    :currency {:current "USD"
               :exchange-rates {}
               :using-mock-rates? false
-              :show-selector? false}})
+              :show-selector? false}
+   :chart {:current-period "1W"}})
 
 ;; Basic events (small functions)
 (rf/reg-event-db
@@ -162,19 +163,20 @@
    (.setItem js/localStorage "crypto-tracker-ui" version)
    {:db (assoc-in db [:ui :layout-version] (= version "v5"))}))
 
-;; Chart period selection events
+;; Chart period selection events - GLOBAL like currency
 (rf/reg-event-fx
  :chart/cycle-period
- (fn [{:keys [db]} [_ crypto-id]]
-   (let [current-period (get-in db [:chart :periods crypto-id] "1W")
+ (fn [{:keys [db]} [_]]
+   (let [current-period (get-in db [:chart :current-period] "1W")
          next-period (case current-period
                        "24H" "1W"
                        "1W" "1M"
                        "1M" "24H"
-                       "1W")]  ; Default fallback
-     (js/console.log "⏰ Cycling period for" crypto-id "from" current-period "to" next-period)
-     {:db (assoc-in db [:chart :periods crypto-id] next-period)
-      :fx [[:dispatch [:fetch-historical-data-period crypto-id next-period]]]})))
+                       "1W")  ; Default fallback
+         crypto-ids (get db :price-keys [])]
+     (js/console.log "⏰ Cycling GLOBAL period from" current-period "to" next-period)
+     {:db (assoc-in db [:chart :current-period] next-period)
+      :fx (mapv (fn [crypto-id] [:dispatch [:fetch-historical-data-period crypto-id next-period]]) crypto-ids)})))
 
 (rf/reg-event-db
  :clear-error

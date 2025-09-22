@@ -86,7 +86,7 @@
         current-currency @(rf/subscribe [:currency/current])
         exchange-rates @(rf/subscribe [:currency/exchange-rates])
         currency-symbol (curr/get-currency-symbol current-currency)
-        current-period @(rf/subscribe [:chart/current-period crypto-id])
+        current-period @(rf/subscribe [:chart/current-period])
         historical-data @(rf/subscribe [:historical-data crypto-id])
         ;; Calculate metrics from chart data for consistency
         chart-metrics (if (and historical-data (vector? historical-data) (= (count historical-data) 2))
@@ -123,7 +123,7 @@
       [chart-v5/chart-overlay-high converted-high currency-symbol]
       [chart-v5/chart-overlay-current-price converted-price currency-symbol current-currency]
       [chart-v5/chart-overlay-change chart-change]
-      [chart-v5/chart-overlay-period crypto-id current-period]
+      [chart-v5/chart-overlay-period current-period]
       [chart-v5/chart-overlay-low converted-low currency-symbol]]
 
      ;; Asset description with feed indicator
@@ -135,14 +135,25 @@
       ;; Portfolio section
      [portfolio-section crypto-id]]))
 
+;; V5 Grid Component - following Oracle guidance
+(defn crypto-grid-v5
+  "Responsive grid of V5 cards, driven by :sorted-price-keys"
+  []
+  (let [crypto-ids @(rf/subscribe [:sorted-price-keys])]
+    (if (empty? crypto-ids)
+      [:div {:class "text-gray-400 text-center p-6"} "Loading market data…"]
+      [:div {:class "grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 w-full"}
+       (for [cid crypto-ids]
+         ^{:key cid} [crypto-card-v5 cid])])))
+
 ;; V5 prototype component - can be called from anywhere
 (defn v5-prototype-section
-  "V5 prototype section - shows HASH card when feature flag enabled"
+  "V5 prototype section - shows all asset cards when feature flag enabled"
   []
   (let [new-layout? @(rf/subscribe [:ui/new-layout?])]
     (when new-layout?
-      [:div {:class "max-w-xs mx-auto mt-8"}
-       [:div {:class "text-center mb-4"}
+      [:section {:class "max-w-7xl mx-auto px-4 py-10 space-y-6"}
+       [:div {:class "text-center"}
         [:h2 {:class "text-xl font-bold text-neon-green"} "V5 PROTOTYPE"]
-        [:p {:class "text-sm text-gray-400"} "HASH Card - New Layout"]]
-       [crypto-card-v5 "hash"]])))
+        [:p {:class "text-sm text-gray-400"} "Professional card grid"]]
+       [crypto-grid-v5]])))
