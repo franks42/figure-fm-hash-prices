@@ -52,7 +52,7 @@ Create a **quick, subliminal view** of market and portfolio performance. Users s
 **Design Specification**:
 ```
 ┌─────────────────────────────────────────┐
-│ BTC                               €1,250 │ ← Symbol (upper-left) + High (right-upper)
+│ BTC                      [⚙️]     €1,250 │ ← Symbol (upper-left) + Settings (upper-right) + High (far-right)
 │                                         │
 │ $1,234.56 [USD]     📈📉 CHART    ▲2.34% │ ← Current price+currency (left-middle) + Change% (right-middle)
 │                                         │
@@ -64,9 +64,11 @@ Volume: $1.2M    Trades: 45    [FM]        ← Volume, Trades, Feed indicator (s
 ```
 **Key Changes**:
 - Square graph (width = height) for better visual balance
-- Asset symbol (BTC/ETH/HASH) in upper-left corner for immediate identification
+- Asset symbol (BTC/ETH/HASH) in upper-left corner for immediate identification  
+- Settings button (⚙️) in upper-right corner for accessibility options
+- High price in far-right corner with currency symbols (no "USD" suffix)
 - Current price + currency button in left-middle for primary focus
-- High/Low prices in right corners with currency symbols (no "USD" suffix)
+- Low price in bottom-right corner with currency symbols
 - Change percentage in right-middle for visual balance  
 - Period selector [24H]/[1W]/[1M] button in bottom-left corner
 - Asset description (Bitcoin, Ethereum, etc.) under chart, left-aligned
@@ -161,16 +163,31 @@ Volume: $1.2M    Trades: 45    [FM]        ← Volume, Trades, Feed indicator (s
 
 ### 🎨 **LOW PRIORITY** (Advanced Features)
 
-#### 7. USD Volume Estimation
+#### 7. Settings Modal & Accessibility Options
+**Goal**: User-configurable accessibility settings for color-blind friendly alternatives  
+**Why**: Support 8% of users with color vision deficiency, improve overall accessibility  
+**Implementation**:
+- Settings button (⚙️) in upper-right corner of each card
+- Modal overlay with accessibility options
+- Color-blind friendly palette toggle (red/green → blue/orange or other alternatives)
+- Settings persistence via localStorage  
+- Applies to chart backgrounds, change indicators, and all color-coded elements
+- Optional: High contrast mode, reduced motion preferences
+**Technical**:
+- CSS custom properties for color theme switching
+- React portal or similar for modal overlay
+- localStorage key: `crypto-tracker-accessibility-settings`
+
+#### 8. USD Volume Estimation
 **Goal**: Show meaningful volume comparisons across assets  
 **Formula**: `Token Volume × (High + Low) / 2`  
 **Why**: USD amounts more intuitive than token counts
 
-#### 8. Volume Trend Charts  
+#### 9. Volume Trend Charts  
 **Goal**: Subliminal trading activity assessment over 1w/1m/3-6m  
 **Why**: Gauge Figure Markets adoption vs established exchanges
 
-#### 9. Osmosis DEX Integration
+#### 10. Osmosis DEX Integration
 **Goal**: Alternative HASH price feed from Cosmos DEX  
 **Why**: Cross-exchange price validation, DeFi market comparison
 
