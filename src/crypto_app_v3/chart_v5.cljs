@@ -110,7 +110,7 @@
 (defn chart-overlay-change
   "Change percentage in right-middle"
   [change-percent]
-  (let [positive? (>= change-percent 0)]
+  (let [positive? (> change-percent 0)]
     [:div {:class "absolute right-2 top-1/2 -translate-y-1/2 overlay-tier1"}
      [:span {:class (str "text-sm font-semibold "
                          (if positive? "text-neon-green" "text-neon-red"))}
