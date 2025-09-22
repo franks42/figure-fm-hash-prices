@@ -105,10 +105,10 @@
 
 (defn chart-overlay-current-price
   "Current price + currency button in left-middle"
-  [price currency-code]
+  [price currency-symbol currency-code]
   [:div {:class "absolute left-2 top-1/2 -translate-y-1/2 flex items-center overlay-tier1"}
    [:span {:class "text-lg font-bold text-white mr-2"}
-    (str "$" (format-number price 3))]
+    (str currency-symbol (format-number price 3))]
    [:button {:class "text-xs bg-white/10 border border-white/20 rounded px-1 py-0.5 text-white/80"}
     currency-code]])
 

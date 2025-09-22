@@ -1,7 +1,8 @@
 (ns crypto-app-v3.card-v5
   (:require [re-frame.core :as rf]
             [clojure.string :as str]
-            [crypto-app-v3.chart-v5 :as chart-v5]))
+            [crypto-app-v3.chart-v5 :as chart-v5]
+            [crypto-app-v3.views :as v]))
 
 ;; V5 Card Component - Professional Terminal Style
 ;; Single asset prototype (HASH first)
@@ -44,6 +45,8 @@
         asset-type (get data "type" "crypto")
         feed-indicator (if (= asset-type "stock") "YF" "FM")
         current-currency @(rf/subscribe [:currency/current])
+        exchange-rates @(rf/subscribe [:currency/exchange-rates])
+        currency-symbol (v/get-currency-symbol current-currency)
         current-period @(rf/subscribe [:chart/current-period crypto-id])
         historical-data @(rf/subscribe [:historical-data crypto-id])
         ;; Calculate metrics from chart data for consistency
@@ -62,7 +65,11 @@
                           {:change live-change :high high :low low}))
         chart-change (:change chart-metrics)
         chart-high (:high chart-metrics)
-        chart-low (:low chart-metrics)]
+        chart-low (:low chart-metrics)
+        ;; Currency conversion for all overlay prices
+        converted-price (v/convert-currency price current-currency exchange-rates)
+        converted-high (v/convert-currency chart-high current-currency exchange-rates)
+        converted-low (v/convert-currency chart-low current-currency exchange-rates)]
 
 ;; Trigger historical data fetch if missing (same as V4)
     (when (or (nil? historical-data) (empty? historical-data))
@@ -74,11 +81,11 @@
      [:div {:class "relative"}
       [chart-v5/square-chart-container crypto-id]
       [chart-v5/chart-overlay-symbol crypto-id]
-      [chart-v5/chart-overlay-high chart-high "$"]
-      [chart-v5/chart-overlay-current-price price current-currency]
+      [chart-v5/chart-overlay-high converted-high currency-symbol]
+      [chart-v5/chart-overlay-current-price converted-price currency-symbol current-currency]
       [chart-v5/chart-overlay-change chart-change]
       [chart-v5/chart-overlay-period crypto-id current-period]
-      [chart-v5/chart-overlay-low chart-low "$"]]
+      [chart-v5/chart-overlay-low converted-low currency-symbol]]
 
      ;; Asset description
      [asset-description crypto-id]
