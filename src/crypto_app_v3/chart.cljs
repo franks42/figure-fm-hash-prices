@@ -36,26 +36,31 @@
               (when (and (seq times) (seq prices))
                 (js/console.log "📊 Creating chart for" crypto-id "with" (count times) "points")
                 (let [colors (calculate-chart-colors prices)
-                      ;; Create trend line data (start and end points only)
-                      _trend-times [(first times) (last times)]
-                      trend-prices [(first prices) (last prices)]
+                      ;; Create trend line data - same length as times but only start/end values
+                      start-price (first prices)
+                      end-price (last prices)
+                      trend-data (map-indexed (fn [idx _]
+                                                (cond
+                                                  (= idx 0) start-price
+                                                  (= idx (dec (count times))) end-price
+                                                  :else nil)) times)
                       instance (js/uPlot.
                                 (clj->js {:width (.-offsetWidth @container-ref)
                                           :height 120
                                           :series [{}
+                                                   {:stroke "rgba(200,200,200,0.8)"
+                                                    :width 3
+                                                    :dash [6, 3]
+                                                    :fill "rgba(0,0,0,0)"
+                                                    :points {:show false}}
                                                    {:stroke (:stroke colors)
                                                     :fill (:fill colors)
                                                     :width 4
-                                                    :points {:show false}}
-                                                   {:stroke "rgba(128,128,128,0.6)"
-                                                    :width 2
-                                                    :dash [8, 4]
-                                                    :fill "rgba(0,0,0,0)"
                                                     :points {:show false}}]
                                           :axes [{:show false} {:show false}]
                                           :legend {:show false}
                                           :cursor {:show false}})
-                                (clj->js [times prices trend-prices])
+                                (clj->js [times (clj->js trend-data) prices])
                                 @container-ref)]
                   (reset! chart-instance instance)
                   (js/console.log "✅ Chart created successfully with sentiment colors!")))))))
