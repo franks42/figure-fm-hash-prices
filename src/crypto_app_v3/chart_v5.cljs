@@ -1,5 +1,6 @@
 (ns crypto-app-v3.chart-v5
   (:require [reagent.core :as r]
+            [re-frame.core :as rf]
             [clojure.string :as str]))
 
 ;; V5 Chart Component - Square Layout with HTML Overlays
@@ -18,7 +19,7 @@
 (defn square-chart-container
   [crypto-id]
   (let [container-ref (r/atom nil)
-        _chart-instance (r/atom nil)]
+        chart-instance (r/atom nil)]
     (r/create-class
      {:display-name "square-chart-v5"
       :component-did-mount
@@ -26,15 +27,61 @@
         (js/console.log "🎯 V5 Chart component mounted for" crypto-id))
       :component-did-update
       (fn [_ _]
-        (js/console.log "🔄 V5 Chart update for" crypto-id))
+        (let [current-data @(rf/subscribe [:historical-data crypto-id])]
+          (js/console.log "🔄 V5 Chart update for" crypto-id)
+    ;; Create chart when we have data and container
+          (when (and current-data @container-ref js/uPlot (not @chart-instance)
+                     (vector? current-data) (= (count current-data) 2))
+            (let [[times prices] current-data]
+              (when (and (seq times) (seq prices))
+                (js/console.log "📊 Creating V5 square chart for" crypto-id "with" (count times) "points")
+     ;; Calculate sentiment colors
+                (let [start-price (first prices)
+                      end-price (last prices)
+                      is-positive? (> end-price start-price)
+                      stroke-color (if is-positive? "#00ff88" "#ff4d5a")
+                      fill-color (if is-positive? "rgba(0,255,136,0.4)" "rgba(255,77,90,0.4)")
+                      ;; Build trend line data
+                      trend-data (let [n (count times)]
+                                   (mapv (fn [i]
+                                           (cond
+                                             (= i 0) start-price
+                                             (= i (dec n)) end-price
+                                             :else nil)) (range n)))
+                      ;; Make container square
+                      size (min (.-offsetWidth @container-ref) (.-offsetHeight @container-ref))
+                      instance (js/uPlot.
+                                (clj->js {:width size
+                                          :height size
+                                          :series [{}
+                                                   {:stroke "#888"
+                                                    :width 2
+                                                    :dash [4, 4]
+                                                    :spanGaps true
+                                                    :points {:show false}}
+                                                   {:stroke stroke-color
+                                                    :fill fill-color
+                                                    :width 3
+                                                    :points {:show false}}]
+                                          :axes [{:show false} {:show false}]
+                                          :legend {:show false}
+                                          :cursor {:show false}})
+                                (clj->js [times trend-data prices])
+                                @container-ref)]
+                  (reset! chart-instance instance)
+                  (js/console.log "✅ V5 Square chart created successfully!")))))))
       :reagent-render
       (fn []
-        [:div {:class "relative w-full bg-gray-900/20 rounded-lg border border-white/10"
-               :style {:aspect-ratio "1"}
-               :ref (fn [el] (when el (reset! container-ref el)))}
-         [:div {:class "absolute inset-2"}
-          [:div {:class "w-full h-full bg-gradient-to-br from-gray-800/20 to-gray-600/20 rounded flex items-center justify-center"}
-           [:div {:class "text-white/40 text-sm"} "V5 Square Chart"]]]])})))
+        (let [current-data @(rf/subscribe [:historical-data crypto-id])
+              has-data? (and current-data (vector? current-data) (not-empty (first current-data)))]
+          [:div {:class "relative w-full bg-gray-900/20 rounded-lg border border-white/10"
+                 :style {:aspect-ratio "1"}
+                 :ref (fn [el] (when el (reset! container-ref el)))}
+           [:div {:class "absolute inset-2"}
+            (if has-data?
+              [:div {:class "w-full h-full"}]
+              [:div {:class "w-full h-full bg-gradient-to-br from-gray-800/20 to-gray-600/20 rounded flex items-center justify-center"}
+               [:div {:class "text-white/40 text-sm"} "Loading chart..."]])]]))})))
 
 ;; Chart overlays - positioned absolutely over the chart
 (defn chart-overlay-symbol
