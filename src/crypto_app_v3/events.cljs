@@ -8,6 +8,43 @@
 (def ^:const SCAN_HIDE_DELAY_MS 2100)
 (def ^:const TIMEOUT_MS 10000)
 
+;; FIGR IPO and Twelve Data constants  
+(def ^:const FIGR_IPO_DATE "2025-09-11")
+(def ^:const TWELVE_DATA_API_KEY "b61354a1fe6f45a2a9e01c8c4145e617")
+
+;; FIGR period logic for Twelve Data (Oracle-recommended)
+(defn get-figr-interval [period]
+  (case period
+    "24H" "5min"   ; Rich intraday for 24H
+    "1W"  "15min"  ; Good granularity for 1W
+    "1M"  "1day"   ; Daily for 1M
+    "15min"))      ; Default to 1W
+
+(defn get-figr-row-count [period]
+  (case period
+    "24H" 288  ; 24h * 12 intervals/hour (5min)
+    "1W"  672  ; 7d * 24h * 4 intervals/hour (15min)  
+    "1M"  30   ; 30 trading days max
+    100))      ; Default reasonable limit
+
+;; Pure Twelve Data JSON transformer (Oracle-recommended)
+(defn twelve-data->chart-data
+  "Transform Twelve Data JSON to V5 chart format [timestamps[], prices[]]"
+  [td-response period]
+  (when-let [values (:values td-response)]
+    (let [;; Filter out old 2022 data (symbol reuse artifact)
+          ipo-date (js/Date. FIGR_IPO_DATE)
+          recent-values (filter #(>= (js/Date. (:datetime %)) ipo-date) values)
+          ;; Sort ascending (Twelve Data comes newest first)  
+          sorted-values (reverse recent-values)
+          ;; Apply period-based row limiting
+          row-count (get-figr-row-count period)
+          limited-values (take-last row-count sorted-values)
+          timestamps (mapv #(-> % :datetime js/Date. .getTime (/ 1000)) limited-values)
+          prices (mapv #(-> % :close js/parseFloat) limited-values)]
+      (js/console.log "🏦 TWELVE-DATA SUCCESS:" period "points:" (count timestamps) "range:" (first prices) "-" (last prices))
+      [timestamps prices])))
+
 ;; Period configuration
 (defn get-period-config [period]
   (case period
@@ -20,38 +57,47 @@
 (rf/reg-event-fx
  :fetch-historical-data
  (fn [{:keys [db]} [_ crypto-id]]
-   (let [period (get-in db [:chart :current-period] "1W")
-         config (get-period-config period)
-         end-time (js/Date.)
-         start-time (js/Date. (- (.getTime end-time) (* (:days config) 24 60 60 1000)))
-         url (str "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets/"
-                  (str/upper-case crypto-id) "-USD"
-                  "/candles?start_date=" (.toISOString start-time)
-                  "&end_date=" (.toISOString end-time)
-                  "&interval_in_minutes=" (:interval config) "&size=" (:size config))]
-     (js/console.log "📈 Dispatching fetch for" crypto-id "period:" period "config:" config)
-     {:db db
-      :fetch {:url url
-              :on-success [:historical-data-success crypto-id]
-              :on-failure [:historical-data-failure crypto-id]}})))
+   (if (= crypto-id "figr")
+     ;; Route FIGR to Alpha Vantage
+     (let [period (get-in db [:chart :current-period] "1W")]
+       {:fx [[:dispatch [:fetch-figr-daily period]]]})
+     ;; Regular crypto logic
+     (let [period (get-in db [:chart :current-period] "1W")
+           config (get-period-config period)
+           end-time (js/Date.)
+           start-time (js/Date. (- (.getTime end-time) (* (:days config) 24 60 60 1000)))
+           url (str "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets/"
+                    (str/upper-case crypto-id) "-USD"
+                    "/candles?start_date=" (.toISOString start-time)
+                    "&end_date=" (.toISOString end-time)
+                    "&interval_in_minutes=" (:interval config) "&size=" (:size config))]
+       (js/console.log "📈 Dispatching fetch for" crypto-id "period:" period "config:" config)
+       {:db db
+       :fetch {:url url
+                :on-success [:historical-data-success crypto-id]
+                :on-failure [:historical-data-failure crypto-id]}}))))
 
 ;; Period-specific fetch event
 (rf/reg-event-fx
  :fetch-historical-data-period
  (fn [{:keys [db]} [_ crypto-id period]]
-   (let [config (get-period-config period)
-         end-time (js/Date.)
-         start-time (js/Date. (- (.getTime end-time) (* (:days config) 24 60 60 1000)))
-         url (str "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets/"
-                  (str/upper-case crypto-id) "-USD"
-                  "/candles?start_date=" (.toISOString start-time)
-                  "&end_date=" (.toISOString end-time)
-                  "&interval_in_minutes=" (:interval config) "&size=" (:size config))]
-     (js/console.log "📈 Fetching" period "data for" crypto-id "config:" config)
-     {:db db
-      :fetch {:url url
-              :on-success [:historical-data-success crypto-id]
-              :on-failure [:historical-data-failure crypto-id]}})))
+   (if (= crypto-id "figr")
+     ;; Route FIGR to Alpha Vantage
+     {:fx [[:dispatch [:fetch-figr-daily period]]]}
+     ;; Regular crypto logic
+     (let [config (get-period-config period)
+           end-time (js/Date.)
+           start-time (js/Date. (- (.getTime end-time) (* (:days config) 24 60 60 1000)))
+           url (str "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets/"
+                    (str/upper-case crypto-id) "-USD"
+                    "/candles?start_date=" (.toISOString start-time)
+                    "&end_date=" (.toISOString end-time)
+                    "&interval_in_minutes=" (:interval config) "&size=" (:size config))]
+       (js/console.log "📈 Fetching" period "data for" crypto-id "config:" config)
+       {:db db
+        :fetch {:url url
+                :on-success [:historical-data-success crypto-id]
+                :on-failure [:historical-data-failure crypto-id]}}))))
 
 (rf/reg-event-db
  :historical-data-success
@@ -70,6 +116,56 @@
  (fn [db [_ crypto-id error]]
    (js/console.log "❌ Historical data failed for" crypto-id ":" error)
    (assoc-in db [:historical-data crypto-id] [])))
+
+;; FIGR Alpha Vantage events (Oracle-recommended separate from crypto logic)
+(rf/reg-event-fx
+ :fetch-figr-daily
+ (fn [{:keys [db]} [_ period]]
+   (let [cache-key (str "figr-daily-v1-" period)
+         cached-data (.getItem js/localStorage cache-key)]
+     (if cached-data
+       (let [parsed-cache (js->clj (js/JSON.parse cached-data) :keywordize-keys true)]
+         (if (< (- (js/Date.now) (:timestamp parsed-cache)) (* 24 60 60 1000))  ; 24h cache
+           (do
+             (js/console.log "🏦 ALPHA-VANTAGE: Using cached FIGR data for period:" period)
+             {:db (assoc-in db [:historical-data "figr"] (:chart-data parsed-cache))})
+           (do
+             (js/console.log "📈 Cache expired, fetching fresh FIGR data for period:" period)
+             {:db db
+              :fetch-strings {:url (str "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=FIGR&outputsize=compact&apikey=" ALPHA_VANTAGE_API_KEY)
+                      :on-success [:figr-daily-success period]
+                      :on-failure [:figr-daily-failure period]}})))
+       (do
+         (js/console.log "🏦 ALPHA-VANTAGE: No cache, fetching FIGR data for period:" period)
+         {:db db
+          :fetch-strings {:url (str "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=FIGR&outputsize=compact&apikey=" ALPHA_VANTAGE_API_KEY)
+                  :on-success [:figr-daily-success period]
+                  :on-failure [:figr-daily-failure period]}})))))
+
+(rf/reg-event-db
+ :figr-daily-success
+ (fn [db [_ period response]]
+   (js/console.log "🏦 ALPHA-VANTAGE SUCCESS:" period)
+   (js/console.log "🏦 EDN STRUCTURE:" (pr-str response))
+   (if (or (get response "Error Message") (get response "Note") (get response "Information"))
+     (do
+       (js/console.log "❌ Alpha Vantage error/note:" (or (get response "Error Message") (get response "Note")))
+       (assoc-in db [:historical-data "figr"] []))
+     (let [chart-data (av-daily->chart-data response period)
+           cache-key (str "figr-daily-v1-" period)
+           cache-entry {:chart-data chart-data
+                        :timestamp (js/Date.now)
+                        :period period}]
+       (when chart-data
+         (.setItem js/localStorage cache-key (js/JSON.stringify (clj->js cache-entry)))
+         (js/console.log "📊 FIGR transformed to chart format:" chart-data))
+       (assoc-in db [:historical-data "figr"] (or chart-data []))))))
+
+(rf/reg-event-db
+ :figr-daily-failure
+ (fn [db [_ period error]]
+   (js/console.log "🏦 ALPHA-VANTAGE FAILED:" period "error:" error)
+   (assoc-in db [:historical-data "figr"] [])))
 
 ;; Helper functions FIRST (small, pure)
 (defn extract-prices-from-response [js-data]

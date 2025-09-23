@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twelve Data FIGR Test</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            margin: 20px; 
+            background: #1a1a1a; 
+            color: #fff; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        button { 
+            padding: 10px 20px; 
+            margin: 10px 5px; 
+            font-size: 14px; 
+            cursor: pointer; 
+            background: #0080ff; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+        }
+        button:hover { 
+            background: #3399ff; 
+        }
+        textarea { 
+            width: 100%; 
+            height: 400px; 
+            font-family: monospace; 
+            font-size: 12px; 
+            background: #2a2a2a; 
+            color: #fff; 
+            border: 1px solid #444; 
+            padding: 10px; 
+            margin: 10px 0; 
+        }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+        }
+        .success { background: #2d5a2d; }
+        .error { background: #5a2d2d; }
+        .info { background: #2d4a5a; }
+        .section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #444; 
+            border-radius: 4px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Twelve Data FIGR Intraday Test</h1>
+        
+        <div class="section">
+            <h3>Test Intraday FIGR Data</h3>
+            <button onclick="test5min()">⚡ 5min intervals (24H period)</button>
+            <button onclick="test15min()">📈 15min intervals (1W period)</button>
+            <button onclick="testDaily()">📅 Daily data (1M period)</button>
+            <button onclick="clearResult()">🗑️ Clear</button>
+        </div>
+
+        <div id="status" class="status info">
+            Ready to test Twelve Data API for FIGR intraday data...
+        </div>
+
+        <div class="section">
+            <h3>📊 Raw JSON Response</h3>
+            <textarea id="jsonOutput" placeholder="API response will appear here..."></textarea>
+        </div>
+
+        <div class="section">
+            <h3>🔄 Transformed Data (V5 Chart Format)</h3>
+            <textarea id="transformedOutput" placeholder="Transformed [timestamps[], prices[]] format will appear here..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'b61354a1fe6f45a2a9e01c8c4145e617';
+        const statusEl = document.getElementById('status');
+        const jsonEl = document.getElementById('jsonOutput');
+        const transformedEl = document.getElementById('transformedOutput');
+
+        function setStatus(message, type = 'info') {
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function clearResult() {
+            jsonEl.value = '';
+            transformedEl.value = '';
+            setStatus('Cleared results', 'info');
+        }
+
+        async function test5min() {
+            setStatus('🔄 Testing FIGR 5min intraday data...', 'info');
+            
+            const url = `https://api.twelvedata.com/time_series?symbol=FIGR&interval=5min&apikey=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                jsonEl.value = JSON.stringify(data, null, 2);
+                
+                if (data.status === 'error') {
+                    setStatus(`❌ API Error: ${data.message}`, 'error');
+                    transformedEl.value = `Error: ${data.message}`;
+                    return;
+                }
+                
+                // Transform for V5 chart format (5min -> 24H period)
+                if (data.values && Array.isArray(data.values)) {
+                    const timestamps = [];
+                    const prices = [];
+                    
+                    // Data comes newest first, reverse for ascending order
+                    const sortedValues = [...data.values].reverse();
+                    
+                    // Get last 24h worth (24h * 12 intervals/hour = 288 points max)
+                    const last24h = sortedValues.slice(-288);
+                    
+                    last24h.forEach(point => {
+                        timestamps.push(new Date(point.datetime).getTime() / 1000); // Unix seconds
+                        prices.push(parseFloat(point.close));
+                    });
+                    
+                    const transformed = {
+                        "24H": [timestamps, prices],
+                        metadata: {
+                            symbol: data.meta.symbol,
+                            interval: data.meta.interval,
+                            exchange: data.meta.exchange,
+                            dataPoints: timestamps.length,
+                            priceRange: `${Math.min(...prices).toFixed(2)} - ${Math.max(...prices).toFixed(2)}`
+                        }
+                    };
+                    
+                    transformedEl.value = JSON.stringify(transformed, null, 2);
+                    setStatus(`✅ 5min intraday: ${timestamps.length} data points`, 'success');
+                } else {
+                    setStatus('❌ No values array found', 'error');
+                    transformedEl.value = 'Error: No values array in response';
+                }
+            } catch (error) {
+                setStatus(`❌ Error: ${error.message}`, 'error');
+                transformedEl.value = `Error: ${error.message}`;
+            }
+        }
+
+        async function test15min() {
+            setStatus('🔄 Testing FIGR 15min intraday data...', 'info');
+            
+            const url = `https://api.twelvedata.com/time_series?symbol=FIGR&interval=15min&apikey=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                jsonEl.value = JSON.stringify(data, null, 2);
+                
+                if (data.status === 'error') {
+                    setStatus(`❌ API Error: ${data.message}`, 'error');
+                    transformedEl.value = `Error: ${data.message}`;
+                    return;
+                }
+                
+                // Transform for V5 chart format (15min -> 1W period)
+                if (data.values && Array.isArray(data.values)) {
+                    const timestamps = [];
+                    const prices = [];
+                    
+                    // Data comes newest first, reverse for ascending order
+                    const sortedValues = [...data.values].reverse();
+                    
+                    // Get last week worth (7 days * 24h * 4 intervals/hour = 672 points max)
+                    const lastWeek = sortedValues.slice(-672);
+                    
+                    lastWeek.forEach(point => {
+                        timestamps.push(new Date(point.datetime).getTime() / 1000);
+                        prices.push(parseFloat(point.close));
+                    });
+                    
+                    const transformed = {
+                        "1W": [timestamps, prices],
+                        metadata: {
+                            symbol: data.meta.symbol,
+                            interval: data.meta.interval,
+                            exchange: data.meta.exchange,
+                            dataPoints: timestamps.length,
+                            priceRange: `${Math.min(...prices).toFixed(2)} - ${Math.max(...prices).toFixed(2)}`
+                        }
+                    };
+                    
+                    transformedEl.value = JSON.stringify(transformed, null, 2);
+                    setStatus(`✅ 15min intraday: ${timestamps.length} data points`, 'success');
+                } else {
+                    setStatus('❌ No values array found', 'error');
+                    transformedEl.value = 'Error: No values array in response';
+                }
+            } catch (error) {
+                setStatus(`❌ Error: ${error.message}`, 'error');
+                transformedEl.value = `Error: ${error.message}`;
+            }
+        }
+
+        async function testDaily() {
+            setStatus('🔄 Testing FIGR daily data...', 'info');
+            
+            const url = `https://api.twelvedata.com/time_series?symbol=FIGR&interval=1day&apikey=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                jsonEl.value = JSON.stringify(data, null, 2);
+                
+                if (data.status === 'error') {
+                    setStatus(`❌ API Error: ${data.message}`, 'error');
+                    transformedEl.value = `Error: ${data.message}`;
+                    return;
+                }
+                
+                // Transform for V5 chart format (daily -> 1M period)
+                if (data.values && Array.isArray(data.values)) {
+                    const timestamps = [];
+                    const prices = [];
+                    
+                    // Data comes newest first, reverse for ascending order
+                    const sortedValues = [...data.values].reverse();
+                    
+                    // Get all available daily data (since IPO)
+                    sortedValues.forEach(point => {
+                        timestamps.push(new Date(point.datetime).getTime() / 1000);
+                        prices.push(parseFloat(point.close));
+                    });
+                    
+                    const transformed = {
+                        "1M": [timestamps, prices],
+                        metadata: {
+                            symbol: data.meta.symbol,
+                            interval: data.meta.interval,
+                            exchange: data.meta.exchange,
+                            dataPoints: timestamps.length,
+                            priceRange: `${Math.min(...prices).toFixed(2)} - ${Math.max(...prices).toFixed(2)}`
+                        }
+                    };
+                    
+                    transformedEl.value = JSON.stringify(transformed, null, 2);
+                    setStatus(`✅ Daily data: ${timestamps.length} data points`, 'success');
+                } else {
+                    setStatus('❌ No values array found', 'error');
+                    transformedEl.value = 'Error: No values array in response';
+                }
+            } catch (error) {
+                setStatus(`❌ Error: ${error.message}`, 'error');
+                transformedEl.value = `Error: ${error.message}`;
+            }
+        }
+
+        // Show initial status
+        setStatus('🎯 Ready to test Twelve Data intraday FIGR data', 'info');
+    </script>
+</body>
+</html>

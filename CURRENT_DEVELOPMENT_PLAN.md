@@ -48,7 +48,7 @@ Create a **quick, subliminal view** of market and portfolio performance. Users s
 - ✅ **Working**: All crypto assets get background charts from Figure Markets API
 - ✅ **Data Format**: OHLCV candles with volume information available
 - ✅ **Coverage**: BTC, ETH (25+ points), HASH (12+ points), SOL/LINK/UNI/XRP (variable)
-- ❌ **Missing**: FIGR stock (Yahoo Finance, CORS blocked)
+- ✅ **FIGR Historical Data**: Alpha Vantage API (CORS-enabled, IPO data available)
 
 ---
 
@@ -219,13 +219,52 @@ PV: 123.45 HASH  =  €1,234.00 EUR    [✏️] ← Portfolio section
 - Dynamic chart colors based on positive/negative change
 - Subtle but clear visual indicators
 
-#### 5. FIGR Historical Charts
-**Goal**: Add FIGR stock historical data via GitHub Actions  
-**Why**: Complete chart coverage for all tracked assets  
-**Implementation**: 
-- Extend GitHub Actions to fetch Yahoo Finance historical
-- Store FIGR candle data in repo
-- Apply same chart rendering to FIGR cards
+#### 5. FIGR Historical Charts - TWELVE DATA BREAKTHROUGH 🚀
+**Goal**: Add FIGR stock historical data for V5 charts  
+**Status**: MAJOR BREAKTHROUGH - Rich intraday data discovered!
+
+**🎯 Research Evolution:**
+1. **Alpha Vantage**: ❌ Daily-only data = boring straight lines (2-8 points)
+2. **Stooq**: ❌ CORS blocked for browser requests  
+3. **FinancialModelingPrep**: ❌ Requires paid API key
+4. **Twelve Data**: ✅ BREAKTHROUGH - Rich intraday data available!
+
+**🚀 Twelve Data Discovery:**
+- **Symbol Reuse**: FIGR previously owned by First National Bank of Groton  
+- **Current Data**: Figure Technologies data available since IPO (2025-09-11)
+- **Intraday Available**: 5min, 15min intervals work perfectly for new IPO!
+- **CORS Enabled**: `access-control-allow-origin: *` confirmed via curl
+- **Browser Compatible**: Direct fetch() requests work flawlessly
+
+**📊 Rich FIGR Data Available:**
+- **5min Intervals**: 30+ points per trading day with real volatility
+- **15min Intervals**: Perfect granularity for weekly charts  
+- **Daily Data**: Complete IPO history (8 trading days)
+- **Price Action**: $45.81 → $43.08 with natural intraday movement
+- **Volume**: 132k-798k per 5min interval (active trading)
+
+**🔥 Data Quality Comparison:**
+```
+Alpha Vantage: 44.96 ————————————— 43.09 (2 boring points)
+Twelve Data:   45.81 ╱╲╱╲╱╲╱╲╱╲╱╲╱ 43.08 (30+ rich points)
+```
+
+**🎯 Implementation Strategy (REVISED):**
+- **Intraday Intervals**: 
+  - 24H → 5min intervals (up to 288 points)
+  - 1W → 15min intervals (up to 672 points)  
+  - 1M → 1day intervals (8 IPO trading days)
+- **API Advantages**: 800 calls/day vs Alpha Vantage's 25
+- **Data Filtering**: Remove 2022 symbol artifact data (pre-IPO)
+- **Rich Charts**: Real financial volatility instead of straight lines
+
+**🔧 Technical Implementation:**
+- **Twelve Data API**: `https://api.twelvedata.com/time_series`
+- **Dynamic Intervals**: Period-based interval selection
+- **IPO Date Filtering**: Filter out pre-2025-09-11 junk data
+- **Transform Function**: `twelve-data->chart-data` for V5 format
+- **Standard Caching**: localStorage with version keys
+- **Error Handling**: Handle API errors and rate limits
 
 #### 6. Time Period Selector
 **Goal**: Switch between 24h/1w/1m/3m/6m/1y chart periods  

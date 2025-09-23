@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Vantage FIGR Test</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            margin: 20px; 
+            background: #1a1a1a; 
+            color: #fff; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        button { 
+            padding: 10px 20px; 
+            margin: 10px 5px; 
+            font-size: 14px; 
+            cursor: pointer; 
+            background: #2a7a2a; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+        }
+        button:hover { 
+            background: #3a8a3a; 
+        }
+        textarea { 
+            width: 100%; 
+            height: 400px; 
+            font-family: monospace; 
+            font-size: 12px; 
+            background: #2a2a2a; 
+            color: #fff; 
+            border: 1px solid #444; 
+            padding: 10px; 
+            margin: 10px 0; 
+        }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+        }
+        .success { background: #2d5a2d; }
+        .error { background: #5a2d2d; }
+        .info { background: #2d4a5a; }
+        .section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #444; 
+            border-radius: 4px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Twelve Data FIGR Intraday Test</h1>
+        
+        <div class="section">
+            <h3>Test API Endpoints - FIGR</h3>
+            <button onclick="testDaily()">📅 Daily Data (1M period)</button>
+            <button onclick="testIntradaySimple()">📈 Intraday 60min Simple</button>
+            <button onclick="testIntraday5Simple()">⚡ Intraday 5min Simple</button>
+            <button onclick="clearResult()">🗑️ Clear</button>
+        </div>
+
+        <div class="section">
+            <h3>Test Fallback - Daily for All Periods</h3>
+            <button onclick="testDailyFor24H()">📅 Daily → 24H (last 5 days)</button>
+            <button onclick="testDailyFor1W()">📅 Daily → 1W (last 2 weeks)</button>
+            <button onclick="testDailyFor1M()">📅 Daily → 1M (last month)</button>
+        </div>
+
+        <div class="section">
+            <h3>Test AAPL Comparison</h3>
+            <button onclick="testAAPLIntraday()">🍎 AAPL Intraday 60min</button>
+        </div>
+
+        <div id="status" class="status info">
+            Ready to test Alpha Vantage API for FIGR historical data...
+        </div>
+
+        <div class="section">
+            <h3>📊 Raw JSON Response</h3>
+            <textarea id="jsonOutput" placeholder="API response will appear here..."></textarea>
+        </div>
+
+        <div class="section">
+            <h3>🔄 Transformed Data (V5 Chart Format)</h3>
+            <textarea id="transformedOutput" placeholder="Transformed [timestamps[], prices[]] format will appear here..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'your-twelve-data-key-here';
+        const statusEl = document.getElementById('status');
+        const jsonEl = document.getElementById('jsonOutput');
+        const transformedEl = document.getElementById('transformedOutput');
+
+        function setStatus(message, type = 'info') {
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function clearResult() {
+            jsonEl.value = '';
+            transformedEl.value = '';
+            setStatus('Cleared results', 'info');
+        }
+
+        async function testDaily() {
+            setStatus('🔄 Fetching daily data for FIGR...', 'info');
+            
+            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=FIGR&outputsize=compact&apikey=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                jsonEl.value = JSON.stringify(data, null, 2);
+                
+                // Transform for V5 chart format (daily -> 1M period)
+                if (data['Time Series (Daily)']) {
+                    const timeSeries = data['Time Series (Daily)'];
+                    const timestamps = [];
+                    const prices = [];
+                    
+                    // Get last 30 days, sort by date
+                    const sortedDates = Object.keys(timeSeries)
+                        .sort((a, b) => new Date(a) - new Date(b))
+                        .slice(-30);
+                    
+                    sortedDates.forEach(date => {
+                        timestamps.push(new Date(date).getTime() / 1000); // Unix seconds
+                        prices.push(parseFloat(timeSeries[date]['4. close']));
+                    });
+                    
+                    const transformed = {
+                        "1M": [timestamps, prices],
+                        metadata: {
+                            symbol: data['Meta Data']['2. Symbol'],
+                            lastRefreshed: data['Meta Data']['3. Last Refreshed'],
+                            dataPoints: timestamps.length
+                        }
+                    };
+                    
+                    transformedEl.value = JSON.stringify(transformed, null, 2);
+                    setStatus(`✅ Daily data loaded: ${timestamps.length} data points`, 'success');
+                } else {
+                    setStatus('❌ No daily time series data found', 'error');
+                    transformedEl.value = 'Error: No time series data in response';
+                }
+            } catch (error) {
+                setStatus(`❌ Error: ${error.message}`, 'error');
+                transformedEl.value = `Error: ${error.message}`;
+            }
+        }
+
+        async function testIntradaySimple() {
+            setStatus('🔄 Fetching 60min intraday data for FIGR (simple)...', 'info');
+            
+            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=FIGR&interval=60min&apikey=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                jsonEl.value = JSON.stringify(data, null, 2);
+                
+                if (data['Error Message']) {
+                    setStatus(`❌ API Error: ${data['Error Message']}`, 'error');
+                    transformedEl.value = `API Error: ${data['Error Message']}`;
+                    return;
+                }
+                
+                // Transform for V5 chart format (60min -> 1W period)
+                if (data['Time Series (60min)']) {
+                    const timeSeries = data['Time Series (60min)'];
+                    const timestamps = [];
+                    const prices = [];
+                    
+                    // Get available data, sort by timestamp
+                    const sortedTimes = Object.keys(timeSeries)
+                        .sort((a, b) => new Date(a) - new Date(b));
+                    
+                    sortedTimes.forEach(time => {
+                        timestamps.push(new Date(time).getTime() / 1000); // Unix seconds
+                        prices.push(parseFloat(timeSeries[time]['4. close']));
+                    });
+                    
+                    const transformed = {
+                        "1W": [timestamps, prices],
+                        metadata: {
+                            symbol: data['Meta Data']['2. Symbol'],
+                            lastRefreshed: data['Meta Data']['3. Last Refreshed'],
+                            interval: data['Meta Data']['4. Interval'],
+                            dataPoints: timestamps.length
+                        }
+                    };
+                    
+                    transformedEl.value = JSON.stringify(transformed, null, 2);
+                    setStatus(`✅ 60min data loaded: ${timestamps.length} data points`, 'success');
+                } else {
+                    setStatus('❌ No 60min time series data found', 'error');
+                    transformedEl.value = 'Error: No time series data in response';
+                }
+            } catch (error) {
+                setStatus(`❌ Error: ${error.message}`, 'error');
+                transformedEl.value = `Error: ${error.message}`;
+            }
+        }
+
+        async function testIntraday5Simple() {
+            setStatus('🔄 Fetching 5min intraday data for FIGR (simple)...', 'info');
+            
+            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=FIGR&interval=5min&apikey=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                jsonEl.value = JSON.stringify(data, null, 2);
+                
+                if (data['Error Message']) {
+                    setStatus(`❌ API Error: ${data['Error Message']}`, 'error');
+                    transformedEl.value = `API Error: ${data['Error Message']}`;
+                    return;
+                }
+                
+                // Transform for V5 chart format (5min -> 24H period)
+                if (data['Time Series (5min)']) {
+                    const timeSeries = data['Time Series (5min)'];
+                    const timestamps = [];
+                    const prices = [];
+                    
+                    // Get available data, sort by timestamp
+                    const sortedTimes = Object.keys(timeSeries)
+                        .sort((a, b) => new Date(a) - new Date(b));
+                    
+                    sortedTimes.forEach(time => {
+                        timestamps.push(new Date(time).getTime() / 1000); // Unix seconds
+                        prices.push(parseFloat(timeSeries[time]['4. close']));
+                    });
+                    
+                    const transformed = {
+                        "24H": [timestamps, prices],
+                        metadata: {
+                            symbol: data['Meta Data']['2. Symbol'],
+                            lastRefreshed: data['Meta Data']['3. Last Refreshed'],
+                            interval: data['Meta Data']['4. Interval'],
+                            dataPoints: timestamps.length
+                        }
+                    };
+                    
+                    transformedEl.value = JSON.stringify(transformed, null, 2);
+                    setStatus(`✅ 5min data loaded: ${timestamps.length} data points`, 'success');
+                } else {
+                    setStatus('❌ No 5min time series data found', 'error');
+                    transformedEl.value = 'Error: No time series data in response';
+                }
+            } catch (error) {
+                setStatus(`❌ Error: ${error.message}`, 'error');
+                transformedEl.value = `Error: ${error.message}`;
+            }
+        }
+
+        async function testAAPLIntraday() {
+            setStatus('🔄 Testing AAPL 60min intraday (for comparison)...', 'info');
+            
+            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=AAPL&interval=60min&apikey=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                jsonEl.value = JSON.stringify(data, null, 2);
+                
+                if (data['Error Message']) {
+                    setStatus(`❌ AAPL API Error: ${data['Error Message']}`, 'error');
+                    transformedEl.value = `AAPL API Error: ${data['Error Message']}`;
+                } else if (data['Time Series (60min)']) {
+                    const dataPoints = Object.keys(data['Time Series (60min)']).length;
+                    setStatus(`✅ AAPL 60min works: ${dataPoints} data points`, 'success');
+                    transformedEl.value = `AAPL intraday data available: ${dataPoints} points\nFIGR might not have intraday data in free tier`;
+                } else {
+                    setStatus('❌ AAPL: No intraday data', 'error');
+                    transformedEl.value = 'AAPL: No intraday data found';
+                }
+            } catch (error) {
+                setStatus(`❌ AAPL Error: ${error.message}`, 'error');
+                transformedEl.value = `AAPL Error: ${error.message}`;
+            }
+        }
+
+        async function testDailyFor24H() {
+            setStatus('🔄 Using daily data for 24H period (last 5 trading days)...', 'info');
+            
+            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=FIGR&outputsize=compact&apikey=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                jsonEl.value = JSON.stringify(data, null, 2);
+                
+                if (data['Time Series (Daily)']) {
+                    const timeSeries = data['Time Series (Daily)'];
+                    const timestamps = [];
+                    const prices = [];
+                    
+                    // Get last 5 trading days
+                    const sortedDates = Object.keys(timeSeries)
+                        .sort((a, b) => new Date(a) - new Date(b))
+                        .slice(-5);
+                    
+                    sortedDates.forEach(date => {
+                        timestamps.push(new Date(date).getTime() / 1000);
+                        prices.push(parseFloat(timeSeries[date]['4. close']));
+                    });
+                    
+                    const transformed = {
+                        "24H": [timestamps, prices],
+                        metadata: {
+                            symbol: data['Meta Data']['2. Symbol'],
+                            note: "Using daily data for 24H period (fallback)",
+                            dataPoints: timestamps.length
+                        }
+                    };
+                    
+                    transformedEl.value = JSON.stringify(transformed, null, 2);
+                    setStatus(`✅ Daily→24H fallback: ${timestamps.length} points`, 'success');
+                } else {
+                    setStatus('❌ No daily data', 'error');
+                }
+            } catch (error) {
+                setStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDailyFor1W() {
+            setStatus('🔄 Using daily data for 1W period (last 2 weeks)...', 'info');
+            
+            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=FIGR&outputsize=compact&apikey=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                jsonEl.value = JSON.stringify(data, null, 2);
+                
+                if (data['Time Series (Daily)']) {
+                    const timeSeries = data['Time Series (Daily)'];
+                    const timestamps = [];
+                    const prices = [];
+                    
+                    // Get last 2 weeks (10 trading days)
+                    const sortedDates = Object.keys(timeSeries)
+                        .sort((a, b) => new Date(a) - new Date(b))
+                        .slice(-10);
+                    
+                    sortedDates.forEach(date => {
+                        timestamps.push(new Date(date).getTime() / 1000);
+                        prices.push(parseFloat(timeSeries[date]['4. close']));
+                    });
+                    
+                    const transformed = {
+                        "1W": [timestamps, prices],
+                        metadata: {
+                            symbol: data['Meta Data']['2. Symbol'],
+                            note: "Using daily data for 1W period (fallback)",
+                            dataPoints: timestamps.length
+                        }
+                    };
+                    
+                    transformedEl.value = JSON.stringify(transformed, null, 2);
+                    setStatus(`✅ Daily→1W fallback: ${timestamps.length} points`, 'success');
+                } else {
+                    setStatus('❌ No daily data', 'error');
+                }
+            } catch (error) {
+                setStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDailyFor1M() {
+            // This is the same as the original testDaily() function
+            testDaily();
+        }
+
+        // Show initial status
+        setStatus('🎯 Ready to test Alpha Vantage API endpoints for FIGR data', 'info');
+    </script>
+</body>
+</html>

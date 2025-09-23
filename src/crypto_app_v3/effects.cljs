@@ -24,6 +24,26 @@
                  (js/console.log "❌ Fetch error:" error)
                  (rf/dispatch (conj on-failure error)))))))
 
+;; FIGR-specific fetch that keeps string keys (avoids keyword space issues)
+(rf/reg-fx
+ :fetch-strings
+ (fn [{:keys [url method headers _body on-success on-failure]}]
+   (js/console.log "🏦 FETCH-STRINGS:" url)
+   (-> (js/fetch url
+                 (clj->js {:method  (or method "GET")
+                           :mode    "cors"
+                           :headers (or headers {})}))
+       (.then (fn [response]
+                (if (.-ok response)
+                  (.json response)
+                  (throw (js/Error. (str "HTTP " (.-status response)))))))
+       (.then (fn [data]
+                (js/console.log "🏦 STRINGS JSON:" data)
+                (rf/dispatch (conj on-success (js->clj data)))))  ; NO :keywordize-keys
+       (.catch (fn [error]
+                 (js/console.log "🏦 STRINGS ERROR:" error)
+                 (rf/dispatch (conj on-failure error)))))))
+
 ;; Copy V2 data processing logic (small functions)
 
 (defn extract-prices-from-response [js-data]
