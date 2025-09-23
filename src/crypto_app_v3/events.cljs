@@ -492,19 +492,10 @@
 (rf/reg-event-fx
  :market-data/fallback-check
  (fn [{:keys [db]} [_]]
-   (let [figure-status (get-in db [:provider-status :figure])
-         twelve-status (get-in db [:provider-status :twelve])
-         any-failed? (or (= figure-status :failed) (= twelve-status :failed))]
-     (if any-failed?
-       (do
-         (js/console.log "🔄 LIVE: Some providers failed, triggering GitHub backup")
-         {:http-get {:url "https://raw.githubusercontent.com/franks42/figure-fm-hash-prices/data-updates/data/crypto-prices.json"
-                     :on-success :fetch-success
-                     :on-failure :fetch-failure}})
-       (do
-         (js/console.log "✅ LIVE: All providers successful - no backup needed")
-         {:dispatch [:trigger-flash]
-          :dispatch-later [{:ms 800 :dispatch [:clear-flash]}]})))))
+   ;; LIVE DATA ONLY - NO BACKUP FALLBACK
+   (js/console.log "✅ LIVE DATA ONLY - No GitHub backup used")
+   {:dispatch [:trigger-flash]
+    :dispatch-later [{:ms 800 :dispatch [:clear-flash]}]}))
 
 ;; Main price update event (uses helper functions defined above)
 (rf/reg-event-fx

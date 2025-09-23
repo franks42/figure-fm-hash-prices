@@ -4,11 +4,9 @@
 (def ^:const TWELVE_DATA_API_KEY "b61354a1fe6f45a2a9e01c8c4145e617")
 
 (defn direct-api-enabled? []
-  (let [url-param (str/includes? (.-search js/window.location) "direct=true")
-        local-storage (.getItem js/localStorage "enable-direct-api")
-        enabled? (or url-param local-storage)]
-    (js/console.log "🔍 PHASE 1: Feature flag check - URL:" url-param "LocalStorage:" local-storage "Result:" enabled?)
-    enabled?))
+  ;; REAL-TIME DATA IS THE DEFAULT - no URL parameters needed
+  (js/console.log "🚀 LIVE DATA IS DEFAULT - real-time APIs always enabled")
+  true)
 
 (defn fetch-figure-markets
   "Fetch crypto data from Figure Markets API"

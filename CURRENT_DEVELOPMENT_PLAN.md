@@ -1,8 +1,8 @@
 # Current Development Plan - V6.2.0+
 
 **Project**: Figure Markets Hash Prices Tracker  
-**Current Version**: V6.3.0 Subliminal-Gradient  
-**Status**: ✅ Subliminal gradient charts working, ✅ V5 modals working  
+**Current Version**: V6.3.1 Live-Only-System  
+**Status**: ✅ Real-time data ONLY (no backup), ✅ Subliminal gradients, ✅ V5 modals  
 **Goal**: Subliminal market awareness tool (not professional trading platform)
 
 ## 🚨 **CRITICAL SCALABILITY ISSUE: API Key Limits**
@@ -201,7 +201,7 @@ Tier-2: GitHub Actions JSON → FALLBACK ONLY
 3. Add user API key configuration for scaling
 4. Fine-tune backup vs primary switching logic
 
-## ✅ **Recent Completed Features (v6.3.0)**
+## ✅ **Recent Completed Features (v6.3.1)**
 
 **V5 Modal Fix (MAJOR):**
 - **Root cause identified**: CSS clipping by `#v5-prototype` container
@@ -217,7 +217,13 @@ Tier-2: GitHub Actions JSON → FALLBACK ONLY
 - Simplified URL structure: `http://localhost:8000/` = V5
 - Removed feature flag complexity and version switching logic
 
-**Subliminal Gradient System (NEW):**
+**Live-Only System (MAJOR):**
+- **Oracle-verified removal**: Eliminated ALL GitHub backup fallback code (events.cljs)
+- **Real-time only**: direct-api-enabled? always returns true (no URL parameters)
+- **Zero backup usage**: Even if APIs fail, no GitHub Actions data requested
+- **True live-first**: Figure Markets + Twelve Data exclusively, no fallbacks
+
+**Subliminal Gradient System:**
 - **Magnitude-based coloring**: Chart fill areas colored by percentage change (0.01% subtle → 10%+ intense)
 - **Clean aesthetics**: White graph lines, white percentage text, black chart backgrounds  
 - **Saturation gradient**: Green (positive) to red (negative) with intensity matching magnitude

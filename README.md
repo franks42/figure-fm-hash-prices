@@ -4,7 +4,7 @@ A **V5-only** cryptocurrency and stock price tracking system with professional t
 
 ## Current Version
 
-- **V6.3.0 (Subliminal Gradient)**: Gradient chart fills based on percentage magnitude, white text/lines
+- **V6.3.1 (Live-Only)**: Real-time data ONLY - no GitHub backup fallback, subliminal gradient charts
 - **URL**: `http://localhost:8000/` (V5 interface) or `http://localhost:8000/simple.html` (demo)
 
 ## Live-Data-First Architecture
@@ -20,10 +20,10 @@ Real-time cryptocurrency and stock tracker with **direct API integration** and *
 - **Portfolio Management**: Add/edit/remove portfolio with modal interface
 - **Real-time Data**: Direct API integration with Figure Markets and Twelve Data
 
-### 🚀 **Live Data Sources**
+### 🚀 **Live Data Sources (ONLY)**
 - **Figure Markets API**: HASH, BTC, ETH, SOL, UNI, XRP, LINK, FIGR_HELOC (real-time)
 - **Twelve Data API**: FIGR stock quotes + historical charts (real-time)
-- **GitHub Actions**: Backup data source (10-minute updates)
+- **No backup data**: GitHub Actions completely disabled - live APIs only
 
 ### 🏗️ **Technical Stack**
 - **Frontend**: ClojureScript + Scittle + Re-frame + Reagent + uPlot
