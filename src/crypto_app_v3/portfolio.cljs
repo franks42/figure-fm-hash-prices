@@ -64,8 +64,8 @@
  (fn [db [_ loaded-portfolio]]
    (assoc-in db [:portfolio :holdings] loaded-portfolio)))
 
-;; Startup event
-(rf/reg-event-fx
- :portfolio/initialize
- (fn [_ _]
-   {:portfolio/load nil}))
+;; Startup event - DISABLED: V5 system handles this now
+;; (rf/reg-event-fx
+;;  :portfolio/initialize
+;;  (fn [_ _]
+;;    {:portfolio/load nil}))

@@ -280,6 +280,14 @@
 
 ;; Chart period selection events - GLOBAL like currency
 (rf/reg-event-fx
+ :chart/set-period
+ (fn [{:keys [db]} [_ period]]
+   (js/console.log "⏰ Setting GLOBAL period to" period)
+   {:db (assoc-in db [:chart :current-period] period)
+    :fx [[:local-storage/persist-period period]
+         [:dispatch-later [{:ms 100 :dispatch [:chart/fetch-all-historical period]}]]]}))
+
+(rf/reg-event-fx
  :chart/cycle-period
  (fn [{:keys [db]} [_]]
    (let [current-period (get-in db [:chart :current-period] "1W")
@@ -287,11 +295,16 @@
                        "24H" "1W"
                        "1W" "1M"
                        "1M" "24H"
-                       "1W")  ; Default fallback
-         crypto-ids (get db :price-keys [])]
+                       "1W")]  ; Default fallback
      (js/console.log "⏰ Cycling GLOBAL period from" current-period "to" next-period)
-     {:db (assoc-in db [:chart :current-period] next-period)
-      :fx (mapv (fn [crypto-id] [:dispatch [:fetch-historical-data-period crypto-id next-period]]) crypto-ids)})))
+     {:fx [[:dispatch [:chart/set-period next-period]]]})))
+
+(rf/reg-event-fx
+ :chart/fetch-all-historical
+ (fn [{:keys [db]} [_ period]]
+   (let [crypto-ids (get db :price-keys [])]
+     (js/console.log "📈 Fetching historical data for all assets, period:" period)
+     {:fx (mapv (fn [crypto-id] [:dispatch [:fetch-historical-data-period crypto-id period]]) crypto-ids)})))
 
 (rf/reg-event-db
  :clear-error
@@ -353,11 +366,11 @@
 
 (rf/reg-event-db
  :portfolio/restore
- (fn [db [_ js-holdings]]
-   (js/console.log "📖 Restoring JS holdings to database:" js-holdings)
-   (js/console.log "📖 JS holdings type:" (type js-holdings))
-   ;; Store JS object directly to avoid persistent map conversion
-   (assoc-in db [:portfolio :holdings] js-holdings)))
+ (fn [db [_ holdings-map]]
+   (js/console.log "📖 Restoring CLJS holdings to database:" holdings-map)
+   (js/console.log "📖 Holdings map type:" (type holdings-map))
+   ;; Ensure we store a proper CLJS map for subscriptions
+   (assoc-in db [:portfolio :holdings] (js->clj holdings-map :keywordize-keys false))))
 
 (rf/reg-event-fx
  :portfolio/initialize
@@ -434,12 +447,17 @@
        (assoc-in [:currency :current] currency))))
 
 ;; V5 Portfolio data layer events
-(rf/reg-event-db
+(rf/reg-event-fx
  :portfolio/set-qty
- (fn [db [_ crypto-id quantity]]
-   (if (and quantity (> quantity 0))
-     (assoc-in db [:portfolio :holdings crypto-id] quantity)
-     (update-in db [:portfolio :holdings] dissoc crypto-id))))
+ (fn [{:keys [db]} [_ crypto-id quantity]]
+   (js/console.log "📝 V5 Portfolio set-qty called:" crypto-id quantity)
+   (let [updated-holdings (if (and quantity (> quantity 0))
+                            (assoc (get-in db [:portfolio :holdings] {}) crypto-id quantity)
+                            (dissoc (get-in db [:portfolio :holdings] {}) crypto-id))
+         updated-db (assoc-in db [:portfolio :holdings] updated-holdings)]
+     (js/console.log "📝 V5 Updated holdings:" updated-holdings)
+     {:db updated-db
+      :fx [[:local-storage/persist-portfolio updated-holdings]]})))
 
 (rf/reg-event-db
  :portfolio/remove

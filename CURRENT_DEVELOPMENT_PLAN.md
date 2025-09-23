@@ -2,7 +2,7 @@
 
 **Project**: Figure Markets Hash Prices Tracker  
 **Current Version**: V5.0.0-prototype  
-**Status**: V5 with FIGR charts complete, CRITICAL scalability issue identified  
+**Status**: V5 with FIGR charts + persistence complete, CRITICAL scalability issue identified  
 **Goal**: Subliminal market awareness tool (not professional trading platform)
 
 ## 🚨 **CRITICAL SCALABILITY ISSUE: API Key Limits**
@@ -34,6 +34,25 @@
 5. Documentation for obtaining free Twelve Data keys
 
 **Impact**: Without this, FIGR charts will fail once usage grows beyond a few users.
+
+## ✅ **Recent Completed Features (v5.1.1)**
+
+**Period Persistence:**
+- Selected chart periods (24H/1W/1M) now survive page refreshes
+- localStorage integration with proper initialization sequence
+- Global period changes affect all assets consistently
+
+**Portfolio Persistence Fixed:**
+- V5 portfolio quantities now persist across page refreshes  
+- Root cause: Duplicate event handlers between V3/V4/V5 systems
+- Solution: Disabled conflicting V4 handler, consolidated to V5 system
+- Data flow: CLJS map → localStorage → proper restoration on startup
+
+**Architecture Lessons:**
+- Version separation is critical for maintainability
+- Mixing V3/V4/V5 systems created subtle "Frankenstein" bugs
+- Silent event handler overwrites caused hard-to-debug failures
+- Need better version boundaries and migration strategies
 
 ## 🎯 **Project Vision**
 

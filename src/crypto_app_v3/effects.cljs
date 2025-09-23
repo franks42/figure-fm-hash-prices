@@ -219,19 +219,23 @@
  :local-storage/load-portfolio
  (fn [_]
    (try
-     (js/console.log "📖 Loading portfolio from localStorage...")
+     (js/console.log "📖 V5 LOAD: Starting portfolio load from localStorage...")
+     (js/console.log "📖 V5 LOAD: About to call getItem...")
      (let [stored-data (.getItem js/localStorage "crypto-portfolio-v3-simple")]
-       (js/console.log "📖 Raw stored data:" stored-data)
-       (when stored-data
-         (let [js-data (.parse js/JSON stored-data)
-               ;; Keep as JS object - don't convert to ClojureScript
-               plain-data (js->clj js-data :keywordize-keys false)]
-           (js/console.log "📖 JS parsed data:" js-data)
-           (js/console.log "📖 Plain data:" plain-data)
-           (js/console.log "📖 Plain data type:" (type plain-data))
-           (rf/dispatch [:portfolio/restore js-data]))))  ; Pass JS object directly
+       (js/console.log "📖 V5 LOAD: Raw stored data:" stored-data)
+       (js/console.log "📖 V5 LOAD: Stored data type:" (type stored-data))
+       (js/console.log "📖 V5 LOAD: Stored data truthy?" (boolean stored-data))
+       (if stored-data
+         (do
+           (js/console.log "📖 V5 LOAD: Data exists, parsing...")
+           (let [clj-map (js->clj (js/JSON.parse stored-data) :keywordize-keys false)]
+             (js/console.log "📖 V5 LOAD: Parsed as CLJS map:" clj-map)
+             (js/console.log "📖 V5 LOAD: Map type:" (type clj-map))
+             (js/console.log "📖 V5 LOAD: About to dispatch restore event...")
+             (rf/dispatch [:portfolio/restore clj-map])))
+         (js/console.log "📖 V5 LOAD: No data found, skipping restore")))
      (catch :default e
-       (js/console.warn "❌ Failed to load portfolio from localStorage:" e)))))
+       (js/console.warn "❌ V5 LOAD: Failed to load portfolio from localStorage:" e)))))
 
 (rf/reg-fx
  :local-storage/persist-currency
@@ -243,3 +247,15 @@
  (fn [_]
    (when-let [currency (js/localStorage.getItem "selected-currency")]
      (rf/dispatch [:currency/set currency]))))
+
+;; Period persistence effects
+(rf/reg-fx
+ :local-storage/persist-period
+ (fn [period]
+   (js/localStorage.setItem "selected-period" period)))
+
+(rf/reg-fx
+ :local-storage/load-period
+ (fn [_]
+   (when-let [period (js/localStorage.getItem "selected-period")]
+     (rf/dispatch [:chart/set-period period]))))

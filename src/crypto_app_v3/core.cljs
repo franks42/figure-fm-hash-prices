@@ -30,12 +30,20 @@
 
 (defn restore-portfolio []
   (js/console.log "📂 V3 Restoring portfolio from localStorage...")
-  (portfolio-atoms/restore-portfolio))
+  ;; Restore V4 atoms (for legacy support)
+  (portfolio-atoms/restore-portfolio)
+  ;; Restore V5 re-frame portfolio
+  (rf/dispatch-sync [:portfolio/initialize]))
 
 (defn restore-currency []
   (js/console.log "💱 V3 Restoring currency from localStorage...")
   (when-let [currency (js/localStorage.getItem "selected-currency")]
     (rf/dispatch-sync [:currency/set currency])))
+
+(defn restore-period []
+  (js/console.log "⏰ V3 Restoring period from localStorage...")
+  (when-let [period (js/localStorage.getItem "selected-period")]
+    (rf/dispatch-sync [:chart/set-period period])))
 
 (defn mount-app []
   (rdom/render [views/app-component] (.getElementById js/document "app")))
@@ -58,6 +66,7 @@
   (initialize-db)
   (restore-portfolio)
   (restore-currency)
+  (restore-period)
   (mount-app)
   (setup-timeout-handler)
   (start-data-fetching)
