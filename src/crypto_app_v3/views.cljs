@@ -412,11 +412,10 @@
            (when (< idx (dec (count data-sources)))
              [:span {:class "text-gray-500 mx-1"} "•"])])]])))
 
-;; Feature flag debug indicator
+;; V5 interface indicator (V5 is the only interface)
 (defn layout-version-indicator []
-  (let [new-layout? @(rf/subscribe [:ui/new-layout?])]
-    [:div {:class "fixed top-16 left-5 z-20 bg-purple-500/20 border border-purple-500/40 rounded px-2 py-1 text-xs"}
-     (str "UI: " (if new-layout? "V5 (New)" "V4 (Current)"))]))
+  [:div {:class "fixed top-16 left-5 z-20 bg-neon-green/20 border border-neon-green/40 rounded px-2 py-1 text-xs"}
+   "V5 Interface"])
 
 ;; Last update footer (copy V2)
 (defn last-update-footer []

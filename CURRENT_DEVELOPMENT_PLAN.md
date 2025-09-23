@@ -1,8 +1,8 @@
-# Current Development Plan - V4.0.0+
+# Current Development Plan - V6.2.0+
 
 **Project**: Figure Markets Hash Prices Tracker  
-**Current Version**: V5.0.0-prototype  
-**Status**: V5 with FIGR charts + persistence complete, CRITICAL scalability issue identified  
+**Current Version**: V6.2.0 V5-Modal-Fix  
+**Status**: ✅ V5 modals working, ❌ loading performance issue identified  
 **Goal**: Subliminal market awareness tool (not professional trading platform)
 
 ## 🚨 **CRITICAL SCALABILITY ISSUE: API Key Limits**
@@ -201,24 +201,27 @@ Tier-2: GitHub Actions JSON → FALLBACK ONLY
 3. Add user API key configuration for scaling
 4. Fine-tune backup vs primary switching logic
 
-## ✅ **Recent Completed Features (v5.1.1)**
+## ✅ **Recent Completed Features (v6.2.0)**
 
-**Period Persistence:**
-- Selected chart periods (24H/1W/1M) now survive page refreshes
-- localStorage integration with proper initialization sequence
-- Global period changes affect all assets consistently
+**V5 Modal Fix (MAJOR):**
+- **Root cause identified**: CSS clipping by `#v5-prototype` container
+- **Solution implemented**: Separated modals into dedicated `#modal-root` attached to `<body>`
+- **Portfolio modals**: Add/Edit/Cancel/Save all working correctly
+- **Currency selector**: Modal opens, selection works, persists across refresh
+- **Full testing**: Playwright verification of all modal functionality
+- **localStorage persistence**: Portfolio quantities and currency selection persist correctly
 
-**Portfolio Persistence Fixed:**
-- V5 portfolio quantities now persist across page refreshes  
-- Root cause: Duplicate event handlers between V3/V4/V5 systems
-- Solution: Disabled conflicting V4 handler, consolidated to V5 system
-- Data flow: CLJS map → localStorage → proper restoration on startup
+**V5-Only Interface:**
+- Eliminated V4/V5 confusion - V5 is now the ONLY interface
+- Updated all documentation to reflect V5-only status
+- Simplified URL structure: `http://localhost:8000/` = V5
+- Removed feature flag complexity and version switching logic
 
-**Architecture Lessons:**
-- Version separation is critical for maintainability
-- Mixing V3/V4/V5 systems created subtle "Frankenstein" bugs
-- Silent event handler overwrites caused hard-to-debug failures
-- Need better version boundaries and migration strategies
+**Architecture Achievements:**
+- Clean separation of modals from main content (no CSS clipping)
+- Robust localStorage persistence for user preferences
+- Eliminated legacy V4 rendering confusion
+- Oracle-validated systematic debugging approach
 
 ## 🎯 **Project Vision**
 

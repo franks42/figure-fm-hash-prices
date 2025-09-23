@@ -80,8 +80,7 @@
 (rf/reg-sub
  :ui/new-layout?
  (fn [_]
-   ;; V5 is now the only interface - always return true
-   (js/console.log "🎨 V5 is the only layout - always enabled")
+   ;; V5 is the ONLY interface - no V4 option exists
    true))
 
 ;; Chart period selection subscriptions - GLOBAL like currency

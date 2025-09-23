@@ -1,23 +1,23 @@
 # Figure Markets Hash Prices Tracker
 
-A **live-data-first** cryptocurrency and stock price tracking system with real-time API integration. Features professional terminal-style UI with consistent data sources and interactive portfolio management.
+A **V5-only** cryptocurrency and stock price tracking system with professional terminal-style interface. Features working portfolio modals, multi-asset grid layout, and real-time data integration.
 
 ## Current Version
 
-- **V6.1.0 (Live Data)**: Real-time API integration with Oracle-validated architecture
-- **URL**: `http://localhost:8000/?direct=true` (live data) or `http://localhost:8000/` (backup data)
+- **V6.2.0 (V5 Modal Fix)**: Portfolio and currency modals working, V5-only interface
+- **URL**: `http://localhost:8000/` (V5 interface) or `http://localhost:8000/simple.html` (demo)
 
 ## Live-Data-First Architecture
 
 Real-time cryptocurrency and stock tracker with **direct API integration** and **Oracle-validated architecture**.
 
 ### ✅ **Core Features**
-- **Real-time Data**: Direct API calls (Figure Markets + Twelve Data) 
-- **Professional Charts**: Rich intraday FIGR charts (5min/15min intervals)
-- **Consistent Data Sources**: No more high/low logic errors from mixed sources
-- **Multi-Currency Support**: 6 currencies with real-time conversion
-- **Portfolio Management**: Persistent holdings with real-time calculations
-- **Period Persistence**: Chart periods (24H/1W/1M) survive page refresh
+- **V5 Terminal Interface**: Professional multi-asset grid layout with terminal styling
+- **Working Modals**: Portfolio and currency selector modals (CSS clipping fixed)
+- **localStorage Persistence**: Portfolio quantities and currency selection persist
+- **Multi-Currency Support**: 6 currencies with working modal selector
+- **Portfolio Management**: Add/edit/remove portfolio with modal interface
+- **Real-time Data**: Direct API integration with Figure Markets and Twelve Data
 
 ### 🚀 **Live Data Sources**
 - **Figure Markets API**: HASH, BTC, ETH, SOL, UNI, XRP, LINK, FIGR_HELOC (real-time)
@@ -119,9 +119,9 @@ node test-live-data.js        # API integration
 # Start development server
 python3 -m http.server 8000
 
-# Development URLs
-http://localhost:8000/?direct=true    # Live-data-first (real-time APIs)
-http://localhost:8000/                # Backup data (GitHub Actions)
+# V5 Interface URLs
+http://localhost:8000/                # V5 interface (full features)
+http://localhost:8000/simple.html     # V5 demo (fast loading)
 ```
 
 ### 🔧 **Code Quality**
