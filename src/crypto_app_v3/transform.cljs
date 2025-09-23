@@ -7,7 +7,7 @@
 ;;  :timestamp ms, :usd price, :day_high, :day_low, :usd_24h_change %, 
 ;;  :usd_24h_vol, :trades_24h, :symbol, :bid, :ask, :last_price}
 
-(defmulti transform->canonical 
+(defmulti transform->canonical
   "Transform provider response to canonical format"
   (fn [provider _raw] provider))
 
@@ -17,24 +17,29 @@
   (let [data (get raw-response "data")]
     (reduce (fn [acc item]
               (let [symbol (-> (get item "symbol" "")
-                              (str/replace "-USD" "")
-                              str/lower-case)]
-                (when (contains? #{"hash" "btc" "eth" "figr_heloc" "link" "sol" "uni" "xrp"} symbol)
-                  (assoc acc (keyword symbol)
-                         {:id symbol
-                          :type "crypto"
-                          :source :figure
-                          :timestamp (js/Date.now)
-                          :usd (js/parseFloat (get item "midMarketPrice" "0"))
-                          :day_high (js/parseFloat (get item "high24h" "0"))
-                          :day_low (js/parseFloat (get item "low24h" "0"))
-                          :usd_24h_change (* (js/parseFloat (get item "percentageChange24h" "0")) 100)
-                          :usd_24h_vol (js/parseFloat (get item "volume24h" "0"))
-                          :trades_24h (js/parseInt (get item "tradeCount24h" "0"))
-                          :symbol (get item "symbol" "")
-                          :bid (js/parseFloat (get item "bestBid" "0"))
-                          :ask (js/parseFloat (get item "bestAsk" "0"))
-                          :last_price (js/parseFloat (get item "lastTradedPrice" "0"))}))))
+                               (str/replace "-USD" "")
+                               str/lower-case)]
+                (if (contains? #{"hash" "btc" "eth" "figr_heloc" "link" "sol" "uni" "xrp"} symbol)
+                  (do
+                    (js/console.log "✅ TRANSFORM: Including" symbol)
+                    (assoc acc (keyword symbol)
+                           {:id symbol
+                            :type "crypto"
+                            :source :figure
+                            :timestamp (js/Date.now)
+                            :usd (js/parseFloat (get item "midMarketPrice" "0"))
+                            :day_high (js/parseFloat (get item "high24h" "0"))
+                            :day_low (js/parseFloat (get item "low24h" "0"))
+                            :usd_24h_change (* (js/parseFloat (get item "percentageChange24h" "0")) 100)
+                            :usd_24h_vol (js/parseFloat (get item "volume24h" "0"))
+                            :trades_24h (js/parseInt (get item "tradeCount24h" "0"))
+                            :symbol (get item "symbol" "")
+                            :bid (js/parseFloat (get item "bestBid" "0"))
+                            :ask (js/parseFloat (get item "bestAsk" "0"))
+                            :last_price (js/parseFloat (get item "lastTradedPrice" "0"))}))
+                  (do
+                    (js/console.log "⏭️ TRANSFORM: Skipping" symbol)
+                    acc))))
             {}
             data)))
 
@@ -73,14 +78,24 @@
   (let [cleaned-data (dissoc raw-response "timestamp" "source" "last_update")]
     (reduce (fn [acc [asset-key asset-data]]
               (if (map? asset-data)
-                (assoc acc asset-key 
-                       (assoc asset-data 
+                (assoc acc asset-key
+                       (assoc asset-data
                               :id (name asset-key)
                               :source :github
                               :timestamp (js/Date.now)))
                 (assoc acc asset-key asset-data)))
             {}
             cleaned-data)))
+
+;; Format conversion shim (Oracle-recommended)
+(defn canonical->v5
+  "Convert {:hash {:usd 1.0}} → {\"hash\" {\"usd\" 1.0}} (deep keyword→string)"
+  [canonical]
+  (into {}
+        (for [[k v] canonical]
+          [(name k)                       ; top-level key → string
+           (into {} (for [[ik iv] v]      ; inner keys → string
+                      [(name ik) iv]))])))
 
 ;; Merge strategy for mixed data sources
 (defn fill-missing-data

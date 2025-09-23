@@ -1,52 +1,58 @@
 # Figure Markets Hash Prices Tracker
 
-A real-time cryptocurrency and digital asset price tracking system with multi-currency support and portfolio management. Features modern, reactive UI for tracking Figure Markets assets (HASH, FIGR) alongside major cryptocurrencies.
+A **live-data-first** cryptocurrency and stock price tracking system with real-time API integration. Features professional terminal-style UI with consistent data sources and interactive portfolio management.
 
 ## Current Version
 
-- **V4.0.0 (Production)**: Re-frame architecture with background price charts - `index.html`
+- **V6.1.0 (Live Data)**: Real-time API integration with Oracle-validated architecture
+- **URL**: `http://localhost:8000/?direct=true` (live data) or `http://localhost:8000/` (backup data)
 
-## Architecture Overview
+## Live-Data-First Architecture
 
-Modern reactive crypto tracker with real-time background price charts and multi-currency portfolio management.
+Real-time cryptocurrency and stock tracker with **direct API integration** and **Oracle-validated architecture**.
 
-### Core Features  
-- ✅ **Background Price Charts**: 24h historical data from Figure Markets API (browser-direct, CORS enabled)
-- ✅ **Multi-Currency Support**: 10 global currencies with live exchange rate conversion
-- ✅ **Portfolio Management**: Persistent holdings with real-time value calculations
-- ✅ **Robust Data Pipeline**: Fault-tolerant GitHub Actions with fallback handling
-- ✅ **Visual Feedback**: Stale data warnings, loading indicators, update animations
-- ✅ **iOS Widget Ready**: Widget-optimized layouts for screenshot automation
+### ✅ **Core Features**
+- **Real-time Data**: Direct API calls (Figure Markets + Twelve Data) 
+- **Professional Charts**: Rich intraday FIGR charts (5min/15min intervals)
+- **Consistent Data Sources**: No more high/low logic errors from mixed sources
+- **Multi-Currency Support**: 6 currencies with real-time conversion
+- **Portfolio Management**: Persistent holdings with real-time calculations
+- **Period Persistence**: Chart periods (24H/1W/1M) survive page refresh
 
-### Technical Stack
-- **Frontend**: ClojureScript + Scittle (no-build) + Re-frame + uPlot charts
-- **Data**: Figure Markets API + Yahoo Finance with 10-minute updates  
-- **Charts**: Real-time background charts with 24h historical price trends
-- **Hosting**: GitHub Pages with automated data pipeline
+### 🚀 **Live Data Sources**
+- **Figure Markets API**: HASH, BTC, ETH, SOL, UNI, XRP, LINK, FIGR_HELOC (real-time)
+- **Twelve Data API**: FIGR stock quotes + historical charts (real-time)
+- **GitHub Actions**: Backup data source (10-minute updates)
+
+### 🏗️ **Technical Stack**
+- **Frontend**: ClojureScript + Scittle + Re-frame + Reagent + uPlot
+- **APIs**: Direct browser calls with CORS support
+- **Testing**: Playwright automated browser testing
+- **Architecture**: Live-first with graceful fallback to backup data
 
 ## Interface Features
 
-### Multi-Currency Support
-- **10 Global Currencies**: USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY, KRW, SEK
-- **Real-time Exchange Rates**: Live currency conversion with exchange rate indicators
-- **Persistent Preferences**: Selected currency saved across sessions
-- **Visual Indicators**: Shows when using mock data vs. live exchange rates
+### 💱 **Real-Time Multi-Currency**
+- **6 Major Currencies**: USD, EUR, GBP, JPY, CAD, AUD
+- **Live Conversion**: All prices converted in real-time
+- **Persistent Selection**: Currency choice saved across sessions
+- **Interactive Selector**: Modal overlay for currency switching
 
-### Enhanced Portfolio Management
-- **Multi-currency Valuation**: View portfolio value in any supported currency
-- **Persistent Storage**: Holdings saved locally with automatic restoration
-- **Per-asset Management**: Individual portfolio panels for each asset
-- **Live Calculations**: Real-time portfolio value updates with currency conversion
+### 📊 **Live Portfolio Management** 
+- **Individual Holdings**: Per-asset portfolio quantities
+- **Real-time Valuation**: Portfolio value in selected currency
+- **Persistent Storage**: Holdings survive page refresh (V5 re-frame system)
+- **Interactive Editing**: Modal overlay for quantity management
+- **Total Value Display**: Aggregated portfolio value across all assets
 
-### Market Data Display
-- **Figure Markets Assets**: HASH token and FIGR stock with specialized formatting
-- **Major Cryptocurrencies**: BTC, ETH, LINK, SOL, UNI, XRP
-- **Comprehensive Metrics**:
-  - Current prices with currency conversion
-  - 24h volume in selected currency
-  - Bid/Ask spreads
-  - Price change percentages
-- **Real-time Updates**: 30-second auto-refresh with visual indicators
+### 📈 **Live Market Data**
+- **Crypto Assets**: HASH, BTC, ETH, SOL, UNI, XRP, LINK, FIGR_HELOC (Figure Markets API)
+- **Stock Data**: FIGR (Twelve Data API with real-time quotes)
+- **Consistent Sources**: Current price + high/low from same API (no mixing)
+- **Rich Charts**: 
+  - Crypto: Figure Markets historical data
+  - FIGR: Twelve Data intraday (5min/15min/daily intervals)
+- **Live Updates**: 30-second polling with real-time API calls
 
 ### User Experience
 - **Glass-morphism Design**: Modern UI with transparency effects
@@ -57,21 +63,29 @@ Modern reactive crypto tracker with real-time background price charts and multi-
   - Warning system for mock data usage
 - **Error Handling**: Graceful fallbacks with clear error messaging
 
-## Technical Architecture
+## Live-Data-First Architecture
 
-### Data Pipeline
-- **Active Pipeline**: `.github/workflows/fetch-crypto-data-nbb.yml`
-  - Uses ClojureScript (nbb) for data processing
-  - Runs every 10 minutes
-  - Multi-source fallback: Yahoo Finance → Alpha Vantage → Hardcoded fallback
-- **Automated Fetching**: GitHub Actions retrieve data every 10 minutes
-- **Standardized Format**: All data normalized to consistent schema
-- **Branch Strategy**: Data stored in `data-updates` branch, code in `main`
+### 🎯 **Data Flow (Oracle-Validated)**
+```
+Tier-1: Direct APIs (Primary) → Real-time data
+├── Figure Markets API: Crypto current prices + historical charts
+└── Twelve Data API: FIGR stock quotes + historical charts
 
-### Frontend Stack
-- **ClojureScript + Scittle**: No-build reactive UI with Reagent
-- **Tailwind CSS**: Utility-first styling with custom components
-- **Modular Architecture**: Separate namespaces for state, effects, and views
+Tier-2: GitHub Actions (Backup) → 10-minute batch updates
+└── Fallback when live APIs fail
+```
+
+### 🔄 **Canonical Data Pipeline**
+```
+┌─────────────┐   raw JSON   ┌─────────────────┐  V5 format   ┌─────────────┐
+│ Provider API │─────────────►│ Transformer     │─────────────►│ App State   │
+└─────────────┘               └─────────────────┘              └─────────────┘
+```
+
+### 🧪 **Testing Infrastructure**
+- **Playwright**: Automated browser testing for all functionality
+- **Test Scripts**: `test-current-state.js`, `test-buttons.js`, `test-live-data.js`
+- **Mandatory Testing**: No functionality claimed working without Playwright verification
 
 ### Data Schema
 ```clojure
@@ -86,12 +100,36 @@ Modern reactive crypto tracker with real-time background price charts and multi-
  :timestamp 1705234567890}
 ```
 
-## Deployment
+## Development & Testing
 
-### Live Interface
-- **Production**: https://franks42.github.io/figure-fm-hash-prices/
-- **Local Development**: `python3 -m http.server 8000`
-- **Data Updates**: Automatic via GitHub Actions every 10 minutes
+### 🧪 **Playwright Testing (Mandatory)**
+```bash
+# Install testing infrastructure
+npm install playwright
+npx playwright install chromium
+
+# Test before claiming anything works
+node test-current-state.js    # Basic functionality
+node test-buttons.js          # UI interactions
+node test-live-data.js        # API integration
+```
+
+### 🚀 **Local Development**
+```bash
+# Start development server
+python3 -m http.server 8000
+
+# Development URLs
+http://localhost:8000/?direct=true    # Live-data-first (real-time APIs)
+http://localhost:8000/                # Backup data (GitHub Actions)
+```
+
+### 🔧 **Code Quality**
+```bash
+# Always run after changes
+clj-kondo --lint src/crypto_app_v3/
+cljfmt fix src/crypto_app_v3/
+```
 
 ### Key Files
 

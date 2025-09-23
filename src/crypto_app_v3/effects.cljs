@@ -1,6 +1,7 @@
 (ns crypto-app-v3.effects
   (:require [re-frame.core :as rf]
-            [crypto-app-v3.direct-api :as da]))
+            [crypto-app-v3.direct-api :as da]
+            [crypto-app-v3.transform :as tx]))
 
 ;; Simple native fetch effect for Scittle compatibility
 (js/console.log "🔧 Registering :fetch effect handler...")
@@ -117,15 +118,29 @@
    (when-let [element (.getElementById js/document element-id)]
      (.remove (.-classList element) class-name))))
 
-;; PHASE 1: Direct API effect handlers (Oracle-recommended)
+;; Live-data-first orchestrated fetch (Oracle-recommended)
 (rf/reg-fx
- :direct-api/fetch
- (fn [{:keys [api on-success on-failure symbol]}]
-   (let [p (case api
-             :figure (da/fetch-figure-markets)
-             :twelve (da/fetch-twelve-data-quote symbol))]
-     (.then p #(rf/dispatch (conj on-success (js->clj % :keywordize-keys false))))
-     (.catch p #(rf/dispatch (conj on-failure %))))))
+ :market-data/pull-live
+ (fn [_]
+   (js/console.log "🚀 LIVE: Orchestrated fetch - parallel API calls")
+   ;; Figure Markets for crypto
+   (-> (da/fetch-figure-markets)
+       (.then (fn [data]
+                (js/console.log "✅ LIVE: Figure Markets success")
+                (let [transformed (tx/transform->canonical :figure (js->clj data :keywordize-keys false))]
+                  (rf/dispatch [:provider/success :figure transformed]))))
+       (.catch (fn [error]
+                 (js/console.error "❌ LIVE: Figure Markets failed:" error)
+                 (rf/dispatch [:provider/failure :figure error]))))
+   ;; Twelve Data for FIGR  
+   (-> (da/fetch-twelve-data-quote "FIGR")
+       (.then (fn [data]
+                (js/console.log "✅ LIVE: Twelve Data success")
+                (let [transformed (tx/transform->canonical :twelve (js->clj data :keywordize-keys false))]
+                  (rf/dispatch [:provider/success :twelve transformed]))))
+       (.catch (fn [error]
+                 (js/console.error "❌ LIVE: Twelve Data failed:" error)
+                 (rf/dispatch [:provider/failure :twelve error]))))))
 
 ;; Main fetch events with PHASE 1 routing
 (rf/reg-event-fx
@@ -133,10 +148,8 @@
  (fn [_ _]
    (js/console.log "🚀 PHASE 1: Fetch crypto data - direct API enabled?" (da/direct-api-enabled?))
    (if (da/direct-api-enabled?)
-     {:direct-api/fetch {:api :figure
-                         :on-success [:fetch-success]
-                         :on-failure [:fetch-failure]}
-      :dispatch-later [{:ms 200 :dispatch [:fetch-figr-quote]}]
+     {:fx [[:market-data/pull-live]
+           [:dispatch-later [{:ms 3000 :dispatch [:market-data/fallback-check]}]]]
       :dom-add-class {:element-id "fetch-indicator" :class-name "active"}}
      {:http-get {:url (data-url)
                  :on-success :fetch-success

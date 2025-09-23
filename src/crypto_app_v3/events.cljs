@@ -1,6 +1,7 @@
 (ns crypto-app-v3.events
   (:require [re-frame.core :as rf]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [crypto-app-v3.transform :as tx]))
 
 ;; Copy V2 constants (small, focused)
 (def ^:const POLL_INTERVAL_MS 30000)
@@ -463,6 +464,47 @@
  :portfolio/remove
  (fn [db [_ crypto-id]]
    (update-in db [:portfolio :holdings] dissoc crypto-id)))
+
+;; Live-data-first provider events (Oracle-recommended)
+(rf/reg-event-db
+ :provider/success
+ (fn [db [_ provider canonical-data]]
+   (js/console.log "✅ LIVE: Provider success -" provider "assets:" (count (keys canonical-data)))
+   (let [v5-data (tx/canonical->v5 canonical-data)  ; Oracle's shim
+         current-prices (:prices db)
+         updated-prices (merge current-prices v5-data)
+         new-keys (keys updated-prices)]
+     (js/console.log "🔄 LIVE: Converted to V5 format -" (keys v5-data))
+     (-> db
+         (assoc :prices updated-prices)
+         (assoc :price-keys new-keys)
+         (assoc :last-update (update-timestamp))
+         (assoc-in [:ui :loading?] false)
+         (assoc-in [:ui :error] nil)
+         (assoc-in [:provider-status provider] :success)))))
+
+(rf/reg-event-db
+ :provider/failure
+ (fn [db [_ provider error]]
+   (js/console.error "❌ LIVE: Provider failure -" provider ":" error)
+   (assoc-in db [:provider-status provider] :failed)))
+
+(rf/reg-event-fx
+ :market-data/fallback-check
+ (fn [{:keys [db]} [_]]
+   (let [figure-status (get-in db [:provider-status :figure])
+         twelve-status (get-in db [:provider-status :twelve])
+         any-failed? (or (= figure-status :failed) (= twelve-status :failed))]
+     (if any-failed?
+       (do
+         (js/console.log "🔄 LIVE: Some providers failed, triggering GitHub backup")
+         {:http-get {:url "https://raw.githubusercontent.com/franks42/figure-fm-hash-prices/data-updates/data/crypto-prices.json"
+                     :on-success :fetch-success
+                     :on-failure :fetch-failure}})
+       (do
+         (js/console.log "✅ LIVE: All providers successful - no backup needed")
+         {:dispatch [:trigger-flash]
+          :dispatch-later [{:ms 800 :dispatch [:clear-flash]}]})))))
 
 ;; Main price update event (uses helper functions defined above)
 (rf/reg-event-fx

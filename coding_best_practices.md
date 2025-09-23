@@ -11,6 +11,27 @@ cljfmt fix src/crypto_app_v3/
 
 **CRITICAL RULE**: NEVER ask the user to test code that has not passed `clj-kondo` without errors.
 
+### 🧪 MANDATORY: Playwright Testing Before Claims
+```bash
+# ALWAYS test functionality with Playwright before claiming it works:
+node test-current-state.js        # Basic functionality
+node test-buttons.js              # UI interactions  
+node test-live-data.js            # API integrations
+node test-debug-loading.js        # Loading states
+```
+
+**ABSOLUTE RULE**: 
+- **NEVER** claim "it works" or "should work" without Playwright verification
+- **NEVER** say "try this" without testing it yourself first
+- **ALWAYS** create and run Playwright tests for any new functionality
+- **ALWAYS** test edge cases (button clicks, modal states, error conditions)
+
+**Why this matters:**
+- Prevents wasted user time debugging obviously broken code
+- Catches browser-specific issues that don't show in server-side testing
+- Validates actual user interactions, not just data flow
+- Playwright shows real JavaScript errors and timing issues
+
 ### Testing Requirements
 ```bash
 # Testing workflow - AFTER linting passes:
@@ -130,7 +151,31 @@ Problem identified → Consult Oracle → Implement solution → Test & verify
 python3 -m http.server 8000
 # OR
 npx serve
+
+# Playwright testing setup:
+npm install playwright
+npx playwright install chromium
 ```
+
+### Playwright Testing Workflow
+```bash
+# 1. Make code changes
+# 2. Run linting (clj-kondo + cljfmt)
+# 3. Create/update Playwright test
+# 4. Test functionality yourself BEFORE claiming it works
+# 5. Only then present results to user
+
+# Example test creation pattern:
+node test-new-feature.js    # Verify your changes
+node test-buttons.js        # Check UI interactions still work  
+node test-current-state.js  # Ensure no regressions
+```
+
+**Testing-First Development:**
+- Write Playwright test BEFORE implementing complex features
+- Test incrementally after each small change
+- Never batch multiple changes without intermediate testing
+- Use headless: false during development to see what's happening
 
 ### Build Targets
 - **Dev**: Unoptimized, source-maps enabled

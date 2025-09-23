@@ -256,15 +256,19 @@
     <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.re-frame.js"></script>
     
     <!-- Load V3 ClojureScript Application - EFFECTS MUST LOAD FIRST -->
-    <!-- PHASE 1: Step 1 - Feature flag testing -->
-    <script type="application/x-scittle" src="src/crypto_app_v3/direct_api.cljs?v=6.1.0-step1"></script>
-    <script type="application/x-scittle" src="src/crypto_app_v3/effects.cljs?v=6.1.0-step1"></script>
+    <!-- PHASE 1: Live-data-first (Oracle-recommended) -->
+    <script type="application/x-scittle" src="src/crypto_app_v3/transform.cljs?v=6.1.0-oracle"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/direct_api.cljs?v=6.1.0-oracle"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/effects.cljs?v=6.1.0-oracle"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/events.cljs?v=6.1.0-step2"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/subs.cljs?v=6.1.0-v5only"></script>
     <!-- V5 ONLY - Clean interface -->
     <script type="application/x-scittle" src="src/crypto_app_v3/currency.cljs?v=5.3.0"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/portfolio_atoms.cljs?v=4.2.1"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/chart.cljs?v=4.2.1"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/chart_v5.cljs?v=5.3.1-currency-btn"></script>
-    <script type="application/x-scittle" src="src/crypto_app_v3/card_v5.cljs?v=5.3.0-currency"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/card_v5.cljs?v=6.1.2-panels"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/views.cljs?v=6.1.0-modals"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/v5_mount.cljs?v=5.3.0"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/core.cljs?v=6.1.0-v5only"></script>
 </body>
