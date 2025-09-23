@@ -35,7 +35,8 @@
       [:button {:class "text-neon-green hover:text-neon-green/80 ml-2 font-medium"
                 :on-click #(rf/dispatch [:currency/show-selector])}
        current-currency]]
-     [:span (str "Trades: " trades)]]))
+     (when trades
+       [:span (str "Trades: " trades)])]))
 
 (defn portfolio-section
   "Portfolio management section - add/edit holdings with quantity display"
@@ -80,9 +81,12 @@
         low (get data "day_low" 0)
         live-change (get data "usd_24h_change" 0)
         volume (get data "usd_24h_vol" 0)  ; Keep full volume amount
-        trades (get data "trades_24h" 0)
+        trades (when-let [t (get data "trades_24h")] t)
         asset-type (get data "type" "crypto")
-        feed-indicator (if (= asset-type "stock") "YF" "FM")
+        feed-indicator (cond
+                         (= crypto-id "figr") "TD"  ; FIGR uses Twelve Data
+                         (= asset-type "stock") "YF" ; Other stocks use Yahoo Finance  
+                         :else "FM")                 ; Cryptos use Figure Markets
         current-currency @(rf/subscribe [:currency/current])
         exchange-rates @(rf/subscribe [:currency/exchange-rates])
         currency-symbol (curr/get-currency-symbol current-currency)

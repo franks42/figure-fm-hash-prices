@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Twelve Data API Test</title>
+</head>
+<body>
+    <h1>Testing Twelve Data API for FIGR</h1>
+    <div id="output"></div>
+    
+    <script>
+        const TWELVE_DATA_API_KEY = "b61354a1fe6f45a2a9e01c8c4145e617";
+        const FIGR_IPO_DATE = "2025-09-11";
+        
+        function getInterval(period) {
+            switch(period) {
+                case "24H": return "5min";
+                case "1W": return "15min";
+                case "1M": return "1day";
+                default: return "15min";
+            }
+        }
+        
+        function getRowCount(period) {
+            switch(period) {
+                case "24H": return 288;  // 24h * 12 intervals/hour (5min)
+                case "1W": return 672;   // 7d * 24h * 4 intervals/hour (15min)
+                case "1M": return 30;    // 30 trading days max
+                default: return 100;
+            }
+        }
+        
+        async function testTwelveData(period) {
+            const interval = getInterval(period);
+            const rowCount = getRowCount(period);
+            const url = `https://twelve-data1.p.rapidapi.com/time_series?symbol=FIGR&interval=${interval}&outputsize=${rowCount}&apikey=${TWELVE_DATA_API_KEY}`;
+            
+            console.log(`Testing ${period} with interval ${interval}, ${rowCount} rows`);
+            console.log(`URL: ${url}`);
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                console.log(`${period} response:`, data);
+                
+                if (data.values && data.values.length > 0) {
+                    // Filter IPO data
+                    const ipoDate = new Date(FIGR_IPO_DATE);
+                    const recentValues = data.values.filter(v => new Date(v.datetime) >= ipoDate);
+                    console.log(`${period} filtered ${data.values.length} -> ${recentValues.length} points`);
+                    
+                    // Transform to chart format
+                    const sortedValues = recentValues.reverse(); // Twelve Data comes newest first
+                    const limitedValues = sortedValues.slice(-rowCount);
+                    const timestamps = limitedValues.map(v => new Date(v.datetime).getTime() / 1000);
+                    const prices = limitedValues.map(v => parseFloat(v.close));
+                    
+                    console.log(`${period} chart data:`, {
+                        points: timestamps.length,
+                        priceRange: `${Math.min(...prices).toFixed(3)} - ${Math.max(...prices).toFixed(3)}`,
+                        timeRange: `${new Date(timestamps[0] * 1000).toISOString()} - ${new Date(timestamps[timestamps.length-1] * 1000).toISOString()}`
+                    });
+                    
+                    return [timestamps, prices];
+                } else {
+                    console.error(`${period} no data:`, data);
+                }
+            } catch (error) {
+                console.error(`${period} error:`, error);
+            }
+        }
+        
+        // Test all periods
+        Promise.all([
+            testTwelveData("24H"),
+            testTwelveData("1W"),
+            testTwelveData("1M")
+        ]).then(() => {
+            console.log("All tests completed");
+            document.getElementById('output').innerHTML = '<p>Check browser console for results</p>';
+        });
+    </script>
+</body>
+</html>

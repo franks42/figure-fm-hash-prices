@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FIGR Debug Test</title>
+</head>
+<body>
+    <h1>FIGR Debug</h1>
+    <div id="output"></div>
+    
+    <script>
+        // Test if V5 shows FIGR and if historical data is being fetched
+        setTimeout(() => {
+            window.location.href = "http://localhost:8000/?ui=v5";
+        }, 2000);
+    </script>
+</body>
+</html>

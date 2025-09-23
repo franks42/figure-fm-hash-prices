@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct FIGR Test</title>
+</head>
+<body>
+    <h1>Direct FIGR API Test</h1>
+    <button onclick="testTwelveData()">Test Twelve Data FIGR API</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testTwelveData() {
+            const API_KEY = "b61354a1fe6f45a2a9e01c8c4145e617";
+            const url = `https://api.twelvedata.com/time_series?symbol=FIGR&interval=5min&apikey=${API_KEY}`;
+            
+            console.log("Testing URL:", url);
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                console.log("API Response:", data);
+                document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (data.values && data.values.length > 0) {
+                    console.log("✅ Success! Got", data.values.length, "data points");
+                    console.log("Latest price:", data.values[0].close);
+                } else if (data.status === 'error') {
+                    console.log("❌ API Error:", data.message);
+                } else {
+                    console.log("❌ Unexpected response format");
+                }
+            } catch (error) {
+                console.error("❌ Fetch error:", error);
+                document.getElementById('result').innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+            }
+        }
+        
+        // Auto-run test
+        setTimeout(testTwelveData, 1000);
+    </script>
+</body>
+</html>

@@ -2,8 +2,38 @@
 
 **Project**: Figure Markets Hash Prices Tracker  
 **Current Version**: V5.0.0-prototype  
-**Status**: V5 portfolio prototype complete, ready for expansion  
+**Status**: V5 with FIGR charts complete, CRITICAL scalability issue identified  
 **Goal**: Subliminal market awareness tool (not professional trading platform)
+
+## 🚨 **CRITICAL SCALABILITY ISSUE: API Key Limits**
+
+**Status**: ✅ FIGR charts working beautifully, ❌ **Won't scale beyond ~10 users**
+
+**The Problem:**
+- Twelve Data free tier: **800 calls/day per API key**
+- Current implementation: **Hardcoded shared key**  
+- Each V5 user: ~3 API calls (24H/1W/1M periods) + refresh cycles
+- With 1-hour caching: ~72 calls/user/day worst case
+- **Current capacity: Only 10-12 concurrent users maximum**
+
+**The Solution (High Priority):**
+```
+🎯 User API Key Configuration System
+├── Settings panel for personal Twelve Data API key input
+├── localStorage persistence of user's personal key  
+├── Graceful fallback to demo/shared key for new users
+├── Clear rate limit messaging and free API key instructions
+└── Result: Each user gets 800 calls/day = scales to hundreds of users
+```
+
+**Implementation Needed:**
+1. Settings UI component for API key management
+2. Twelve Data API key validation endpoint testing
+3. Dynamic key injection in `TWELVE_DATA_API_KEY` constant
+4. Error handling for invalid/expired user keys
+5. Documentation for obtaining free Twelve Data keys
+
+**Impact**: Without this, FIGR charts will fail once usage grows beyond a few users.
 
 ## 🎯 **Project Vision**
 
