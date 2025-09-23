@@ -153,13 +153,41 @@ function processData(data) {
 - ✅ **Simplified testing**: One data pipeline to validate  
 - ✅ **Consistent behavior**: Identical error handling and validation
 
-### **Migration Strategy:**
+### **Oracle-Validated Live-Data-First Architecture:**
 
-**Phase 1: Direct API Primary**
-1. Implement direct Figure Markets calls for crypto data
-2. Implement direct Twelve Data calls for FIGR data  
-3. GitHub Actions continue as backup (no pressure)
-4. Test real-time performance and reliability
+**Root Cause of Current Issues:**
+- Data source mixing: current price (GitHub Actions) + high/low (chart data) = logical errors
+- FIGR shows low ($42.04) higher than current ($40.69) due to different data sources
+- Solution: Consistent data source per asset
+
+**Live-First Provider Tiering:**
+```
+Tier-1: Direct APIs (real-time) → PRIMARY
+├── Figure Markets: HASH/BTC/ETH crypto data  
+└── Twelve Data: FIGR stock quotes + charts
+Tier-2: GitHub Actions JSON → FALLBACK ONLY
+```
+
+**Data Flow Architecture:**
+```
+┌───────────┐   raw JSON   ┌───────────────────┐  canonical map  ┌──────────────┐
+│ Provider N │────────────►│  Transformer N    │────────────────►│  App state   │
+└───────────┘              └───────────────────┘                 └──────────────┘
+```
+
+**Migration Strategy:**
+
+**Phase 1: Live-Data-First Implementation (Current)**
+1. Create canonical data format and transformer functions
+2. Implement orchestrated fetch (parallel API calls)  
+3. Add graceful per-provider fallback logic
+4. Playwright testing at each step
+
+**Phase 2: Production Rollout**
+1. Feature flag rollout (percentage-based)
+2. Dual-fetch validation (live vs backup comparison)
+3. Monitor error rates and data consistency
+4. Full rollout with GitHub Actions as backup only
 
 **Phase 2: Backup Modernization (Optional)**
 1. Set up Supabase database for backup data

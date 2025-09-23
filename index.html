@@ -249,7 +249,6 @@
             </h1>
             <p class="text-gray-400 text-lg font-light">Real-time cryptocurrency prices powered by Figure Markets</p>
         </header>
-        <div id="app"></div>
         <div id="v5-prototype"></div>
     </div>
 
@@ -257,18 +256,16 @@
     <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.re-frame.js"></script>
     
     <!-- Load V3 ClojureScript Application - EFFECTS MUST LOAD FIRST -->
-    <script type="application/x-scittle" src="src/crypto_app_v3/effects.cljs?v=4.1.1"></script>
-    <script type="application/x-scittle" src="src/crypto_app_v3/events.cljs?v=5.2.0-periods"></script>
-    <script type="application/x-scittle" src="src/crypto_app_v3/subs.cljs?v=5.2.0-periods"></script>
-    <script type="application/x-scittle" src="src/crypto_app_v3/portfolio.cljs?v=4.2.1"></script>
-    <script type="application/x-scittle" src="src/crypto_app_v3/portfolio_atoms.cljs?v=4.2.1"></script>
-    <script type="application/x-scittle" src="src/crypto_app_v3/chart.cljs?v=4.2.1"></script>
+    <!-- PHASE 1: Step 1 - Feature flag testing -->
+    <script type="application/x-scittle" src="src/crypto_app_v3/direct_api.cljs?v=6.1.0-step1"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/effects.cljs?v=6.1.0-step1"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/events.cljs?v=6.1.0-step2"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/subs.cljs?v=6.1.0-v5only"></script>
+    <!-- V5 ONLY - Clean interface -->
     <script type="application/x-scittle" src="src/crypto_app_v3/currency.cljs?v=5.3.0"></script>
-    <script type="application/x-scittle" src="src/crypto_app_v3/views.cljs?v=5.3.0-clean"></script>
-    <script type="application/x-scittle" src="src/crypto_app_v3/debug.cljs?v=5.1.2"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/chart_v5.cljs?v=5.3.1-currency-btn"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/card_v5.cljs?v=5.3.0-currency"></script>
     <script type="application/x-scittle" src="src/crypto_app_v3/v5_mount.cljs?v=5.3.0"></script>
-    <script type="application/x-scittle" src="src/crypto_app_v3/core.cljs?v=4.2.1"></script>
+    <script type="application/x-scittle" src="src/crypto_app_v3/core.cljs?v=6.1.0-v5only"></script>
 </body>
 </html>

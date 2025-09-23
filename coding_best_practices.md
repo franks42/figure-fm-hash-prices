@@ -93,6 +93,32 @@ Problem identified → Consult Oracle → Implement solution → Test & verify
 
 ## Scittle & GitHub Pages Specifics
 
+### SCI/Scittle Limitations (CRITICAL KNOWLEDGE)
+**Scittle uses SCI (Small Clojure Interpreter) - NOT full ClojureScript!**
+
+**❌ DOES NOT WORK in Scittle:**
+- `defprotocol` and `defrecord` - Limited/broken implementation
+- `deftype` and `definterface` - Not supported  
+- `this-as` in JavaScript hosts - Not supported
+- Complex JavaScript interop - May be limited
+- Advanced macro features - May be restricted
+- `future` and `pmap` - Disabled by default for safety
+
+**✅ WORKS in Scittle:**
+- Basic data structures (vectors, maps, sets, lists)
+- Functions, basic macros (`def`, `let`, `fn`)
+- Core library functions (`map`, `filter`, `reduce`)
+- Basic DOM manipulation and JavaScript interop
+- re-frame (specifically supported)
+- Simple multimethods (simpler than protocols)
+
+**🔧 Scittle-Safe Patterns:**
+- Use **multimethods** instead of protocols
+- Use **regular functions** instead of records  
+- Use **plain maps** instead of deftype
+- Test ALL advanced features before assuming they work
+- Stick to core ClojureScript features
+
 ### Bundle Size Considerations
 - Scittle compiles ClojureScript in browser at runtime
 - Keep bundle size small - avoid unnecessary dependencies

@@ -1,11 +1,7 @@
 (ns crypto-app-v3.core
-  (:require [reagent.dom :as rdom]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [crypto-app-v3.events]
             [crypto-app-v3.subs]
-            [crypto-app-v3.portfolio]
-            [crypto-app-v3.portfolio-atoms :as portfolio-atoms]
-            [crypto-app-v3.views :as views]
             [crypto-app-v3.effects]))
 
 ;; Copy V2 initialization logic (small functions)
@@ -29,10 +25,8 @@
   (rf/dispatch-sync [:initialize-db]))
 
 (defn restore-portfolio []
-  (js/console.log "📂 V3 Restoring portfolio from localStorage...")
-  ;; Restore V4 atoms (for legacy support)
-  (portfolio-atoms/restore-portfolio)
-  ;; Restore V5 re-frame portfolio
+  (js/console.log "📂 V5 Restoring portfolio from localStorage...")
+  ;; V5 re-frame portfolio only
   (rf/dispatch-sync [:portfolio/initialize]))
 
 (defn restore-currency []
@@ -46,7 +40,8 @@
     (rf/dispatch-sync [:chart/set-period period])))
 
 (defn mount-app []
-  (rdom/render [views/app-component] (.getElementById js/document "app")))
+  ;; V5 only - no V4 mount needed (V5 mounts itself via v5_mount.cljs)
+  (js/console.log "📱 V5 Core initialized - V5 mount handles UI"))
 
 (defn setup-timeout-handler []
   (js/setTimeout

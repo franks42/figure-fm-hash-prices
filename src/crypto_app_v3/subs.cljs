@@ -79,13 +79,10 @@
 ;; UI feature flag subscriptions
 (rf/reg-sub
  :ui/new-layout?
- (fn [db]
-   (let [url-param (when js/window.location.search
-                     (.includes js/window.location.search "ui=v5"))
-         local-storage (when-let [stored (.getItem js/localStorage "crypto-tracker-ui")]
-                         (= stored "v5"))
-         db-setting (get-in db [:ui :layout-version] false)]
-     (or url-param local-storage db-setting))))
+ (fn [_]
+   ;; V5 is now the only interface - always return true
+   (js/console.log "🎨 V5 is the only layout - always enabled")
+   true))
 
 ;; Chart period selection subscriptions - GLOBAL like currency
 (rf/reg-sub

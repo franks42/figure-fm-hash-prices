@@ -1,5 +1,6 @@
 (ns crypto-app-v3.effects
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [crypto-app-v3.direct-api :as da]))
 
 ;; Simple native fetch effect for Scittle compatibility
 (js/console.log "🔧 Registering :fetch effect handler...")
@@ -116,14 +117,31 @@
    (when-let [element (.getElementById js/document element-id)]
      (.remove (.-classList element) class-name))))
 
-;; Main fetch events (copy V2 logic)
+;; PHASE 1: Direct API effect handlers (Oracle-recommended)
+(rf/reg-fx
+ :direct-api/fetch
+ (fn [{:keys [api on-success on-failure symbol]}]
+   (let [p (case api
+             :figure (da/fetch-figure-markets)
+             :twelve (da/fetch-twelve-data-quote symbol))]
+     (.then p #(rf/dispatch (conj on-success (js->clj % :keywordize-keys false))))
+     (.catch p #(rf/dispatch (conj on-failure %))))))
+
+;; Main fetch events with PHASE 1 routing
 (rf/reg-event-fx
  :fetch-crypto-data
  (fn [_ _]
-   {:http-get {:url (data-url)
-               :on-success :fetch-success
-               :on-failure :fetch-failure}
-    :dom-add-class {:element-id "fetch-indicator" :class-name "active"}}))
+   (js/console.log "🚀 PHASE 1: Fetch crypto data - direct API enabled?" (da/direct-api-enabled?))
+   (if (da/direct-api-enabled?)
+     {:direct-api/fetch {:api :figure
+                         :on-success [:fetch-success]
+                         :on-failure [:fetch-failure]}
+      :dispatch-later [{:ms 200 :dispatch [:fetch-figr-quote]}]
+      :dom-add-class {:element-id "fetch-indicator" :class-name "active"}}
+     {:http-get {:url (data-url)
+                 :on-success :fetch-success
+                 :on-failure :fetch-failure}
+      :dom-add-class {:element-id "fetch-indicator" :class-name "active"}})))
 
 (rf/reg-event-fx
  :fetch-success

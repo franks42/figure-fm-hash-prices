@@ -106,13 +106,14 @@
                         (do
                           (js/console.log "🔴🟢 LIVE-FALLBACK" crypto-id "Using live data - High:" high "Low:" low "Change:" live-change)
                           {:change live-change :high high :low low}))
+        ;; ALWAYS use day high/low from price feed, not chart period data
+        display-high high
+        display-low low
         chart-change (:change chart-metrics)
-        chart-high (:high chart-metrics)
-        chart-low (:low chart-metrics)
         ;; Currency conversion for all overlay prices
         converted-price (curr/convert-currency price current-currency exchange-rates)
-        converted-high (curr/convert-currency chart-high current-currency exchange-rates)
-        converted-low (curr/convert-currency chart-low current-currency exchange-rates)]
+        converted-high (curr/convert-currency display-high current-currency exchange-rates)
+        converted-low (curr/convert-currency display-low current-currency exchange-rates)]
 
 ;; Trigger historical data fetch if missing (same as V4)
     (when (or (nil? historical-data) (empty? historical-data))
