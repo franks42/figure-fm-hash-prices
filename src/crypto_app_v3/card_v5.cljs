@@ -135,6 +135,25 @@
       ;; Portfolio section
      [portfolio-section crypto-id]]))
 
+;; V5 Portfolio Total Value Display
+(defn portfolio-total-v5
+  "V5 total portfolio value display with currency conversion"
+  []
+  (let [total-value @(rf/subscribe [:portfolio/total-value])
+        current-currency @(rf/subscribe [:currency/current])
+        exchange-rates @(rf/subscribe [:currency/exchange-rates])
+        currency-symbol (curr/get-currency-symbol current-currency)
+        converted-value (curr/convert-currency total-value current-currency exchange-rates)]
+    (when (> total-value 0)
+      [:div {:class "bg-gradient-to-r from-neon-green/5 to-neon-cyan/5 border border-neon-green/20 rounded-2xl p-6 mb-8"}
+       [:div {:class "text-center"}
+        [:div {:class "text-sm text-neon-green uppercase mb-2 tracking-widest font-medium"} "Total Portfolio Value"]
+        [:div {:class "text-4xl font-bold text-white tabular-nums flex items-center justify-center gap-3"}
+         (str currency-symbol (chart-v5/format-number converted-value 2))
+         [:button {:class "text-neon-green hover:text-neon-green/80 text-lg font-medium"
+                   :on-click #(rf/dispatch [:currency/show-selector])}
+          current-currency]]]])))
+
 ;; V5 Grid Component - following Oracle guidance
 (defn crypto-grid-v5
   "Responsive grid of V5 cards, driven by :sorted-price-keys"
@@ -156,4 +175,5 @@
        [:div {:class "text-center"}
         [:h2 {:class "text-xl font-bold text-neon-green"} "V5 PROTOTYPE"]
         [:p {:class "text-sm text-gray-400"} "Professional card grid"]]
+       [portfolio-total-v5]
        [crypto-grid-v5]])))

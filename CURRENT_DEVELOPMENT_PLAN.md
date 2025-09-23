@@ -28,13 +28,14 @@ Create a **quick, subliminal view** of market and portfolio performance. Users s
 - **Clean Codebase**: Zero clj-kondo warnings, consistent formatting, enhanced coding practices
 
 ### 🚀 **V5 Prototype (NEW)**
-- **Square Chart Layout**: Professional terminal-style cards with square aspect ratio charts
-- **Dynamic Period Selection**: 24H/1W/1M chart periods with proper data fetching
-- **Portfolio Integration**: Complete V5 portfolio data layer with re-frame events/subscriptions
+- **Multi-Asset Grid**: Professional responsive grid supporting all cryptocurrencies
+- **Square Chart Layout**: Terminal-style cards with square aspect ratio charts
+- **Global Period Selection**: Universal 24H/1W/1M chart periods affecting all cards
+- **Complete Portfolio System**: Individual card portfolios + total portfolio value summary
 - **Currency Conversion**: Full currency conversion throughout V5 UI (prices, volume, portfolio)
 - **Enhanced UX**: Optimized portfolio display (PV: $123.45 USD (quantity token) ✏️)
 - **Correct Asset Descriptions**: "Provenance Blockchain HASH Token" and other accurate labels
-- **Feature Flag System**: `?ui=v5` enables new prototype alongside existing V4
+- **Feature Flag System**: `?ui=v5` enables complete multi-asset experience alongside V4
 
 ### 🏗️ **Technical Architecture**
 - **Frontend**: ClojureScript + Scittle (no-build) + Re-frame + uPlot  
