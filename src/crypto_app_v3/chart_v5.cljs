@@ -6,6 +6,32 @@
 ;; V5 Chart Component - Square Layout with HTML Overlays
 ;; This is the new chart implementation for the comprehensive redesign
 
+;; Subliminal color gradient based on percentage change magnitude
+(defn get-change-color
+  "Returns color with intensity based on percentage change magnitude for subliminal messaging"
+  [percent-change]
+  (let [abs-change (js/Math.abs percent-change)
+        ;; Cap at 10% - anything above 10% gets same max intensity (extreme)
+        capped-change (js/Math.min abs-change 10.0)
+        ;; Map 0% to 10% onto 0.1 to 0.8 opacity (seamless gradient)
+        intensity (js/Math.min (* capped-change 0.08) 0.8) ; 0.08 = 8% per percent change
+        intensity (js/Math.max intensity 0.3)] ; Much higher minimum visibility
+    (cond
+      (> percent-change 0.05) ; Positive > 0.05%
+      {:text-color (str "rgba(0, 255, 65, " (js/Math.min (+ intensity 0.7) 1.0) ")") ; Bright neon green text
+       :bg-color (str "rgba(0, 255, 65, " (* intensity 1.5) ")") ; Much more visible green background
+       :border-color (str "rgba(0, 255, 65, " (* intensity 1.2) ")")} ; Strong green border
+
+      (< percent-change -0.05) ; Negative < -0.05%  
+      {:text-color (str "rgba(220, 38, 38, " (js/Math.min (+ intensity 0.7) 1.0) ")") ; Bright red text
+       :bg-color (str "rgba(220, 38, 38, " (* intensity 1.5) ")") ; Much more visible red background  
+       :border-color (str "rgba(220, 38, 38, " (* intensity 1.2) ")")} ; Strong red border
+
+      :else ; Nearly flat (-0.05% to +0.05%)
+      {:text-color "rgba(156, 163, 175, 0.8)" ; Neutral gray
+       :bg-color "rgba(107, 114, 128, 0.3)" ; More visible gray background
+       :border-color "rgba(107, 114, 128, 0.2)"})))
+
 ;; Utility functions
 (defn format-number
   "Format number with specified decimal places"
@@ -40,14 +66,16 @@
             (let [[times prices] current-data]
               (when (and (seq times) (seq prices))
                 (js/console.log "📊 Creating V5 square chart for" crypto-id "with" (count times) "points")
-           ;; Calculate sentiment colors
+           ;; Calculate subliminal gradient colors based on percentage change
                 (let [start-price (first prices)
                       end-price (last prices)
                       pct-change (* 100 (/ (- end-price start-price) start-price))
-                      _ (js/console.log "🔴🟢 CHART-SENTIMENT" crypto-id "Start:" start-price "End:" end-price "Pct:" pct-change)
-                      is-positive? (> end-price start-price)
-                      stroke-color (if is-positive? "#00ff88" "#ff4d5a")
-                      fill-color (if is-positive? "rgba(0,255,136,0.4)" "rgba(255,77,90,0.4)")
+                      _ (js/console.log "🔴🟢 CHART-GRADIENT" crypto-id "Start:" start-price "End:" end-price "Pct:" pct-change)
+                      gradient-colors (get-change-color pct-change)
+           ;; White stroke color for all charts (clean line)
+                      stroke-color "#ffffff"
+                       ;; Background fill uses the subtle background color from gradient
+                      fill-color (:bg-color gradient-colors)
 ;; Build trend line data
                       trend-data (let [n (count times)]
                                    (mapv (fn [i]
@@ -81,14 +109,23 @@
       (fn []
         (let [current-data @(rf/subscribe [:historical-data crypto-id])
               has-data? (and current-data (vector? current-data) (not-empty (first current-data)))]
-          [:div {:class "relative w-full bg-gray-900/20 rounded-lg border border-white/10"
-                 :style {:aspect-ratio "1"}
-                 :ref (fn [el] (when el (reset! container-ref el)))}
-           [:div {:class "absolute inset-2"}
-            (if has-data?
-              [:div {:class "w-full h-full"}]
-              [:div {:class "w-full h-full bg-gradient-to-br from-gray-800/20 to-gray-600/20 rounded flex items-center justify-center"}
-               [:div {:class "text-white/40 text-sm"} "Loading chart..."]])]]))})))
+          (let [[times prices] (or current-data [nil nil])
+                bg-color (if (and prices (> (count prices) 1))
+                           ;; Calculate gradient background color for visible subliminal effect
+                           (let [start-price (first prices)
+                                 end-price (last prices)
+                                 pct-change (* 100 (/ (- end-price start-price) start-price))]
+                             (:bg-color (get-change-color pct-change)))
+                           ;; Default background
+                           "rgba(17, 24, 39, 0.2)")]
+            [:div {:class "relative w-full bg-gray-900/20 rounded-lg border border-white/10"
+                   :style {:aspect-ratio "1"}
+                   :ref (fn [el] (when el (reset! container-ref el)))}
+             [:div {:class "absolute inset-2"}
+              (if has-data?
+                [:div {:class "w-full h-full"}]
+                [:div {:class "w-full h-full bg-gradient-to-br from-gray-800/20 to-gray-600/20 rounded flex items-center justify-center"}
+                 [:div {:class "text-white/40 text-sm"} "Loading chart..."]])]])))})))
 
 ;; Chart overlays - positioned absolutely over the chart
 (defn chart-overlay-symbol
@@ -114,19 +151,23 @@
     currency-code]])
 
 (defn chart-overlay-change
-  "Change percentage in right-middle"
+  "Change percentage in right-middle with subliminal gradient intensity"
   [change-percent]
-  (let [positive? (> change-percent 0)]
+  (let [positive? (> change-percent 0)
+        colors (get-change-color change-percent)
+        arrow (if positive? "▲" "▼")]
     [:div {:class "absolute right-2 top-1/2 -translate-y-1/2 overlay-tier1"}
-     [:span {:class (str "text-sm font-semibold "
-                         (if positive? "text-neon-green" "text-neon-red"))}
-      (str (if positive? "▲" "▼") (format-number (js/Math.abs change-percent) 2) "%")]]))
+     [:div {:class "px-2 py-1 rounded-lg border transition-all duration-300"
+            :style {:background-color (:bg-color colors)
+                    :border-color (:border-color colors)}}
+      [:span {:class "text-sm font-semibold text-white"}
+       (str arrow (format-number (js/Math.abs change-percent) 2) "%")]]]))
 
 (defn chart-overlay-period
   "Period selector in bottom-center - GLOBAL like currency"
   [current-period]
   [:div {:class "absolute bottom-2 inset-x-0 flex justify-center z-30"}
-   [:button {:class "text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-1 text-white/80 overlay-tier3 cursor-pointer transition-colors"
+   [:button {:class "text-xs bg-blue-900/80 hover:bg-blue-800/80 border border-blue-600/60 rounded px-2 py-1 text-white overlay-tier3 cursor-pointer transition-colors"
              :on-click #(rf/dispatch [:chart/cycle-period])}
     current-period]])
 

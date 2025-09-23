@@ -4,7 +4,7 @@ A **V5-only** cryptocurrency and stock price tracking system with professional t
 
 ## Current Version
 
-- **V6.2.0 (V5 Modal Fix)**: Portfolio and currency modals working, V5-only interface
+- **V6.3.0 (Subliminal Gradient)**: Gradient chart fills based on percentage magnitude, white text/lines
 - **URL**: `http://localhost:8000/` (V5 interface) or `http://localhost:8000/simple.html` (demo)
 
 ## Live-Data-First Architecture
@@ -12,7 +12,8 @@ A **V5-only** cryptocurrency and stock price tracking system with professional t
 Real-time cryptocurrency and stock tracker with **direct API integration** and **Oracle-validated architecture**.
 
 ### ✅ **Core Features**
-- **V5 Terminal Interface**: Professional multi-asset grid layout with terminal styling
+- **Subliminal Gradient Charts**: Chart fill colors based on percentage change magnitude (0.01% subtle → 10%+ intense)
+- **V5 Terminal Interface**: Professional multi-asset grid layout with clean white lines/text
 - **Working Modals**: Portfolio and currency selector modals (CSS clipping fixed)
 - **localStorage Persistence**: Portfolio quantities and currency selection persist
 - **Multi-Currency Support**: 6 currencies with working modal selector

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Color Debug Test</title>
+    <style>
+        body { background: black; color: white; padding: 20px; font-family: monospace; }
+        .test-box { 
+            width: 200px; 
+            height: 100px; 
+            margin: 10px 0; 
+            border: 1px solid #666; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Color Gradient Test</h1>
+    <p>These should be the EXACT same colors Playwright detects:</p>
+    
+    <div class="test-box" style="background-color: rgba(0, 255, 65, 0.8);">
+        Green 0.8 opacity (Playwright detected)
+    </div>
+    
+    <div class="test-box" style="background-color: rgba(220, 38, 38, 0.757);">
+        Red 0.757 opacity (Playwright detected)
+    </div>
+    
+    <div class="test-box" style="background-color: rgba(0, 255, 65, 0.45);">
+        Green 0.45 opacity (Medium)
+    </div>
+    
+    <div class="test-box" style="background-color: rgba(220, 38, 38, 0.45);">
+        Red 0.45 opacity (Medium)
+    </div>
+    
+    <div class="test-box" style="background-color: rgba(107, 114, 128, 0.3);">
+        Gray 0.3 opacity (Neutral)
+    </div>
+    
+    <p>If you can't see ANY of these colors, the issue is browser-specific color rendering.</p>
+    <p>If you CAN see these colors, then something in the main app is overriding them.</p>
+    
+    <button onclick="testDynamicColors()">Test Dynamic Colors (like ClojureScript)</button>
+    
+    <div id="dynamic-test" class="test-box" style="background-color: rgba(17, 24, 39, 0.2);">
+        Click button to apply dynamic color
+    </div>
+    
+    <script>
+        function testDynamicColors() {
+            const element = document.getElementById('dynamic-test');
+            
+            // Simulate the ClojureScript color calculation
+            const percentChange = 2.34; // Positive change
+            const absChange = Math.abs(percentChange);
+            const cappedChange = Math.min(absChange, 10.0);
+            const intensity = Math.max(Math.min(cappedChange * 0.08, 0.8), 0.3);
+            
+            const bgColor = `rgba(0, 255, 65, ${intensity * 1.5})`;
+            
+            console.log('Calculated color:', bgColor);
+            console.log('Intensity:', intensity);
+            
+            element.style.backgroundColor = bgColor;
+            element.textContent = `Dynamic: ${bgColor}`;
+        }
+        
+        console.log('Color debug test loaded');
+        console.log('If you see colors here but not in main app, there is CSS override issue');
+    </script>
+</body>
+</html>

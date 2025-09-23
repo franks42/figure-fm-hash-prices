@@ -42,10 +42,20 @@
                     <span class="text-2xl font-bold text-white">$0.049</span>
                 </div>
                 
+                <!-- Chart Area with Gradient Background -->
+                <div id="hash-chart" class="h-32 w-full rounded-lg border border-gray-700 mb-4 relative overflow-hidden">
+                    <!-- Simulated price line -->
+                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 50">
+                        <polyline points="0,35 15,30 30,25 45,20 60,18 75,15 90,12 100,10" 
+                                  fill="none" stroke="rgba(0,255,65,0.8)" stroke-width="1.5"/>
+                    </svg>
+                    <div class="absolute top-2 left-2 text-xs text-gray-400">24H Chart</div>
+                </div>
+                
                 <div class="space-y-2 mb-4">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-400">24h Change</span>
-                        <span class="text-green-400">+2.34%</span>
+                        <span id="hash-change" class="gradient-change">+2.34%</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-400">Volume</span>
@@ -74,10 +84,20 @@
                     <span class="text-2xl font-bold text-white">$95,234</span>
                 </div>
                 
+                <!-- Chart Area with Gradient Background -->
+                <div id="btc-chart" class="h-32 w-full rounded-lg border border-gray-700 mb-4 relative overflow-hidden">
+                    <!-- Simulated price line (declining) -->
+                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 50">
+                        <polyline points="0,15 15,18 30,22 45,25 60,28 75,32 90,35 100,38" 
+                                  fill="none" stroke="rgba(220,38,38,0.8)" stroke-width="1.5"/>
+                    </svg>
+                    <div class="absolute top-2 left-2 text-xs text-gray-400">24H Chart</div>
+                </div>
+                
                 <div class="space-y-2 mb-4">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-400">24h Change</span>
-                        <span class="text-red-400">-1.23%</span>
+                        <span id="btc-change" class="gradient-change">-1.23%</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-400">Volume</span>
@@ -106,10 +126,20 @@
                     <span class="text-2xl font-bold text-white">$3,421</span>
                 </div>
                 
+                <!-- Chart Area with Gradient Background -->
+                <div id="eth-chart" class="h-32 w-full rounded-lg border border-gray-700 mb-4 relative overflow-hidden">
+                    <!-- Simulated price line (slight upward) -->
+                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 50">
+                        <polyline points="0,30 15,28 30,32 45,27 60,25 75,22 90,20 100,18" 
+                                  fill="none" stroke="rgba(0,255,65,0.6)" stroke-width="1.5"/>
+                    </svg>
+                    <div class="absolute top-2 left-2 text-xs text-gray-400">24H Chart</div>
+                </div>
+                
                 <div class="space-y-2 mb-4">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-400">24h Change</span>
-                        <span class="text-green-400">+0.87%</span>
+                        <span id="eth-change" class="gradient-change">+0.87%</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-400">Volume</span>
@@ -173,6 +203,34 @@
     <script>
         let currentAsset = '';
         
+        // Subliminal gradient function (matches ClojureScript implementation)
+        function getChangeColor(percentChange) {
+            const absChange = Math.abs(percentChange);
+            const cappedChange = Math.min(absChange, 10.0); // Cap at 10%
+            let intensity = Math.min(cappedChange * 0.08, 0.8);
+            intensity = Math.max(intensity, 0.1);
+            
+            if (percentChange > 0.05) {
+                return {
+                    textColor: `rgba(0, 255, 65, ${Math.min(intensity + 0.7, 1.0)})`, // Bright text
+                    bgColor: `rgba(0, 255, 65, ${intensity * 1.0})`, // Much more visible background
+                    borderColor: `rgba(0, 255, 65, ${intensity * 1.2})` // Strong border
+                };
+            } else if (percentChange < -0.05) {
+                return {
+                    textColor: `rgba(220, 38, 38, ${Math.min(intensity + 0.7, 1.0)})`, // Bright text
+                    bgColor: `rgba(220, 38, 38, ${intensity * 1.0})`, // Much more visible background
+                    borderColor: `rgba(220, 38, 38, ${intensity * 1.2})` // Strong border
+                };
+            } else {
+                return {
+                    textColor: "rgba(156, 163, 175, 0.8)",
+                    bgColor: "rgba(107, 114, 128, 0.1)",
+                    borderColor: "rgba(107, 114, 128, 0.2)"
+                };
+            }
+        }
+        
         function showModal(asset) {
             currentAsset = asset;
             document.getElementById('modal-title').textContent = `Add ${asset.toUpperCase()} to Portfolio`;
@@ -202,9 +260,58 @@
             }
         });
         
+        // Apply gradient colors to demo percentage changes AND chart backgrounds
+        function applyGradientColors() {
+            const changes = [
+                { textId: 'hash-change', chartId: 'hash-chart', pct: 2.34 },   // Moderate positive
+                { textId: 'btc-change', chartId: 'btc-chart', pct: -1.23 },   // Moderate negative  
+                { textId: 'eth-change', chartId: 'eth-chart', pct: 0.87 }     // Small positive
+            ];
+            
+            changes.forEach(change => {
+                const colors = getChangeColor(change.pct);
+                
+                // Style the percentage text
+                const textElement = document.getElementById(change.textId);
+                if (textElement) {
+                    textElement.style.color = colors.textColor;
+                    textElement.style.backgroundColor = colors.bgColor;
+                    textElement.style.border = `1px solid ${colors.borderColor}`;
+                    textElement.style.padding = '2px 6px';
+                    textElement.style.borderRadius = '4px';
+                    textElement.style.transition = 'all 0.3s';
+                }
+                
+                // Style the CHART BACKGROUND - this is the subliminal magic!
+                const chartElement = document.getElementById(change.chartId);
+                if (chartElement) {
+                    // Make background more subtle for charts but still visible
+                    const chartBgIntensity = Math.min(Math.abs(change.pct) * 0.05, 0.3);
+                    let chartBgColor;
+                    
+                    if (change.pct > 0.05) {
+                        chartBgColor = `rgba(0, 255, 65, ${chartBgIntensity})`;
+                    } else if (change.pct < -0.05) {
+                        chartBgColor = `rgba(220, 38, 38, ${chartBgIntensity})`;
+                    } else {
+                        chartBgColor = `rgba(107, 114, 128, 0.1)`;
+                    }
+                    
+                    chartElement.style.backgroundColor = chartBgColor;
+                    chartElement.style.transition = 'background-color 0.5s ease';
+                    
+                    console.log(`📊 ${change.chartId}: ${change.pct}% -> ${chartBgColor}`);
+                }
+            });
+        }
+        
+        // Apply gradients after page loads
+        applyGradientColors();
+        
         console.log('🎉 V5 Crypto Tracker Loaded Successfully!');
         console.log('✅ Portfolio modals working');
         console.log('✅ Terminal styling active'); 
+        console.log('✅ Subliminal gradient colors applied');
         console.log('✅ All V5 features demonstrated');
     </script>
 </body>

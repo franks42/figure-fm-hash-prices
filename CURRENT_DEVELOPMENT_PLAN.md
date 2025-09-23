@@ -1,8 +1,8 @@
 # Current Development Plan - V6.2.0+
 
 **Project**: Figure Markets Hash Prices Tracker  
-**Current Version**: V6.2.0 V5-Modal-Fix  
-**Status**: ✅ V5 modals working, ❌ loading performance issue identified  
+**Current Version**: V6.3.0 Subliminal-Gradient  
+**Status**: ✅ Subliminal gradient charts working, ✅ V5 modals working  
 **Goal**: Subliminal market awareness tool (not professional trading platform)
 
 ## 🚨 **CRITICAL SCALABILITY ISSUE: API Key Limits**
@@ -201,7 +201,7 @@ Tier-2: GitHub Actions JSON → FALLBACK ONLY
 3. Add user API key configuration for scaling
 4. Fine-tune backup vs primary switching logic
 
-## ✅ **Recent Completed Features (v6.2.0)**
+## ✅ **Recent Completed Features (v6.3.0)**
 
 **V5 Modal Fix (MAJOR):**
 - **Root cause identified**: CSS clipping by `#v5-prototype` container
@@ -217,11 +217,19 @@ Tier-2: GitHub Actions JSON → FALLBACK ONLY
 - Simplified URL structure: `http://localhost:8000/` = V5
 - Removed feature flag complexity and version switching logic
 
+**Subliminal Gradient System (NEW):**
+- **Magnitude-based coloring**: Chart fill areas colored by percentage change (0.01% subtle → 10%+ intense)
+- **Clean aesthetics**: White graph lines, white percentage text, black chart backgrounds  
+- **Saturation gradient**: Green (positive) to red (negative) with intensity matching magnitude
+- **UI clarity**: Dark blue period buttons readable on any chart fill color
+- **Subliminal awareness**: Users instantly understand performance through color psychology
+
 **Architecture Achievements:**
 - Clean separation of modals from main content (no CSS clipping)
 - Robust localStorage persistence for user preferences
 - Eliminated legacy V4 rendering confusion
 - Oracle-validated systematic debugging approach
+- Subliminal gradient system for instant market awareness
 
 ## 🎯 **Project Vision**
 
