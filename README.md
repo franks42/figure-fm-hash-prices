@@ -4,7 +4,7 @@ A **V5-only** cryptocurrency and stock price tracking system with professional t
 
 ## Current Version
 
-- **V6.3.1 (Live-Only)**: Real-time data ONLY - no GitHub backup fallback, subliminal gradient charts
+- **V6.3.2 (UI Polish)**: Clean interface - updated title, removed prototype text, added version/settings
 - **URL**: `http://localhost:8000/` (V5 interface) or `http://localhost:8000/simple.html` (demo)
 
 ## Live-Data-First Architecture

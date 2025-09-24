@@ -10,7 +10,7 @@
 (defn asset-description
   "Asset description below chart with feed indicator on right"
   [crypto-id feed-indicator]
-  (let [descriptions {"hash" "Provenance Blockchain HASH Token"
+  (let [descriptions {"hash" "Provenance Blockchain HASH"
                       "figr" "Figure Technologies Inc."
                       "btc" "Bitcoin"
                       "eth" "Ethereum"
@@ -177,8 +177,5 @@
   (let [new-layout? @(rf/subscribe [:ui/new-layout?])]
     (when new-layout?
       [:section {:class "max-w-7xl mx-auto px-4 py-10 space-y-6"}
-       [:div {:class "text-center"}
-        [:h2 {:class "text-xl font-bold text-neon-green"} "V5 PROTOTYPE"]
-        [:p {:class "text-sm text-gray-400"} "Professional card grid"]]
        [portfolio-total-v5]
        [crypto-grid-v5]])))
