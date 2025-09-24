@@ -412,10 +412,9 @@
            (when (< idx (dec (count data-sources)))
              [:span {:class "text-gray-500 mx-1"} "•"])])]])))
 
-;; V5 interface indicator (V5 is the only interface)
+;; Layout version indicator removed - no longer needed since V5 is the only interface
 (defn layout-version-indicator []
-  [:div {:class "fixed top-16 left-5 z-20 bg-neon-green/20 border border-neon-green/40 rounded px-2 py-1 text-xs"}
-   "V5 Interface"])
+  [:div])
 
 ;; Last update footer (copy V2)
 (defn last-update-footer []

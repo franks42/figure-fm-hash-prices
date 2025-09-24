@@ -286,6 +286,61 @@ Create a **quick, subliminal view** of market and portfolio performance. Users s
 
 ## 📋 **Priority Roadmap**
 
+### 🔥 **IMMEDIATE PRIORITY** (Oracle-Validated Plan)
+
+#### Portfolio Performance Card (PF) - Oracle Implementation Plan
+**Goal**: Add portfolio card as first asset showing aggregated portfolio performance  
+**Oracle Status**: ✅ **Detailed implementation plan complete**
+
+**📊 Portfolio Card Specification:**
+- **Position**: First card (left of HASH)
+- **Symbol**: "PF" (Portfolio)  
+- **Price**: Total portfolio value in selected currency
+- **Chart**: Historical portfolio performance (sum of all holdings at each time point)
+- **High/Low**: Portfolio value highs/lows over period
+- **Change%**: Portfolio performance vs 24H/1W/1M ago
+- **Feed Indicator**: "PF" badge
+- **No Portfolio Section**: Cannot "add PF to portfolio"
+
+**🔧 Oracle Technical Implementation:**
+
+**Phase 1: Portfolio Utils Namespace** (`crypto-app-v3.portfolio.utils`)
+1. `portfolio->price-map`: Convert holdings to Figure-Markets-style data structure
+   - Input: holdings map `{cid qty}`, prices map 
+   - Output: `{"usd" total-value, "day_high" agg-high, "usd_24h_change" pct, ...}`
+   - Calculations: `Σ qtyᵢ × priceᵢ` for current, high, low values
+2. `aggregate-historical`: Calculate portfolio value at each historical time point
+   - Input: holdings map, historical-map `{cid → [timestamps prices]}`
+   - Output: `[timestamps portfolio-values]` 
+   - Algorithm: Find timestamp intersection, calculate `Σ qtyᵢ × priceᵢ(t)` for each t
+
+**Phase 2: Re-frame Integration**
+1. `:portfolio/aggregated-price` subscription using `portfolio->price-map`
+2. `:portfolio/historical-data` subscription using `aggregate-historical`  
+3. Modify `:prices` to include "pf" when portfolio exists
+4. Modify `:sorted-price-keys` to include "pf" first (sort priority "00-pf")
+5. Modify `:historical-data` to route "pf" to portfolio aggregation
+
+**Phase 3: Card Integration**
+1. Update `crypto-card-v5` to handle `crypto-id = "pf"` special case
+2. Skip portfolio section for PF card
+3. Add "pf" to asset descriptions map: `"Total Portfolio"`
+4. Feed indicator shows "PF" 
+5. Conditional rendering: Only show PF card when holdings exist
+
+**Phase 4: Testing & Verification**
+1. Single asset test: 1 BTC holding → PF values should equal BTC values
+2. Multi-asset test: Verify aggregated calculations match manual spreadsheet
+3. Currency conversion: PF values update with currency selector
+4. Real-time updates: Adding/removing holdings updates PF card instantly
+5. Historical accuracy: PF chart visually matches sum of underlying assets
+
+**🎯 Integration Benefits:**
+- Zero breaking changes to existing card system
+- Portfolio data uses same structure as crypto data
+- Existing gradient system works automatically for portfolio
+- Subliminal portfolio awareness through first-position placement
+
 ### 🔥 **HIGH PRIORITY** (Core UX Issues)
 
 #### 1. Chart & Card Layout Redesign  
