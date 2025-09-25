@@ -4,7 +4,7 @@ A **V5-only** cryptocurrency and stock price tracking system with professional t
 
 ## Current Version
 
-- **V6.3.2 (UI Polish)**: Clean interface - updated title, removed prototype text, added version/settings
+- **V6.4.0 (Portfolio Card)**: Portfolio Performance card as first asset with aggregated portfolio performance
 - **URL**: `http://localhost:8000/` (V5 interface) or `http://localhost:8000/simple.html` (demo)
 
 ## Live-Data-First Architecture
@@ -12,13 +12,14 @@ A **V5-only** cryptocurrency and stock price tracking system with professional t
 Real-time cryptocurrency and stock tracker with **direct API integration** and **Oracle-validated architecture**.
 
 ### ✅ **Core Features**
+- **Portfolio Performance Card**: PF card as first asset showing aggregated portfolio performance and historical charts
 - **Subliminal Gradient Charts**: Chart fill colors based on percentage change magnitude (0.01% subtle → 10%+ intense)
 - **V5 Terminal Interface**: Professional multi-asset grid layout with clean white lines/text
 - **Working Modals**: Portfolio and currency selector modals (CSS clipping fixed)
 - **localStorage Persistence**: Portfolio quantities and currency selection persist
 - **Multi-Currency Support**: 6 currencies with working modal selector
 - **Portfolio Management**: Add/edit/remove portfolio with modal interface
-- **Real-time Data**: Direct API integration with Figure Markets and Twelve Data
+- **Real-time Data**: Direct API integration with Figure Markets and Twelve Data (no backup)
 
 ### 🚀 **Live Data Sources (ONLY)**
 - **Figure Markets API**: HASH, BTC, ETH, SOL, UNI, XRP, LINK, FIGR_HELOC (real-time)

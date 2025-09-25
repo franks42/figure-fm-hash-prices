@@ -458,12 +458,25 @@
          updated-db (assoc-in db [:portfolio :holdings] updated-holdings)]
      (js/console.log "📝 V5 Updated holdings:" updated-holdings)
      {:db updated-db
-      :fx [[:local-storage/persist-portfolio updated-holdings]]})))
+      :fx [[:local-storage/persist-portfolio updated-holdings]
+            ;; Trigger historical data fetch for all holdings to enable PF chart
+           [:dispatch-later [{:ms 500 :dispatch [:portfolio/fetch-all-historical]}]]]})))
 
 (rf/reg-event-db
  :portfolio/remove
  (fn [db [_ crypto-id]]
    (update-in db [:portfolio :holdings] dissoc crypto-id)))
+
+;; Fetch historical data for all portfolio holdings to enable PF chart
+(rf/reg-event-fx
+ :portfolio/fetch-all-historical
+ (fn [{:keys [db]} [_]]
+   (let [holdings (get-in db [:portfolio :holdings] {})
+         current-period (get-in db [:chart :current-period] "1W")]
+     (js/console.log "📊 PF: Fetching historical data for holdings:" (keys holdings))
+     {:fx (mapv (fn [crypto-id]
+                  [:dispatch [:fetch-historical-data crypto-id]])
+                (keys holdings))})))
 
 ;; Live-data-first provider events (Oracle-recommended)
 (rf/reg-event-db

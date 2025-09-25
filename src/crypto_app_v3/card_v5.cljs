@@ -10,7 +10,8 @@
 (defn asset-description
   "Asset description below chart with feed indicator on right"
   [crypto-id feed-indicator]
-  (let [descriptions {"hash" "Provenance Blockchain HASH"
+  (let [descriptions {"pf" "Total Portfolio"
+                      "hash" "Provenance Blockchain HASH"
                       "figr" "Figure Technologies Inc."
                       "btc" "Bitcoin"
                       "eth" "Ethereum"
@@ -84,6 +85,7 @@
         trades (when-let [t (get data "trades_24h")] t)
         asset-type (get data "type" "crypto")
         feed-indicator (cond
+                         (= crypto-id "pf") "PF"    ; Portfolio card
                          (= crypto-id "figr") "TD"  ; FIGR uses Twelve Data
                          (= asset-type "stock") "YF" ; Other stocks use Yahoo Finance  
                          :else "FM")                 ; Cryptos use Figure Markets
@@ -115,8 +117,9 @@
         converted-high (curr/convert-currency display-high current-currency exchange-rates)
         converted-low (curr/convert-currency display-low current-currency exchange-rates)]
 
-;; Trigger historical data fetch if missing (same as V4)
-    (when (or (nil? historical-data) (empty? historical-data))
+;; Trigger historical data fetch if missing (skip for portfolio - it's calculated)
+    (when (and (not= crypto-id "pf")
+               (or (nil? historical-data) (empty? historical-data)))
       (js/console.log "🚀 V5 Triggering historical fetch for" crypto-id)
       (rf/dispatch [:fetch-historical-data crypto-id]))
 
@@ -137,8 +140,9 @@
      ;; Stats row with currency button
      [stats-row volume trades current-currency currency-symbol exchange-rates]
 
-      ;; Portfolio section
-     [portfolio-section crypto-id]]))
+      ;; Portfolio section (skip for portfolio card itself)
+     (when (not= crypto-id "pf")
+       [portfolio-section crypto-id])]))
 
 ;; V5 Portfolio Total Value Display
 (defn portfolio-total-v5

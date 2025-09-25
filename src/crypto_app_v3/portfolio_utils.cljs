@@ -1,5 +1,4 @@
-(ns crypto-app-v3.portfolio-utils
-  (:require [clojure.set :as set]))
+(ns crypto-app-v3.portfolio-utils)
 
 ;; Portfolio aggregation utilities for PF card
 ;; Converts portfolio holdings into Figure-Markets-style data structure
@@ -13,58 +12,58 @@
     nil
     (let [;; Calculate current total value
           total-current (->> holdings
-                            (map (fn [[crypto-id qty]]
-                                   (let [price-data (get prices crypto-id)
-                                         current-price (get price-data "usd" 0)]
-                                     (* qty current-price))))
-                            (reduce + 0))
-          
+                             (map (fn [[crypto-id qty]]
+                                    (let [price-data (get prices crypto-id)
+                                          current-price (get price-data "usd" 0)]
+                                      (* qty current-price))))
+                             (reduce + 0))
+
           ;; Calculate 24h ago total value for percentage change
           total-24h-ago (->> holdings
-                            (map (fn [[crypto-id qty]]
-                                   (let [price-data (get prices crypto-id)
-                                         current-price (get price-data "usd" 0)
-                                         change-pct (get price-data "usd_24h_change" 0)
+                             (map (fn [[crypto-id qty]]
+                                    (let [price-data (get prices crypto-id)
+                                          current-price (get price-data "usd" 0)
+                                          change-pct (get price-data "usd_24h_change" 0)
                                          ;; Calculate 24h ago price: current / (1 + change%)
-                                         price-24h-ago (if (= change-pct 0)
-                                                         current-price
-                                                         (/ current-price (+ 1 (/ change-pct 100))))]
-                                     (* qty price-24h-ago))))
-                            (reduce + 0))
-          
+                                          price-24h-ago (if (= change-pct 0)
+                                                          current-price
+                                                          (/ current-price (+ 1 (/ change-pct 100))))]
+                                      (* qty price-24h-ago))))
+                             (reduce + 0))
+
           ;; Calculate portfolio percentage change
           pf-change-pct (if (> total-24h-ago 0)
                           (* 100 (/ (- total-current total-24h-ago) total-24h-ago))
                           0)
-          
+
           ;; Calculate high/low from individual asset highs/lows
           total-high (->> holdings
+                          (map (fn [[crypto-id qty]]
+                                 (let [price-data (get prices crypto-id)
+                                       day-high (get price-data "day_high" 0)]
+                                   (* qty day-high))))
+                          (reduce + 0))
+
+          total-low (->> holdings
                          (map (fn [[crypto-id qty]]
                                 (let [price-data (get prices crypto-id)
-                                      day-high (get price-data "day_high" 0)]
-                                  (* qty day-high))))
+                                      day-low (get price-data "day_low" 0)]
+                                  (* qty day-low))))
                          (reduce + 0))
-          
-          total-low (->> holdings
-                        (map (fn [[crypto-id qty]]
-                               (let [price-data (get prices crypto-id)
-                                     day-low (get price-data "day_low" 0)]
-                                 (* qty day-low))))
-                        (reduce + 0))
-          
+
           ;; Aggregate volume and trades
           total-volume (->> holdings
-                           (map (fn [[crypto-id _]]
-                                  (let [price-data (get prices crypto-id)]
-                                    (get price-data "usd_24h_vol" 0))))
-                           (reduce + 0))
-          
+                            (map (fn [[crypto-id _]]
+                                   (let [price-data (get prices crypto-id)]
+                                     (get price-data "usd_24h_vol" 0))))
+                            (reduce + 0))
+
           total-trades (->> holdings
-                           (map (fn [[crypto-id _]]
-                                  (let [price-data (get prices crypto-id)]
-                                    (get price-data "trades_24h" 0))))
-                           (reduce + 0))]
-      
+                            (map (fn [[crypto-id _]]
+                                   (let [price-data (get prices crypto-id)]
+                                     (get price-data "trades_24h" 0))))
+                            (reduce + 0))]
+
       ;; Return Figure-Markets-compatible data structure
       {"usd" total-current
        "usd_24h_change" pf-change-pct
@@ -86,38 +85,33 @@
                                          (contains? historical-map %)
                                          (seq (get historical-map %)))
                                    (keys holdings))
-          
-          ;; Find common timestamps across all available assets
-          timestamp-sets (map (fn [crypto-id]
-                               (let [[timestamps _] (get historical-map crypto-id)]
-                                 (set timestamps)))
-                             available-assets)
-          
-          common-timestamps (if (seq timestamp-sets)
-                             (apply set/intersection timestamp-sets)
-                             #{})
-          
-          ;; Sort timestamps chronologically
-          sorted-timestamps (sort (vec common-timestamps))]
-      
-      (if (empty? sorted-timestamps)
+
+          ;; Use all available timestamps (union instead of intersection)
+          all-timestamps (->> available-assets
+                              (mapcat (fn [crypto-id]
+                                        (let [[timestamps _] (get historical-map crypto-id)]
+                                          timestamps)))
+                              (distinct)
+                              (sort))]
+
+      (if (empty? all-timestamps)
         []
         (let [;; Create index lookups for each asset
               asset-lookups (into {}
-                                 (map (fn [crypto-id]
-                                        (let [[timestamps prices] (get historical-map crypto-id)
-                                              lookup (zipmap timestamps prices)]
-                                          [crypto-id lookup]))
-                                      available-assets))
-              
-              ;; Calculate portfolio value at each timestamp
+                                  (map (fn [crypto-id]
+                                         (let [[timestamps prices] (get historical-map crypto-id)
+                                               lookup (zipmap timestamps prices)]
+                                           [crypto-id lookup]))
+                                       available-assets))
+
+              ;; Calculate portfolio value at each timestamp (use 0 if asset has no data for that timestamp)
               portfolio-values (mapv (fn [timestamp]
-                                      (->> available-assets
-                                           (map (fn [crypto-id]
-                                                  (let [qty (get holdings crypto-id 0)
-                                                        price (get-in asset-lookups [crypto-id timestamp] 0)]
-                                                    (* qty price))))
-                                           (reduce + 0)))
-                                    sorted-timestamps)]
-          
-          [sorted-timestamps portfolio-values])))))
+                                       (->> available-assets
+                                            (map (fn [crypto-id]
+                                                   (let [qty (get holdings crypto-id 0)
+                                                         price (get-in asset-lookups [crypto-id timestamp] 0)]
+                                                     (* qty price))))
+                                            (reduce + 0)))
+                                     all-timestamps)]
+
+          [all-timestamps portfolio-values])))))

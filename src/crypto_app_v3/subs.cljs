@@ -1,11 +1,16 @@
 (ns crypto-app-v3.subs
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [crypto-app-v3.portfolio-utils :as pf-utils]))
 
-;; Historical data subscription
+;; Historical data subscription - handles portfolio aggregation
 (rf/reg-sub
  :historical-data
  (fn [db [_ crypto-id]]
-   (get-in db [:historical-data crypto-id] [])))
+   (if (= crypto-id "pf")
+     ;; Portfolio historical data - use aggregation
+     @(rf/subscribe [:portfolio/historical-data])
+     ;; Regular crypto historical data
+     (get-in db [:historical-data crypto-id] []))))
 
 ;; UI state subscriptions
 (rf/reg-sub
@@ -29,10 +34,52 @@
    (get-in db [:ui :initial-load-complete?])))
 
 ;; Data subscriptions
+;; Raw prices from feed (before portfolio integration)
 (rf/reg-sub
- :prices
+ :raw/prices
  (fn [db]
    (:prices db)))
+
+;; Portfolio aggregation subscriptions
+(rf/reg-sub
+ :portfolio/aggregated-price
+ :<- [:portfolio/holdings]
+ :<- [:raw/prices]
+ (fn [[holdings prices] _]
+   (pf-utils/portfolio->price-map holdings prices)))
+
+(rf/reg-sub
+ :portfolio/historical-data
+ :<- [:portfolio/holdings]
+ :<- [:historical-map]
+ :<- [:chart/current-period]  ; React to period changes
+ (fn [[holdings historical-map period] _]
+   (js/console.log "📊 PF: Aggregating historical data for period:" period "holdings:" (keys holdings))
+   (let [result (pf-utils/aggregate-historical holdings historical-map)]
+     (js/console.log "📊 PF: Aggregated result length:" (if (vector? result) (count (first result)) "not vector"))
+     result)))
+
+(rf/reg-sub
+ :portfolio/has-holdings?
+ :<- [:portfolio/holdings]
+ (fn [holdings _]
+   (and holdings (> (count holdings) 0))))
+
+;; Historical map for portfolio aggregation
+(rf/reg-sub
+ :historical-map
+ (fn [db _]
+   (:historical-data db)))
+
+;; Enhanced prices including portfolio when it exists
+(rf/reg-sub
+ :prices
+ :<- [:raw/prices]
+ :<- [:portfolio/aggregated-price]
+ (fn [[feed-prices pf-price] _]
+   (if pf-price
+     (assoc feed-prices "pf" pf-price)
+     feed-prices)))
 
 (rf/reg-sub
  :price-keys
@@ -115,19 +162,24 @@
  (fn [db]
    (get-in db [:currency :show-selector?] false)))
 
-;; Copy V2 sorting logic (small function)
+;; Copy V2 sorting logic with portfolio first
 (defn sort-crypto-keys [keys]
   (sort-by (fn [crypto-id]
              (cond
-               (= crypto-id "hash") "0-hash"
-               (= crypto-id "figr") "1-figr"
+               (= crypto-id "pf") "00-pf"        ; Portfolio first
+               (= crypto-id "hash") "01-hash"    ; HASH second
+               (= crypto-id "figr") "02-figr"    ; FIGR third
                :else crypto-id)) keys))
 
 (rf/reg-sub
  :sorted-price-keys
  :<- [:price-keys]
- (fn [price-keys]
-   (sort-crypto-keys price-keys)))
+ :<- [:portfolio/has-holdings?]
+ (fn [[price-keys has-holdings?] _]
+   (let [keys-with-pf (if has-holdings?
+                        (conj price-keys "pf")
+                        price-keys)]
+     (sort-crypto-keys keys-with-pf))))
 
 ;; Portfolio calculations (copy V2 portfolio logic)
 (defn calculate-holding-value [quantity current-price]

@@ -1,8 +1,8 @@
 # Current Development Plan - V6.2.0+
 
 **Project**: Figure Markets Hash Prices Tracker  
-**Current Version**: V6.3.1 Live-Only-System  
-**Status**: ✅ Real-time data ONLY (no backup), ✅ Subliminal gradients, ✅ V5 modals  
+**Current Version**: V6.4.0 Portfolio-Performance-Card  
+**Status**: ✅ Portfolio card complete, ✅ Real-time data ONLY, ✅ Subliminal gradients, ✅ V5 modals  
 **Goal**: Subliminal market awareness tool (not professional trading platform)
 
 ## 🚨 **CRITICAL SCALABILITY ISSUE: API Key Limits**
@@ -201,7 +201,7 @@ Tier-2: GitHub Actions JSON → FALLBACK ONLY
 3. Add user API key configuration for scaling
 4. Fine-tune backup vs primary switching logic
 
-## ✅ **Recent Completed Features (v6.3.1)**
+## ✅ **Recent Completed Features (v6.4.0)**
 
 **V5 Modal Fix (MAJOR):**
 - **Root cause identified**: CSS clipping by `#v5-prototype` container
@@ -230,12 +230,21 @@ Tier-2: GitHub Actions JSON → FALLBACK ONLY
 - **UI clarity**: Dark blue period buttons readable on any chart fill color
 - **Subliminal awareness**: Users instantly understand performance through color psychology
 
+**Portfolio Performance Card (MAJOR):**
+- **Oracle-designed**: 4-phase implementation (Utils → Re-frame → Cards → Testing)
+- **First position**: PF card appears as first asset when portfolio exists
+- **Aggregated metrics**: Total value, historical performance, high/low, percentage changes
+- **Multi-asset support**: Timestamp union approach handles mixed crypto/stock holdings
+- **Real-time integration**: Portfolio updates instantly with price changes and currency conversion
+- **Subliminal awareness**: Portfolio performance visible through gradient colors and position
+
 **Architecture Achievements:**
 - Clean separation of modals from main content (no CSS clipping)
 - Robust localStorage persistence for user preferences
 - Eliminated legacy V4 rendering confusion
 - Oracle-validated systematic debugging approach
 - Subliminal gradient system for instant market awareness
+- Portfolio aggregation system for comprehensive performance tracking
 
 ## 🎯 **Project Vision**
 
