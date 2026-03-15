@@ -169,6 +169,7 @@
                (= crypto-id "pf") "00-pf"        ; Portfolio first
                (= crypto-id "hash") "01-hash"    ; HASH second
                (= crypto-id "figr") "02-figr"    ; FIGR third
+               (= crypto-id "fgrd") "03-fgrd"    ; FGRD fourth (tokenized FIGR)
                :else crypto-id)) keys))
 
 (rf/reg-sub

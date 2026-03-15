@@ -13,6 +13,7 @@
   (let [descriptions {"pf" "Total Portfolio"
                       "hash" "Provenance Blockchain HASH"
                       "figr" "Figure Technologies Inc."
+                      "fgrd" "FIGR Tokenized (Figure Markets)"
                       "btc" "Bitcoin"
                       "eth" "Ethereum"
                       "sol" "Solana"
@@ -87,7 +88,8 @@
         feed-indicator (cond
                          (= crypto-id "pf") "PF"    ; Portfolio card
                          (= crypto-id "figr") "TD"  ; FIGR uses Twelve Data
-                         (= asset-type "stock") "YF" ; Other stocks use Yahoo Finance  
+                         (= crypto-id "fgrd") "FM"  ; FGRD tokenized on Figure Markets
+                         (= asset-type "stock") "YF" ; Other stocks use Yahoo Finance
                          :else "FM")                 ; Cryptos use Figure Markets
         current-currency @(rf/subscribe [:currency/current])
         exchange-rates @(rf/subscribe [:currency/exchange-rates])

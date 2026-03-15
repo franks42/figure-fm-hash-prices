@@ -127,28 +127,55 @@
           :currency "USD"}})
 
 (defn process-crypto-data [crypto-response]
-  (->> (j/get crypto-response :data)
-       (filter #(str/ends-with? (j/get % :symbol) "-USD"))
-       (remove #(contains? #{"USDT-USD" "USDC-USD"} (j/get % :symbol)))
-       (reduce (fn [acc item]
-                 (let [symbol (-> (j/get item :symbol)
-                                  (str/replace "-USD" "")
-                                  str/lower-case
-                                  keyword)]
-                   (assoc acc symbol
-                          {:usd (js/parseFloat (or (j/get item :midMarketPrice)
-                                                   (j/get item :lastTradedPrice) 0))
-                           :usd_24h_change (* (js/parseFloat (or (j/get item :percentageChange24h) 0)) 100)
-                           :usd_24h_vol (js/parseFloat (or (j/get item :volume24h) 0))
-                           :usd_market_cap nil
-                           :symbol (j/get item :symbol)
-                           :bid (js/parseFloat (or (j/get item :bestBid) 0))
-                           :ask (js/parseFloat (or (j/get item :bestAsk) 0))
-                           :last_price (js/parseFloat (or (j/get item :lastTradedPrice) 0))
-                           :trades_24h (js/parseInt (or (j/get item :tradeCount24h) 0))
-                           :day_high (js/parseFloat (or (j/get item :high24h) 0))
-                           :day_low (js/parseFloat (or (j/get item :low24h) 0))
-                           :type "crypto"}))) {})))
+  (let [data (j/get crypto-response :data)
+        ;; Find YLDS-USD price for FGRD conversion
+        ylds-usd-price (reduce (fn [_ item]
+                                 (when (= (j/get item :symbol) "YLDS-USD-2F")
+                                   (reduced (js/parseFloat (or (j/get item :lastTradedPrice) 1)))))
+                               1.0 data)
+        ;; Process standard -USD pairs
+        usd-pairs (->> data
+                       (filter #(str/ends-with? (j/get % :symbol) "-USD"))
+                       (remove #(contains? #{"USDT-USD" "USDC-USD"} (j/get % :symbol)))
+                       (reduce (fn [acc item]
+                                 (let [symbol (-> (j/get item :symbol)
+                                                   (str/replace "-USD" "")
+                                                   str/lower-case
+                                                   keyword)]
+                                   (assoc acc symbol
+                                          {:usd (js/parseFloat (or (j/get item :midMarketPrice)
+                                                                   (j/get item :lastTradedPrice) 0))
+                                           :usd_24h_change (* (js/parseFloat (or (j/get item :percentageChange24h) 0)) 100)
+                                           :usd_24h_vol (js/parseFloat (or (j/get item :volume24h) 0))
+                                           :usd_market_cap nil
+                                           :symbol (j/get item :symbol)
+                                           :bid (js/parseFloat (or (j/get item :bestBid) 0))
+                                           :ask (js/parseFloat (or (j/get item :bestAsk) 0))
+                                           :last_price (js/parseFloat (or (j/get item :lastTradedPrice) 0))
+                                           :trades_24h (js/parseInt (or (j/get item :tradeCount24h) 0))
+                                           :day_high (js/parseFloat (or (j/get item :high24h) 0))
+                                           :day_low (js/parseFloat (or (j/get item :low24h) 0))
+                                           :type "crypto"}))) {}))
+        ;; Process FGRD-YLDS pair, converting to USD
+        fgrd-item (first (filter #(= (j/get % :symbol) "FGRD-YLDS") data))
+        fgrd-data (when fgrd-item
+                    (let [last-price (* (js/parseFloat (or (j/get fgrd-item :lastTradedPrice) 0)) ylds-usd-price)]
+                      {:fgrd {:usd last-price
+                              :usd_24h_change (* (js/parseFloat (or (j/get fgrd-item :percentageChange24h) 0)) 100)
+                              :usd_24h_vol (* (js/parseFloat (or (j/get fgrd-item :volume24h) 0)) ylds-usd-price)
+                              :usd_market_cap nil
+                              :symbol "FGRD-YLDS"
+                              :bid (* (js/parseFloat (or (j/get fgrd-item :bestBid) 0)) ylds-usd-price)
+                              :ask (* (js/parseFloat (or (j/get fgrd-item :bestAsk) 0)) ylds-usd-price)
+                              :last_price last-price
+                              :trades_24h (js/parseInt (or (j/get fgrd-item :tradeCount24h) 0))
+                              :day_high (* (js/parseFloat (or (j/get fgrd-item :high24h) 0)) ylds-usd-price)
+                              :day_low (* (js/parseFloat (or (j/get fgrd-item :low24h) 0)) ylds-usd-price)
+                              :type "tokenized_stock"
+                              :quote_currency "YLDS"
+                              :ylds_usd_rate ylds-usd-price}}))]
+    (log "📊 YLDS-USD rate:" ylds-usd-price)
+    (merge usd-pairs fgrd-data)))
 
 (defn calculate-change-percent [current-price previous-close]
   (if (and current-price previous-close (> previous-close 0))

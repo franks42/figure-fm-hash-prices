@@ -14,12 +14,22 @@
 ;; Figure Markets transformer
 (defmethod transform->canonical :figure [_ raw-response]
   (js/console.log "🔄 TRANSFORM: Figure Markets → canonical format")
-  (let [data (get raw-response "data")]
+  (let [data (get raw-response "data")
+        ;; First pass: find YLDS-USD price for FGRD conversion
+        ylds-usd-price (reduce (fn [_ item]
+                                 (when (= (get item "symbol") "YLDS-USD-2F")
+                                   (reduced (js/parseFloat (get item "lastTradedPrice" "1")))))
+                               1.0 data)]
+    (js/console.log "🔄 TRANSFORM: YLDS-USD price:" ylds-usd-price)
     (reduce (fn [acc item]
-              (let [symbol (-> (get item "symbol" "")
+              (let [raw-symbol (get item "symbol" "")
+                    symbol (-> raw-symbol
                                (str/replace "-USD" "")
                                str/lower-case)]
-                (if (contains? #{"hash" "btc" "eth" "figr_heloc" "link" "sol" "uni" "xrp"} symbol)
+                (cond
+                  ;; Standard -USD pairs
+                  (and (str/ends-with? raw-symbol "-USD")
+                       (contains? #{"hash" "btc" "eth" "figr_heloc" "link" "sol" "uni" "xrp"} symbol))
                   (do
                     (js/console.log "✅ TRANSFORM: Including" symbol)
                     (assoc acc (keyword symbol)
@@ -33,15 +43,41 @@
                             :usd_24h_change (* (js/parseFloat (get item "percentageChange24h" "0")) 100)
                             :usd_24h_vol (js/parseFloat (get item "volume24h" "0"))
                             :trades_24h (js/parseInt (get item "tradeCount24h" "0"))
-                            :symbol (get item "symbol" "")
+                            :symbol raw-symbol
                             :bid (js/parseFloat (get item "bestBid" "0"))
                             :ask (js/parseFloat (get item "bestAsk" "0"))
                             :last_price (js/parseFloat (get item "lastTradedPrice" "0"))}))
+
+                  ;; FGRD-YLDS pair — convert to USD via YLDS price
+                  (= raw-symbol "FGRD-YLDS")
+                  (let [last-price (* (js/parseFloat (get item "lastTradedPrice" "0")) ylds-usd-price)
+                        bid (* (js/parseFloat (get item "bestBid" "0")) ylds-usd-price)
+                        ask (* (js/parseFloat (get item "bestAsk" "0")) ylds-usd-price)]
+                    (js/console.log "✅ TRANSFORM: Including fgrd (via YLDS→USD @" ylds-usd-price ")")
+                    (assoc acc :fgrd
+                           {:id "fgrd"
+                            :type "tokenized_stock"
+                            :source :figure
+                            :timestamp (js/Date.now)
+                            :usd last-price
+                            :day_high (* (js/parseFloat (get item "high24h" "0")) ylds-usd-price)
+                            :day_low (* (js/parseFloat (get item "low24h" "0")) ylds-usd-price)
+                            :usd_24h_change (* (js/parseFloat (get item "percentageChange24h" "0")) 100)
+                            :usd_24h_vol (* (js/parseFloat (get item "volume24h" "0")) ylds-usd-price)
+                            :trades_24h (js/parseInt (get item "tradeCount24h" "0"))
+                            :symbol "FGRD-YLDS"
+                            :bid bid
+                            :ask ask
+                            :last_price last-price
+                            :quote_currency "YLDS"
+                            :ylds_usd_rate ylds-usd-price}))
+
+                  :else
                   (do
                     (js/console.log "⏭️ TRANSFORM: Skipping" symbol)
                     acc))))
             {}
-            data)))
+            data))))
 
 ;; Twelve Data transformer  
 (defmethod transform->canonical :twelve [_ raw-response]

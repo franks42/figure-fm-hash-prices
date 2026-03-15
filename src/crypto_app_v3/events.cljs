@@ -66,17 +66,18 @@
      (let [period (get-in db [:chart :current-period] "1W")]
        (js/console.log "🏦 ROUTING FIGR to Twelve Data, period:" period)
        {:fx [[:dispatch [:fetch-figr-daily period]]]})
-     ;; Regular crypto logic
+     ;; Regular crypto logic (FGRD uses FGRD-YLDS pair)
      (let [period (get-in db [:chart :current-period] "1W")
            config (get-period-config period)
            end-time (js/Date.)
            start-time (js/Date. (- (.getTime end-time) (* (:days config) 24 60 60 1000)))
+           market-symbol (if (= crypto-id "fgrd") "FGRD-YLDS" (str (str/upper-case crypto-id) "-USD"))
            url (str "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets/"
-                    (str/upper-case crypto-id) "-USD"
+                    market-symbol
                     "/candles?start_date=" (.toISOString start-time)
                     "&end_date=" (.toISOString end-time)
                     "&interval_in_minutes=" (:interval config) "&size=" (:size config))]
-       (js/console.log "📈 Dispatching fetch for" crypto-id "period:" period "config:" config)
+       (js/console.log "📈 Dispatching fetch for" crypto-id "(" market-symbol ") period:" period "config:" config)
        {:db db
         :fetch {:url url
                 :on-success [:historical-data-success crypto-id]
@@ -87,18 +88,19 @@
  :fetch-historical-data-period
  (fn [{:keys [db]} [_ crypto-id period]]
    (if (= crypto-id "figr")
-     ;; Route FIGR to Alpha Vantage
+     ;; Route FIGR to Twelve Data
      {:fx [[:dispatch [:fetch-figr-daily period]]]}
-     ;; Regular crypto logic
+     ;; Regular crypto logic (FGRD uses FGRD-YLDS pair)
      (let [config (get-period-config period)
            end-time (js/Date.)
            start-time (js/Date. (- (.getTime end-time) (* (:days config) 24 60 60 1000)))
+           market-symbol (if (= crypto-id "fgrd") "FGRD-YLDS" (str (str/upper-case crypto-id) "-USD"))
            url (str "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets/"
-                    (str/upper-case crypto-id) "-USD"
+                    market-symbol
                     "/candles?start_date=" (.toISOString start-time)
                     "&end_date=" (.toISOString end-time)
                     "&interval_in_minutes=" (:interval config) "&size=" (:size config))]
-       (js/console.log "📈 Fetching" period "data for" crypto-id "config:" config)
+       (js/console.log "📈 Fetching" period "data for" crypto-id "(" market-symbol ") config:" config)
        {:db db
         :fetch {:url url
                 :on-success [:historical-data-success crypto-id]
