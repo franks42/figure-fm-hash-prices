@@ -28,10 +28,14 @@
 
 (defn stats-row
   "Volume and trades row with currency conversion - period-aware"
-  [volume trades current-currency currency-symbol exchange-rates period-stats current-period]
+  [crypto-id volume trades current-currency currency-symbol exchange-rates period-stats current-period]
   (let [display-volume (or (:volume period-stats) volume)
         converted-volume (curr/convert-currency display-volume current-currency exchange-rates)
-        show-trades? (and trades (= current-period "24H"))]
+        show-trades? (and trades (= current-period "24H"))
+        quantity @(rf/subscribe [:portfolio/qty crypto-id])
+        pv @(rf/subscribe [:portfolio/value crypto-id])
+        converted-pv (when pv (curr/convert-currency pv current-currency exchange-rates))
+        has-holdings? (and quantity (> quantity 0))]
     [:div {:class "flex items-center justify-between text-xs text-gray-400 overlay-tier3"}
      [:div {:class "flex items-center"}
       [:span "Vol: "]
@@ -39,41 +43,23 @@
       [:button {:class "text-neon-green hover:text-neon-green/80 ml-2 font-medium"
                 :on-click #(rf/dispatch [:currency/show-selector])}
        current-currency]]
-     (when show-trades?
+     (cond
+       has-holdings?
+       [:span {:class "text-neon-green"}
+        (str "PV: " currency-symbol (chart-v5/format-number converted-pv 2))]
+       show-trades?
        [:span (str "Trades: " trades)])]))
 
-(defn portfolio-section
-  "Portfolio management section - add/edit holdings with quantity display"
+(defn portfolio-button
+  "Small PF button for chart overlay, next to period button"
   [crypto-id]
-  (let [quantity @(rf/subscribe [:portfolio/qty crypto-id])
-        value @(rf/subscribe [:portfolio/value crypto-id])
-        current-currency @(rf/subscribe [:currency/current])
-        exchange-rates @(rf/subscribe [:currency/exchange-rates])
-        currency-symbol (curr/get-currency-symbol current-currency)
-        ;; Convert value to current currency
-        converted-value (when value (curr/convert-currency value current-currency exchange-rates))]
-    [:div {:class "mt-3 pt-3 border-t border-white/10"}
-     (if (> quantity 0)
-       ;; Edit state - PV: $123.45 USD (quantity token) edit
-       [:div {:class "flex items-center justify-between text-xs"}
-        [:div {:class "flex items-center text-gray-300"}
-         [:span {:class "text-gray-400"} "PV:"]
-         (when converted-value
-           [:span {:class "text-white ml-2"}
-            (str currency-symbol (chart-v5/format-number converted-value 2))])
-         [:button {:class "text-neon-green hover:text-neon-green/80 ml-2 font-medium"
-                   :on-click #(rf/dispatch [:currency/show-selector])}
-          current-currency]
-         [:span {:class "text-gray-400 ml-2"}
-          (str "(" quantity " " (str/lower-case crypto-id) ")")]]
-        [:button {:class "text-neon-green hover:text-neon-green/80"
-                  :on-click #(rf/dispatch [:portfolio/show-panel crypto-id])}
-         "✏️"]]
-       ;; Add state - show add button
-       [:div {:class "text-center"}
-        [:button {:class "text-neon-green hover:text-neon-green/80 text-sm font-medium"
-                  :on-click #(rf/dispatch [:portfolio/show-panel crypto-id])}
-         "Add to Portfolio"]])]))
+  (let [quantity @(rf/subscribe [:portfolio/qty crypto-id])]
+    [:button {:class (str "text-xs rounded px-2 py-1 overlay-tier3 cursor-pointer transition-colors "
+                          (if (> quantity 0)
+                            "bg-neon-green/20 hover:bg-neon-green/30 border border-neon-green/40 text-neon-green"
+                            "bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/60 text-gray-400"))
+              :on-click #(rf/dispatch [:portfolio/show-panel crypto-id])}
+     "PF"]))
 
 (defn crypto-card-v5
   "V5 crypto card - professional terminal style with square chart"
@@ -136,18 +122,20 @@
       [chart-v5/chart-overlay-high converted-high currency-symbol]
       [chart-v5/chart-overlay-current-price converted-price currency-symbol current-currency]
       [chart-v5/chart-overlay-change chart-change]
-      [chart-v5/chart-overlay-period current-period]
+      ;; Period + PF buttons in bottom-center (replaces chart-overlay-period)
+      [:div {:class "absolute bottom-2 inset-x-0 flex justify-center gap-1 z-30"}
+       (when (not= crypto-id "pf")
+         [portfolio-button crypto-id])
+       [:button {:class "text-xs bg-blue-900/80 hover:bg-blue-800/80 border border-blue-600/60 rounded px-2 py-1 text-white overlay-tier3 cursor-pointer transition-colors"
+                 :on-click #(rf/dispatch [:chart/cycle-period])}
+        current-period]]
       [chart-v5/chart-overlay-low converted-low currency-symbol]]
 
      ;; Asset description with feed indicator
      [asset-description crypto-id feed-indicator]
 
      ;; Stats row with currency button
-     [stats-row volume trades current-currency currency-symbol exchange-rates period-stats current-period]
-
-      ;; Portfolio section (skip for portfolio card itself)
-     (when (not= crypto-id "pf")
-       [portfolio-section crypto-id])]))
+     [stats-row crypto-id volume trades current-currency currency-symbol exchange-rates period-stats current-period]]))
 
 ;; V5 Portfolio Total Value Display
 (defn portfolio-total-v5
