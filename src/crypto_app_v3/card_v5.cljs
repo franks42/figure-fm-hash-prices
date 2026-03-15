@@ -19,11 +19,14 @@
      [:div {:class "flex-1"}
       (if (= crypto-id "pf")
         [:span]
-        (if has-holdings?
+        (if (and has-holdings? converted-pv (> converted-pv 0))
           [:button {:class "text-neon-green hover:text-neon-green/80 font-medium overlay-tier3"
                     :on-click #(rf/dispatch [:portfolio/show-panel crypto-id])}
            (str "PF: " currency-symbol (chart-v5/format-number converted-pv 2))]
-          [:button {:class "text-gray-400 hover:text-gray-300 font-medium overlay-tier3"
+          [:button {:class (str "font-medium overlay-tier3 "
+                                (if has-holdings?
+                                  "text-neon-green hover:text-neon-green/80"
+                                  "text-gray-400 hover:text-gray-300"))
                     :on-click #(rf/dispatch [:portfolio/show-panel crypto-id])}
            "PF"]))]
      ;; Center: Period button
