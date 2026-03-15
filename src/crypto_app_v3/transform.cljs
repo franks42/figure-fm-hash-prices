@@ -77,7 +77,7 @@
                     (js/console.log "⏭️ TRANSFORM: Skipping" symbol)
                     acc))))
             {}
-            data))))
+            data)))
 
 ;; Twelve Data transformer  
 (defmethod transform->canonical :twelve [_ raw-response]
