@@ -185,6 +185,5 @@
   []
   (let [new-layout? @(rf/subscribe [:ui/new-layout?])]
     (when new-layout?
-      [:section {:class "max-w-7xl mx-auto px-4 py-10 space-y-6"}
-       [portfolio-total-v5]
+      [:section {:class "max-w-7xl mx-auto px-4 py-2 space-y-4"}
        [crypto-grid-v5]])))
