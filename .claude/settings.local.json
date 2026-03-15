@@ -40,9 +40,23 @@
       "Bash(node:*)",
       "WebFetch(domain:localhost)",
       "Bash(nbb:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(gh run:*)",
+      "Bash(npx nbb:*)",
+      "Bash(git:*)",
+      "Bash(gh repo:*)",
+      "Bash(gh api:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_close",
+      "mcp__playwright__browser_take_screenshot"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "memory"
+  ]
 }
