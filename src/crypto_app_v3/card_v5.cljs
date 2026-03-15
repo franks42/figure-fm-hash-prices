@@ -29,21 +29,18 @@
 (defn stats-row
   "Volume and trades row with currency conversion - period-aware"
   [volume trades current-currency currency-symbol exchange-rates period-stats current-period]
-  (let [;; Use period-aggregated volume when available, fall back to 24h
-        display-volume (or (:volume period-stats) volume)
+  (let [display-volume (or (:volume period-stats) volume)
         converted-volume (curr/convert-currency display-volume current-currency exchange-rates)
-        period-label (if (:volume period-stats)
-                       (case current-period "24H" "24H" "1W" "1W" "1M" "1M" "")
-                       "24H")]
+        show-trades? (and trades (= current-period "24H"))]
     [:div {:class "flex items-center justify-between text-xs text-gray-400 overlay-tier3"}
      [:div {:class "flex items-center"}
-      [:span (str "Vol" (when (seq period-label) (str "(" period-label ")")) ": ")]
+      [:span "Vol: "]
       [:span {:class "text-white"} (str currency-symbol (chart-v5/format-number converted-volume 0))]
       [:button {:class "text-neon-green hover:text-neon-green/80 ml-2 font-medium"
                 :on-click #(rf/dispatch [:currency/show-selector])}
        current-currency]]
-     (when trades
-       [:span (str "Trades(24H): " trades)])]))
+     (when show-trades?
+       [:span (str "Trades: " trades)])]))
 
 (defn portfolio-section
   "Portfolio management section - add/edit holdings with quantity display"
