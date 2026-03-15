@@ -80,10 +80,17 @@
 
 (defn fetch-figure-markets []
   (-> (fetch "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets")
-      (p/then (fn [response] (.json response)))
+      (p/then (fn [response]
+                (if (.-ok response)
+                  (.json response)
+                  (throw (js/Error. (str "HTTP " (.-status response) ": " (.-statusText response)))))))
       (p/then (fn [data]
                 (log "✅ Figure Markets data fetched")
-                data))))
+                data))
+      (p/catch (fn [error]
+                 (log "❌ Figure Markets API failed:" (.-message error))
+                 (log "⚠️  Using empty crypto data - will apply fallbacks")
+                 nil))))
 
 (defn fetch-yahoo-finance []
   (-> (fetch "https://query1.finance.yahoo.com/v8/finance/chart/FIGR"
@@ -256,7 +263,11 @@
                   (log "🚀 Starting crypto data fetch action...")
                   (core/info "Action started successfully")
 
-                  (let [processed-crypto (validate-crypto-data (process-crypto-data crypto-data))
+                  (let [processed-crypto (validate-crypto-data
+                                          (if crypto-data
+                                            (process-crypto-data crypto-data)
+                                            (do (log "⚠️  No crypto data available - using fallbacks for all coins")
+                                                {})))
                         processed-stock (process-stock-by-source stock-result)
                         combined-data (validate-output-data
                                        (create-combined-data processed-crypto
