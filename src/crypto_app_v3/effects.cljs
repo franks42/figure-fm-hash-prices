@@ -3,6 +3,22 @@
             [crypto-app-v3.direct-api :as da]
             [crypto-app-v3.transform :as tx]))
 
+;; Structured error classification (clj-yfinance pattern)
+(defn classify-http-error [status status-text]
+  (cond
+    (= status 429)
+    {:type :rate-limited :status status :message (str "Rate limited: " status-text)}
+    (>= status 500)
+    {:type :http-error :status status :message (str "Server error: " status " " status-text)}
+    :else
+    {:type :http-error :status status :message (str "HTTP " status " " status-text)}))
+
+(defn classify-network-error [js-error]
+  {:type :connection-error :message (or (.-message js-error) (str js-error))})
+
+(defn log-structured-error [context error-map]
+  (js/console.error (str "❌ [" (name (:type error-map)) "] " context ": " (:message error-map))))
+
 ;; Simple native fetch effect for Scittle compatibility
 (js/console.log "🔧 Registering :fetch effect handler...")
 
@@ -18,13 +34,20 @@
                 (js/console.log "📡 Response status:" (.-status response) (.-ok response))
                 (if (.-ok response)
                   (.json response)
-                  (throw (js/Error. (str "HTTP " (.-status response)))))))
+                  (let [err-map (classify-http-error (.-status response) (.-statusText response))]
+                    (log-structured-error url err-map)
+                    (throw (js/Error. (str "HTTP " (.-status response) "|" (:type err-map))))))))
        (.then (fn [data]
                 (js/console.log "✅ Parsed JSON:" data)
                 (rf/dispatch (conj on-success (js->clj data :keywordize-keys true)))))
        (.catch (fn [error]
-                 (js/console.log "❌ Fetch error:" error)
-                 (rf/dispatch (conj on-failure error)))))))
+                 (let [msg (.-message error)
+                       err-map (if (and msg (.startsWith msg "HTTP "))
+                                 (let [status (js/parseInt (.substring msg 5))]
+                                   (classify-http-error status ""))
+                                 (classify-network-error error))]
+                   (log-structured-error url err-map)
+                   (rf/dispatch (conj on-failure err-map))))))))
 
 ;; FIGR-specific fetch that keeps string keys (avoids keyword space issues)
 (rf/reg-fx
@@ -38,13 +61,20 @@
        (.then (fn [response]
                 (if (.-ok response)
                   (.json response)
-                  (throw (js/Error. (str "HTTP " (.-status response)))))))
+                  (let [err-map (classify-http-error (.-status response) (.-statusText response))]
+                    (log-structured-error url err-map)
+                    (throw (js/Error. (str "HTTP " (.-status response) "|" (:type err-map))))))))
        (.then (fn [data]
                 (js/console.log "🏦 STRINGS JSON:" data)
                 (rf/dispatch (conj on-success (js->clj data)))))  ; NO :keywordize-keys
        (.catch (fn [error]
-                 (js/console.log "🏦 STRINGS ERROR:" error)
-                 (rf/dispatch (conj on-failure error)))))))
+                 (let [msg (.-message error)
+                       err-map (if (and msg (.startsWith msg "HTTP "))
+                                 (let [status (js/parseInt (.substring msg 5))]
+                                   (classify-http-error status ""))
+                                 (classify-network-error error))]
+                   (log-structured-error url err-map)
+                   (rf/dispatch (conj on-failure err-map))))))))
 
 ;; Copy V2 data processing logic (small functions)
 
@@ -132,15 +162,16 @@
        (.catch (fn [error]
                  (js/console.error "❌ LIVE: Figure Markets failed:" error)
                  (rf/dispatch [:provider/failure :figure error]))))
-   ;; Twelve Data for FIGR  
+   ;; Twelve Data for FIGR (CORS-friendly from browser)
    (-> (da/fetch-twelve-data-quote "FIGR")
        (.then (fn [data]
                 (js/console.log "✅ LIVE: Twelve Data success")
                 (let [transformed (tx/transform->canonical :twelve (js->clj data :keywordize-keys false))]
                   (rf/dispatch [:provider/success :twelve transformed]))))
        (.catch (fn [error]
-                 (js/console.error "❌ LIVE: Twelve Data failed:" error)
-                 (rf/dispatch [:provider/failure :twelve error]))))))
+                 (let [err-map (classify-network-error error)]
+                   (log-structured-error "Twelve Data FIGR" err-map)
+                   (rf/dispatch [:provider/failure :twelve err-map])))))))
 
 ;; Main fetch events with PHASE 1 routing
 (rf/reg-event-fx

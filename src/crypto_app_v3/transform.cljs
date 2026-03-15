@@ -79,7 +79,7 @@
             {}
             data)))
 
-;; Twelve Data transformer  
+;; Twelve Data transformer (used for browser-side FIGR quotes)
 (defmethod transform->canonical :twelve [_ raw-response]
   (js/console.log "🔄 TRANSFORM: Twelve Data → canonical format")
   (let [symbol (str/lower-case (get raw-response "symbol" "figr"))]
@@ -107,6 +107,36 @@
                        :currency (get raw-response "currency" "USD")
                        :timezone (get raw-response "timezone" "EDT")
                        :is_market_open (get raw-response "is_market_open" false)}}))
+
+;; Yahoo Finance v8 transformer (used by GitHub Actions server-side)
+(defmethod transform->canonical :yahoo [_ raw-response]
+  (js/console.log "🔄 TRANSFORM: Yahoo v8 → canonical format")
+  (let [meta (get-in raw-response ["chart" "result" 0 "meta"])
+        price (js/parseFloat (get meta "regularMarketPrice" "0"))
+        prev-close (js/parseFloat (get meta "previousClose" "0"))
+        change-pct (if (and prev-close (> prev-close 0))
+                     (* (/ (- price prev-close) prev-close) 100)
+                     0)
+        symbol (str/lower-case (get meta "symbol" "figr"))]
+    {(keyword symbol) {:id symbol
+                       :type "stock"
+                       :source :yahoo
+                       :timestamp (js/Date.now)
+                       :usd price
+                       :day_high (js/parseFloat (get meta "regularMarketDayHigh" "0"))
+                       :day_low (js/parseFloat (get meta "regularMarketDayLow" "0"))
+                       :usd_24h_change change-pct
+                       :usd_24h_vol (js/parseInt (get meta "regularMarketVolume" "0"))
+                       :trades_24h nil
+                       :symbol (get meta "symbol" "FIGR")
+                       :bid nil
+                       :ask nil
+                       :last_price price
+                       :previous_close prev-close
+                       :change (- price prev-close)
+                       :currency (get meta "currency" "USD")
+                       :exchange (get meta "exchangeName" "")
+                       :timezone (get meta "exchangeTimezoneName" "")}}))
 
 ;; GitHub Actions transformer (mostly pass-through)
 (defmethod transform->canonical :github [_ raw-response]

@@ -9,11 +9,11 @@
 (def ^:const SCAN_HIDE_DELAY_MS 2100)
 (def ^:const TIMEOUT_MS 10000)
 
-;; FIGR IPO and Twelve Data constants  
+;; FIGR IPO and Twelve Data constants
 (def ^:const FIGR_IPO_DATE "2025-09-11")
 (def ^:const TWELVE_DATA_API_KEY "b61354a1fe6f45a2a9e01c8c4145e617")
 
-;; FIGR period logic for Twelve Data (Oracle-recommended)
+;; FIGR period logic for Twelve Data
 (defn get-figr-interval [period]
   (case period
     "24H" "5min"   ; Rich intraday for 24H
@@ -24,11 +24,11 @@
 (defn get-figr-row-count [period]
   (case period
     "24H" 288  ; 24h * 12 intervals/hour (5min)
-    "1W"  672  ; 7d * 24h * 4 intervals/hour (15min)  
+    "1W"  672  ; 7d * 24h * 4 intervals/hour (15min)
     "1M"  30   ; 30 trading days max
     100))      ; Default reasonable limit
 
-;; Pure Twelve Data JSON transformer (Oracle-recommended)
+;; Pure Twelve Data JSON transformer
 (defn twelve-data->chart-data
   "Transform Twelve Data JSON to V5 chart format [timestamps[], prices[]]"
   [td-response period]
@@ -38,7 +38,7 @@
     (let [;; Filter out old 2022 data (symbol reuse artifact)
           ipo-date (js/Date. FIGR_IPO_DATE)
           recent-values (filter #(>= (js/Date. (get % "datetime")) ipo-date) values)
-          ;; Sort ascending (Twelve Data comes newest first)  
+          ;; Sort ascending (Twelve Data comes newest first)
           sorted-values (reverse recent-values)
           ;; Apply period-based row limiting
           row-count (get-figr-row-count period)
@@ -113,18 +113,24 @@
          chart-data (when (seq raw-data)
                       (let [times (mapv #(-> % :date js/Date. .getTime (/ 1000)) raw-data)
                             prices (mapv #(js/parseFloat (:close %)) raw-data)]
-                        [times prices]))]
-     (js/console.log "✅ Historical data received for" crypto-id ":" (count raw-data) "points")
-     (js/console.log "📊 Transformed to chart format:" chart-data)
-     (assoc-in db [:historical-data crypto-id] chart-data))))
+                        [times prices]))
+         period-volume (when (seq raw-data)
+                         (reduce #(+ %1 (js/parseFloat (or (:volume %2) "0"))) 0 raw-data))]
+     (js/console.log "✅ Historical data received for" crypto-id ":" (count raw-data) "points, period volume:" period-volume)
+     (-> db
+         (assoc-in [:historical-data crypto-id] chart-data)
+         (assoc-in [:period-stats crypto-id :volume] period-volume)))))
 
 (rf/reg-event-db
  :historical-data-failure
  (fn [db [_ crypto-id error]]
-   (js/console.log "❌ Historical data failed for" crypto-id ":" error)
-   (assoc-in db [:historical-data crypto-id] [])))
+   (let [msg (if (map? error)
+               (str "[" (name (or (:type error) :unknown)) "] " (:message error))
+               (str error))]
+     (js/console.log "❌ Historical data failed for" crypto-id ":" msg)
+     (assoc-in db [:historical-data crypto-id] []))))
 
-;; FIGR Twelve Data events (Oracle-recommended rich intraday data)
+;; FIGR Twelve Data events (rich intraday data, CORS-friendly)
 (rf/reg-event-fx
  :fetch-figr-daily
  (fn [{:keys [db]} [_ period]]
@@ -169,8 +175,11 @@
      (do
        (js/console.log "❌ Twelve Data error:" (get response "message"))
        (assoc-in db [:historical-data "figr"] []))
-     (let [chart-data (twelve-data->chart-data response period)]
-       (js/console.log "🔍 TRANSFORM RESULT:" chart-data)
+     (let [chart-data (twelve-data->chart-data response period)
+           values (get response "values")
+           period-volume (when (seq values)
+                           (reduce #(+ %1 (js/parseFloat (or (get %2 "volume") "0"))) 0 values))]
+       (js/console.log "🔍 TRANSFORM RESULT:" chart-data "period volume:" period-volume)
        (if chart-data
          (let [cache-key (str "figr-twelve-v1-" period)
                cache-entry {:chart-data chart-data
@@ -178,7 +187,9 @@
                             :period period}]
            (.setItem js/localStorage cache-key (js/JSON.stringify (clj->js cache-entry)))
            (js/console.log "📊 FIGR cached and stored:" chart-data)
-           (assoc-in db [:historical-data "figr"] chart-data))
+           (-> db
+               (assoc-in [:historical-data "figr"] chart-data)
+               (assoc-in [:period-stats "figr" :volume] period-volume)))
          (do
            (js/console.log "❌ TRANSFORM FAILED - no chart data returned")
            (assoc-in db [:historical-data "figr"] [])))))))
@@ -186,8 +197,11 @@
 (rf/reg-event-db
  :figr-twelve-failure
  (fn [db [_ period error]]
-   (js/console.log "🏦 TWELVE-DATA FAILED:" period "error:" error)
-   (assoc-in db [:historical-data "figr"] [])))
+   (let [msg (if (map? error)
+               (str "[" (name (or (:type error) :unknown)) "] " (:message error))
+               (str error))]
+     (js/console.log "🏦 TWELVE-DATA FAILED:" period "error:" msg)
+     (assoc-in db [:historical-data "figr"] []))))
 
 ;; Helper functions FIRST (small, pure)
 (defn extract-prices-from-response [js-data]
@@ -473,8 +487,7 @@
 (rf/reg-event-fx
  :portfolio/fetch-all-historical
  (fn [{:keys [db]} [_]]
-   (let [holdings (get-in db [:portfolio :holdings] {})
-         current-period (get-in db [:chart :current-period] "1W")]
+   (let [holdings (get-in db [:portfolio :holdings] {})]
      (js/console.log "📊 PF: Fetching historical data for holdings:" (keys holdings))
      {:fx (mapv (fn [crypto-id]
                   [:dispatch [:fetch-historical-data crypto-id]])
@@ -506,7 +519,7 @@
 
 (rf/reg-event-fx
  :market-data/fallback-check
- (fn [{:keys [db]} [_]]
+ (fn [_ [_]]
    ;; LIVE DATA ONLY - NO BACKUP FALLBACK
    (js/console.log "✅ LIVE DATA ONLY - No GitHub backup used")
    {:dispatch [:trigger-flash]

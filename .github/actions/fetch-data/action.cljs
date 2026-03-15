@@ -95,10 +95,24 @@
 (defn fetch-yahoo-finance []
   (-> (fetch "https://query1.finance.yahoo.com/v8/finance/chart/FIGR"
              (clj->js {:headers {"User-Agent" "Mozilla/5.0 (compatible; GitHub-Actions)"}}))
-      (p/then (fn [response] (.json response)))
+      (p/then (fn [response]
+                (if (.-ok response)
+                  (.json response)
+                  (throw (js/Error. (str "query1 HTTP " (.-status response)))))))
       (p/then (fn [data]
-                (log "✅ Yahoo Finance data fetched")
-                data))))
+                (log "✅ Yahoo Finance data fetched (query1)")
+                data))
+      (p/catch (fn [err]
+                 (log "⚠️ Yahoo query1 failed:" (.-message err) "- trying query2")
+                 (-> (fetch "https://query2.finance.yahoo.com/v8/finance/chart/FIGR"
+                            (clj->js {:headers {"User-Agent" "Mozilla/5.0 (compatible; GitHub-Actions)"}}))
+                     (p/then (fn [response]
+                               (if (.-ok response)
+                                 (.json response)
+                                 (throw (js/Error. (str "query2 HTTP " (.-status response)))))))
+                     (p/then (fn [data]
+                               (log "✅ Yahoo Finance data fetched (query2)")
+                               data)))))))
 
 (defn fetch-alpha-vantage [api-key]
   (if api-key

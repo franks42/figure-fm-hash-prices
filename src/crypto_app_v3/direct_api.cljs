@@ -1,5 +1,4 @@
-(ns crypto-app-v3.direct-api
-  (:require [clojure.string :as str]))
+(ns crypto-app-v3.direct-api)
 
 (def ^:const TWELVE_DATA_API_KEY "b61354a1fe6f45a2a9e01c8c4145e617")
 

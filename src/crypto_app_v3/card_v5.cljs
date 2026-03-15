@@ -13,7 +13,7 @@
   (let [descriptions {"pf" "Total Portfolio"
                       "hash" "Provenance Blockchain HASH"
                       "figr" "Figure Technologies Inc."
-                      "fgrd" "FIGR Tokenized (Figure Markets)"
+                      "fgrd" "FGRD = tokenized FIGR"
                       "btc" "Bitcoin"
                       "eth" "Ethereum"
                       "sol" "Solana"
@@ -27,18 +27,23 @@
       feed-indicator]]))
 
 (defn stats-row
-  "Volume and trades row with currency conversion"
-  [volume trades current-currency currency-symbol exchange-rates]
-  (let [converted-volume (curr/convert-currency volume current-currency exchange-rates)]
+  "Volume and trades row with currency conversion - period-aware"
+  [volume trades current-currency currency-symbol exchange-rates period-stats current-period]
+  (let [;; Use period-aggregated volume when available, fall back to 24h
+        display-volume (or (:volume period-stats) volume)
+        converted-volume (curr/convert-currency display-volume current-currency exchange-rates)
+        period-label (if (:volume period-stats)
+                       (case current-period "24H" "24H" "1W" "1W" "1M" "1M" "")
+                       "24H")]
     [:div {:class "flex items-center justify-between text-xs text-gray-400 overlay-tier3"}
      [:div {:class "flex items-center"}
-      [:span "Volume: "]
+      [:span (str "Vol" (when (seq period-label) (str "(" period-label ")")) ": ")]
       [:span {:class "text-white"} (str currency-symbol (chart-v5/format-number converted-volume 0))]
       [:button {:class "text-neon-green hover:text-neon-green/80 ml-2 font-medium"
                 :on-click #(rf/dispatch [:currency/show-selector])}
        current-currency]]
      (when trades
-       [:span (str "Trades: " trades)])]))
+       [:span (str "Trades(24H): " trades)])]))
 
 (defn portfolio-section
   "Portfolio management section - add/edit holdings with quantity display"
@@ -95,6 +100,7 @@
         exchange-rates @(rf/subscribe [:currency/exchange-rates])
         currency-symbol (curr/get-currency-symbol current-currency)
         current-period @(rf/subscribe [:chart/current-period])
+        period-stats @(rf/subscribe [:period-stats crypto-id])
         historical-data @(rf/subscribe [:historical-data crypto-id])
         ;; Calculate metrics from chart data for consistency
         chart-metrics (if (and historical-data (vector? historical-data) (= (count historical-data) 2))
@@ -140,7 +146,7 @@
      [asset-description crypto-id feed-indicator]
 
      ;; Stats row with currency button
-     [stats-row volume trades current-currency currency-symbol exchange-rates]
+     [stats-row volume trades current-currency currency-symbol exchange-rates period-stats current-period]
 
       ;; Portfolio section (skip for portfolio card itself)
      (when (not= crypto-id "pf")

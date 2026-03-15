@@ -71,6 +71,12 @@
  (fn [db _]
    (:historical-data db)))
 
+;; Period-aggregated stats (volume from candle data)
+(rf/reg-sub
+ :period-stats
+ (fn [db [_ crypto-id]]
+   (get-in db [:period-stats crypto-id])))
+
 ;; Enhanced prices including portfolio when it exists
 (rf/reg-sub
  :prices
