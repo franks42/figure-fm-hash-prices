@@ -7,59 +7,68 @@
 ;; V5 Card Component - Professional Terminal Style
 ;; Single asset prototype (HASH first)
 
-(defn asset-description
-  "Asset description below chart with feed indicator on right"
+(defn info-row
+  "Row 1 below chart: PF button/value (left), period (center), low price (right)"
+  [crypto-id converted-low currency-symbol current-period current-currency exchange-rates]
+  (let [quantity @(rf/subscribe [:portfolio/qty crypto-id])
+        pv @(rf/subscribe [:portfolio/value crypto-id])
+        converted-pv (when pv (curr/convert-currency pv current-currency exchange-rates))
+        has-holdings? (and quantity (> quantity 0))]
+    [:div {:class "flex items-center justify-between text-xs mt-2"}
+     ;; Left: PF button or PF value
+     [:div {:class "flex-1"}
+      (if (= crypto-id "pf")
+        [:span]
+        (if has-holdings?
+          [:button {:class "text-neon-green hover:text-neon-green/80 font-medium overlay-tier3"
+                    :on-click #(rf/dispatch [:portfolio/show-panel crypto-id])}
+           (str "PF: " currency-symbol (chart-v5/format-number converted-pv 2))]
+          [:button {:class "text-gray-400 hover:text-gray-300 font-medium overlay-tier3"
+                    :on-click #(rf/dispatch [:portfolio/show-panel crypto-id])}
+           "PF"]))]
+     ;; Center: Period button
+     [:div {:class "flex-1 text-center"}
+      [:button {:class "text-xs bg-blue-900/80 hover:bg-blue-800/80 border border-blue-600/60 rounded px-2 py-0.5 text-white overlay-tier3 cursor-pointer transition-colors"
+                :on-click #(rf/dispatch [:chart/cycle-period])}
+       current-period]]
+     ;; Right: Low price
+     [:div {:class "flex-1 text-right text-white/70 overlay-tier2"}
+      (str currency-symbol (chart-v5/format-number converted-low 3))]]))
+
+(defn description-row
+  "Row 2: Short token description (left), data source badge (right)"
   [crypto-id feed-indicator]
   (let [descriptions {"pf" "Total Portfolio"
-                      "hash" "Provenance Blockchain HASH"
-                      "figr" "Figure Technologies Inc."
-                      "fgrd" "FGRD = tokenized FIGR"
+                      "hash" "Provenance Blockchain"
+                      "figr" "Figure Technologies"
+                      "fgrd" "Tokenized FIGR"
                       "btc" "Bitcoin"
                       "eth" "Ethereum"
                       "sol" "Solana"
                       "link" "Chainlink"
                       "uni" "Uniswap"
                       "xrp" "XRP"}]
-    [:div {:class "flex items-center justify-between mb-3"}
-     [:div {:class "text-sm text-gray-400 font-medium"}
+    [:div {:class "flex items-center justify-between text-xs mt-1"}
+     [:div {:class "text-gray-400 font-medium"}
       (get descriptions crypto-id (str/capitalize (name crypto-id)))]
-     [:div {:class "bg-neon-cyan/10 border border-neon-cyan/40 text-neon-cyan rounded px-2 py-0.5 font-semibold text-xs"}
+     [:div {:class "bg-neon-cyan/10 border border-neon-cyan/40 text-neon-cyan rounded px-1.5 py-0 font-semibold text-xs"}
       feed-indicator]]))
 
 (defn stats-row
-  "Volume and trades row with currency conversion - period-aware"
-  [crypto-id volume trades current-currency currency-symbol exchange-rates period-stats current-period]
+  "Row 3: Volume + currency button (left), trades when available (right)"
+  [volume trades current-currency currency-symbol exchange-rates period-stats current-period]
   (let [display-volume (or (:volume period-stats) volume)
         converted-volume (curr/convert-currency display-volume current-currency exchange-rates)
-        show-trades? (and trades (= current-period "24H"))
-        quantity @(rf/subscribe [:portfolio/qty crypto-id])
-        pv @(rf/subscribe [:portfolio/value crypto-id])
-        converted-pv (when pv (curr/convert-currency pv current-currency exchange-rates))
-        has-holdings? (and quantity (> quantity 0))]
-    [:div {:class "flex items-center justify-between text-xs text-gray-400 overlay-tier3"}
+        show-trades? (and trades (= current-period "24H"))]
+    [:div {:class "flex items-center justify-between text-xs text-gray-400 overlay-tier3 mt-1"}
      [:div {:class "flex items-center"}
       [:span "Vol: "]
       [:span {:class "text-white"} (str currency-symbol (chart-v5/format-number converted-volume 0))]
       [:button {:class "text-neon-green hover:text-neon-green/80 ml-2 font-medium"
                 :on-click #(rf/dispatch [:currency/show-selector])}
        current-currency]]
-     (cond
-       has-holdings?
-       [:span {:class "text-neon-green"}
-        (str "PV: " currency-symbol (chart-v5/format-number converted-pv 2))]
-       show-trades?
+     (when show-trades?
        [:span (str "Trades: " trades)])]))
-
-(defn portfolio-button
-  "Small PF button for chart overlay, next to period button"
-  [crypto-id]
-  (let [quantity @(rf/subscribe [:portfolio/qty crypto-id])]
-    [:button {:class (str "text-xs rounded px-2 py-1 overlay-tier3 cursor-pointer transition-colors "
-                          (if (> quantity 0)
-                            "bg-neon-green/20 hover:bg-neon-green/30 border border-neon-green/40 text-neon-green"
-                            "bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/60 text-gray-400"))
-              :on-click #(rf/dispatch [:portfolio/show-panel crypto-id])}
-     "PF"]))
 
 (defn crypto-card-v5
   "V5 crypto card - professional terminal style with square chart"
@@ -115,27 +124,22 @@
       (rf/dispatch [:fetch-historical-data crypto-id]))
 
     [:div {:class "bg-white/[0.03] border border-white/10 rounded-2xl p-4 backdrop-blur-lg hover:bg-white/[0.06] transition-all duration-300"}
-     ;; Square chart with overlays
+     ;; Square chart with overlays (symbol, high, price, change only)
      [:div {:class "relative"}
       [chart-v5/square-chart-container crypto-id]
       [chart-v5/chart-overlay-symbol crypto-id]
       [chart-v5/chart-overlay-high converted-high currency-symbol]
       [chart-v5/chart-overlay-current-price converted-price currency-symbol current-currency]
-      [chart-v5/chart-overlay-change chart-change]
-      ;; Period + PF buttons in bottom-center (replaces chart-overlay-period)
-      [:div {:class "absolute bottom-2 inset-x-0 flex justify-center gap-1 z-30"}
-       (when (not= crypto-id "pf")
-         [portfolio-button crypto-id])
-       [:button {:class "text-xs bg-blue-900/80 hover:bg-blue-800/80 border border-blue-600/60 rounded px-2 py-1 text-white overlay-tier3 cursor-pointer transition-colors"
-                 :on-click #(rf/dispatch [:chart/cycle-period])}
-        current-period]]
-      [chart-v5/chart-overlay-low converted-low currency-symbol]]
+      [chart-v5/chart-overlay-change chart-change]]
 
-     ;; Asset description with feed indicator
-     [asset-description crypto-id feed-indicator]
+     ;; Row 1: PF (left), Period (center), Low (right)
+     [info-row crypto-id converted-low currency-symbol current-period current-currency exchange-rates]
 
-     ;; Stats row with currency button
-     [stats-row crypto-id volume trades current-currency currency-symbol exchange-rates period-stats current-period]]))
+     ;; Row 2: Description (left), Data source (right)
+     [description-row crypto-id feed-indicator]
+
+     ;; Row 3: Volume + currency (left), Trades (right)
+     [stats-row volume trades current-currency currency-symbol exchange-rates period-stats current-period]]))
 
 ;; V5 Portfolio Total Value Display
 (defn portfolio-total-v5
