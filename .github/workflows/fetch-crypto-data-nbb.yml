@@ -74,7 +74,18 @@ jobs:
           git checkout -b data-updates-temp
           git add data/crypto-prices.json
           git commit -m "Update crypto data $(date -u '+%Y-%m-%d %H:%M:%S UTC') [nbb]"
-          git push origin data-updates-temp:data-updates --force
+          # Retry push: GitHub occasionally rejects it with transient server errors
+          for attempt in 1 2 3 4; do
+            if git push origin data-updates-temp:data-updates --force; then
+              break
+            fi
+            if [ "$attempt" = "4" ]; then
+              echo "❌ Push failed after $attempt attempts"
+              exit 1
+            fi
+            echo "⚠️  Push attempt $attempt failed, retrying in $((attempt * 15))s..."
+            sleep $((attempt * 15))
+          done
           echo "✅ Data updated successfully"
         else
           echo "✅ Data validation passed, no update needed"
