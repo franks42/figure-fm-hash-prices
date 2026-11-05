@@ -40,12 +40,10 @@
 
 ;; Copy V2 constants exactly
 (def crypto-icons
-  {:btc "₿" :eth "Ξ" :link "⬡" :sol "◎" :uni "🦄"
-   :xrp "💰" :hash "🔗" :figr_heloc "🏠" :figr "📈"})
+  {:hash "🔗" :figr_heloc "🏠" :figr "📈" :fgrs "📈"})
 
 (def crypto-symbols
-  {:btc "BTC" :eth "ETH" :link "LINK" :sol "SOL" :uni "UNI"
-   :xrp "XRP" :hash "HASH" :figr_heloc "FIGR_HELOC" :figr "FIGR"})
+  {:hash "HASH" :figr_heloc "FIGR_HELOC" :figr "FIGR" :fgrs "FGRS"})
 
 ;; Copy V2 formatting functions exactly (small, pure)
 (defn format-number [n decimals]

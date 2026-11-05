@@ -44,13 +44,8 @@
   (let [descriptions {"pf" "Total Portfolio"
                       "hash" "Provenance Blockchain"
                       "figr" "Figure Technologies"
-                      "fgrd" "Tokenized FIGR"
-                      "btc" "Bitcoin"
-                      "eth" "Ethereum"
-                      "sol" "Solana"
-                      "link" "Chainlink"
-                      "uni" "Uniswap"
-                      "xrp" "XRP"}]
+                      "fgrs" "Tokenized FIGR"
+                      "figr_heloc" "Tokenized HELOC"}]
     [:div {:class "flex items-center justify-between text-xs mt-1"}
      [:div {:class "text-gray-400 font-medium"}
       (get descriptions crypto-id (str/capitalize (name crypto-id)))]
@@ -88,7 +83,7 @@
         feed-indicator (cond
                          (= crypto-id "pf") "PF"    ; Portfolio card
                          (= crypto-id "figr") "TD"  ; FIGR uses Twelve Data
-                         (= crypto-id "fgrd") "FM"  ; FGRD tokenized on Figure Markets
+                         (= crypto-id "fgrs") "FM"  ; FGRS tokenized on Figure Markets
                          (= asset-type "stock") "YF" ; Other stocks use Yahoo Finance
                          :else "FM")                 ; Cryptos use Figure Markets
         current-currency @(rf/subscribe [:currency/current])

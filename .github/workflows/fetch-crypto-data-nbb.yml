@@ -54,14 +54,9 @@ jobs:
         
         # Check critical data presence
         HASH_PRICE=$(jq -r '.hash.usd // 0' data/crypto-prices.json)
-        BTC_PRICE=$(jq -r '.btc.usd // 0' data/crypto-prices.json)
         
         if [ "$HASH_PRICE" = "0" ] || [ "$HASH_PRICE" = "null" ]; then
           echo "⚠️  Warning: HASH price missing or zero"
-        fi
-        
-        if (( $(echo "$BTC_PRICE < 10000" | bc -l) )); then
-          echo "⚠️  Warning: BTC price seems unusually low: $BTC_PRICE"
         fi
         
         # Check if data actually changed (avoid unnecessary commits)

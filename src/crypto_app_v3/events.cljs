@@ -66,12 +66,12 @@
      (let [period (get-in db [:chart :current-period] "1W")]
        (js/console.log "🏦 ROUTING FIGR to Twelve Data, period:" period)
        {:fx [[:dispatch [:fetch-figr-daily period]]]})
-     ;; Regular crypto logic (FGRD uses FGRD-YLDS pair)
+     ;; Regular crypto logic (FGRS uses FGRS-YLDS pair)
      (let [period (get-in db [:chart :current-period] "1W")
            config (get-period-config period)
            end-time (js/Date.)
            start-time (js/Date. (- (.getTime end-time) (* (:days config) 24 60 60 1000)))
-           market-symbol (if (= crypto-id "fgrd") "FGRD-YLDS" (str (str/upper-case crypto-id) "-USD"))
+           market-symbol (if (= crypto-id "fgrs") "FGRS-YLDS" (str (str/upper-case crypto-id) "-USD"))
            url (str "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets/"
                     market-symbol
                     "/candles?start_date=" (.toISOString start-time)
@@ -90,11 +90,11 @@
    (if (= crypto-id "figr")
      ;; Route FIGR to Twelve Data
      {:fx [[:dispatch [:fetch-figr-daily period]]]}
-     ;; Regular crypto logic (FGRD uses FGRD-YLDS pair)
+     ;; Regular crypto logic (FGRS uses FGRS-YLDS pair)
      (let [config (get-period-config period)
            end-time (js/Date.)
            start-time (js/Date. (- (.getTime end-time) (* (:days config) 24 60 60 1000)))
-           market-symbol (if (= crypto-id "fgrd") "FGRD-YLDS" (str (str/upper-case crypto-id) "-USD"))
+           market-symbol (if (= crypto-id "fgrs") "FGRS-YLDS" (str (str/upper-case crypto-id) "-USD"))
            url (str "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets/"
                     market-symbol
                     "/candles?start_date=" (.toISOString start-time)
@@ -387,7 +387,14 @@
    (js/console.log "📖 Restoring CLJS holdings to database:" holdings-map)
    (js/console.log "📖 Holdings map type:" (type holdings-map))
    ;; Ensure we store a proper CLJS map for subscriptions
-   (assoc-in db [:portfolio :holdings] (js->clj holdings-map :keywordize-keys false))))
+   ;; Migrate FGRD holdings: Figure renamed the token to FGRS (same asset, denom nfgrd)
+   (let [holdings (js->clj holdings-map :keywordize-keys false)
+         holdings (if (contains? holdings "fgrd")
+                    (-> holdings
+                        (dissoc "fgrd")
+                        (assoc "fgrs" (+ (get holdings "fgrs" 0) (get holdings "fgrd"))))
+                    holdings)]
+     (assoc-in db [:portfolio :holdings] holdings))))
 
 (rf/reg-event-fx
  :portfolio/initialize
